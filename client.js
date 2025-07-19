@@ -24,13 +24,14 @@ socket.on("waitingForOpponent", () => {
   statusEl.textContent = "等待對手加入...";
 });
 
-socket.on("role", (color) => {
-  document.getElementById("role").textContent = `您是：${color === "black" ? "⚫ 黑棋" : "⚪ 白棋"}`;
-});
+
 
 socket.on("playerColor", color => {
   myColor = color;
+  const roleEl = document.getElementById("role");
+  roleEl.textContent = `您是：${color === "black" ? "⚫ 黑棋" : "⚪ 白棋"}`;
 });
+
 
 socket.on("startGame", data => {
   updateBoard(data.board);
@@ -70,17 +71,34 @@ function updateBoard(board) {
     const x = i % 8;
     const y = Math.floor(i / 8);
     const value = board[y][x];
+
+    // 取得前一個棋子顏色（若存在）
+    const prevDisk = cell.querySelector(".disk");
+    const prevColor = prevDisk?.classList.contains("black") ? "black" :
+                      prevDisk?.classList.contains("white") ? "white" : null;
+
+    // 清空目前這格
     cell.innerHTML = "";
+
     if (value) {
       const disk = document.createElement("div");
-      disk.className = `disk ${value}`;
+
+      // 判斷是否是變色，若是則加上 flip class
+      const isFlipped = prevColor && prevColor !== value;
+      disk.className = `disk ${value}${isFlipped ? " flip" : ""}`;
+
+      // 初始動畫縮放效果
       disk.style.transform = "scale(0)";
       setTimeout(() => disk.style.transform = "scale(1)", 10);
       cell.appendChild(disk);
+
+      // 累加數量
       if (value === "black") black++;
       else white++;
     }
   });
+
+  // 更新棋子數量顯示
   document.getElementById("blackCount").textContent = black;
   document.getElementById("whiteCount").textContent = white;
 }

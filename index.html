@@ -8,15 +8,14 @@
 <body>
   <h1>雙人黑白棋</h1>
   <div id="status">正在連線...</div>
-  <div id="role">您是：等待分配角色...</div>
-  <div id="counts">⚫ 黑棋: <span id="blackCount">2</span> ⚪ 白棋: <span id="whiteCount">2</span></div>
 
-  <div id="game-wrapper">
-    <div id="col-labels">
-      <div>8</div><div>7</div><div>6</div><div>5</div><div>4</div><div>3</div><div>2</div><div>1</div>
-    </div>
-    <div>
-      <div id="board-frame">
+<div id="game-wrapper">
+  <div id="board-frame">
+    <div style="display: flex;">
+      <div id="col-labels">
+        <div>8</div><div>7</div><div>6</div><div>5</div><div>4</div><div>3</div><div>2</div><div>1</div>
+      </div>
+      <div>
         <div id="row-labels">
           <div>A</div><div>B</div><div>C</div><div>D</div><div>E</div><div>F</div><div>G</div><div>H</div>
         </div>
@@ -24,6 +23,11 @@
       </div>
     </div>
   </div>
+</div>
+
+
+  <div id="counts">⚫ 黑棋: <span id="blackCount">2</span> ⚪ 白棋: <span id="whiteCount">2</span></div>
+  <div id="role">您是：等待分配角色...</div>
   <div id="message"></div>
 
   <script src="/socket.io/socket.io.js"></script>
