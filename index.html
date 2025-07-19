@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>雙人黑白棋</title>
+  <style>
+    #board {
+      width: 320px; height: 320px; margin: 20px auto;
+      display: grid; grid-template-columns: repeat(8, 1fr);
+    }
+    .cell {
+      width: 40px; height: 40px; border: 1px solid #333;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="text-align:center;">雙人黑白棋</h1>
+  <div id="status" style="text-align:center;">等待對手加入...</div>
+  <div id="counts">
+  ⚫ 黑棋: <span id="blackCount">2</span>
+  ⚪ 白棋: <span id="whiteCount">2</span>
+</div>
+
+  <div id="board"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
