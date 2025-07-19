@@ -24,6 +24,10 @@ socket.on("waitingForOpponent", () => {
   statusEl.textContent = "等待對手加入...";
 });
 
+socket.on("role", (color) => {
+  document.getElementById("role").textContent = `您是：${color === "black" ? "⚫ 黑棋" : "⚪ 白棋"}`;
+});
+
 socket.on("playerColor", color => {
   myColor = color;
 });
@@ -88,4 +92,16 @@ function updateStatus() {
   } else {
     statusEl.textContent = "等待對手下棋...";
   }
-} // HTML, CSS 同步更新中...
+} 
+
+function placeDisk(row, col, color, animate = false) {
+  const cell = document.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
+  if (!cell) return;
+  let disk = cell.querySelector(".disk");
+  if (!disk) {
+    disk = document.createElement("div");
+    disk.classList.add("disk");
+    cell.appendChild(disk);
+  }
+  disk.className = "disk " + color + (animate ? " flip" : "");
+}
