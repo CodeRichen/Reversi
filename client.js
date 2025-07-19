@@ -41,8 +41,12 @@ socket.on("updateBoard", data => {
 });
 
 socket.on("invalidMove", () => {
-  messageEl.textContent = "這不是合法的落子位置！";
-  setTimeout(() => messageEl.textContent = "", 2000);
+  const messageEl = document.getElementById("message");
+  messageEl.textContent = "這不是合法的落子位置";
+  messageEl.classList.add("show");
+  setTimeout(() => {
+    messageEl.classList.remove("show");
+  }, 500);
 });
 
 socket.on("gameOver", ({ black, white, winner }) => {
