@@ -1,0 +1,490 @@
+### 檔案名稱: client.js
+-------------------------------------------------
+// === client.js ===
+const socket = io();
+let myColor = null;
+let currentTurn = null;
+
+const boardEl = document.getElementById("board");
+const statusEl = document.getElementById("status");
+const messageEl = document.getElementById("message");
+
+for (let i = 0; i < 64; i++) {
+  const cell = document.createElement("div");
+  cell.className = "cell";
+  cell.dataset.index = i;
+  boardEl.appendChild(cell);
+}
+
+boardEl.addEventListener("click", e => {
+  const idx = e.target.closest(".cell")?.dataset.index;
+  if (!idx || currentTurn !== myColor) return;
+  socket.emit("move", parseInt(idx));
+});
+
+socket.on("waitingForOpponent", () => {
+  statusEl.textContent = "等待對手加入...";
+});
+
+
+
+socket.on("playerColor", color => {
+  myColor = color;
+  const roleEl = document.getElementById("role");
+  roleEl.textContent = `您是：${color === "black" ? "⚫ 黑棋" : "⚪ 白棋"}`;
+});
+
+
+socket.on("startGame", data => {
+  updateBoard(data.board);
+  currentTurn = data.turn;
+  updateStatus();
+});
+
+socket.on("updateBoard", data => {
+  updateBoard(data.board);
+  currentTurn = data.turn;
+  updateStatus();
+});
+
+socket.on("invalidMove", () => {
+  const messageEl = document.getElementById("message");
+  messageEl.textContent = "這不是合法的落子位置";
+  messageEl.classList.add("show");
+  setTimeout(() => {
+    messageEl.classList.remove("show");
+  }, 500);
+});
+
+socket.on("gameOver", ({ black, white, winner }) => {
+  let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
+  if (winner === "draw") msg += " 平手！";
+  else msg += winner === myColor ? " 你贏了！" : " 你輸了！";
+  statusEl.textContent = msg;
+});
+
+socket.on("opponentLeft", () => {
+  statusEl.textContent = "對手已離開房間，遊戲結束。";
+});
+
+function updateBoard(board) {
+  let black = 0, white = 0;
+  document.querySelectorAll(".cell").forEach((cell, i) => {
+    const x = i % 8;
+    const y = Math.floor(i / 8);
+    const value = board[y][x];
+
+    // 取得前一個棋子顏色（若存在）
+    const prevDisk = cell.querySelector(".disk");
+    const prevColor = prevDisk?.classList.contains("black") ? "black" :
+                      prevDisk?.classList.contains("white") ? "white" : null;
+
+    // 清空目前這格
+    cell.innerHTML = "";
+
+    if (value) {
+      const disk = document.createElement("div");
+
+      // 判斷是否是變色，若是則加上 flip class
+      const isFlipped = prevColor && prevColor !== value;
+      disk.className = `disk ${value}${isFlipped ? " flip" : ""}`;
+
+      // 初始動畫縮放效果
+      disk.style.transform = "scale(0)";
+      setTimeout(() => disk.style.transform = "scale(1)", 10);
+      cell.appendChild(disk);
+
+      // 累加數量
+      if (value === "black") black++;
+      else white++;
+    }
+  });
+
+  // 更新棋子數量顯示
+  document.getElementById("blackCount").textContent = black;
+  document.getElementById("whiteCount").textContent = white;
+}
+
+function updateStatus() {
+  if (!myColor || !currentTurn) return;
+  if (myColor === currentTurn) {
+    statusEl.textContent = "輪到你下棋！";
+  } else {
+    statusEl.textContent = "等待對手下棋...";
+  }
+} 
+
+function placeDisk(row, col, color, animate = false) {
+  const cell = document.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
+  if (!cell) return;
+  let disk = cell.querySelector(".disk");
+  if (!disk) {
+    disk = document.createElement("div");
+    disk.classList.add("disk");
+    cell.appendChild(disk);
+  }
+  disk.className = "disk " + color + (animate ? " flip" : "");
+}
+
+### 檔案名稱: game.html
+-------------------------------------------------
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>黑白棋</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>黑白棋</h1>
+  <div id="status">正在連線...</div>
+  <div id="board"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
+
+
+### 檔案名稱: index.html
+-------------------------------------------------
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>雙人黑白棋</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>雙人黑白棋</h1>
+  <div id="status">正在連線...</div>
+
+<div id="game-wrapper">
+  <div id="board-frame">
+    <div style="display: flex;">
+      <div id="col-labels">
+        <div>8</div><div>7</div><div>6</div><div>5</div><div>4</div><div>3</div><div>2</div><div>1</div>
+      </div>
+      <div>
+        <div id="row-labels">
+          <div>A</div><div>B</div><div>C</div><div>D</div><div>E</div><div>F</div><div>G</div><div>H</div>
+        </div>
+        <div id="board"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <div id="counts">⚫ 黑棋: <span id="blackCount">2</span> ⚪ 白棋: <span id="whiteCount">2</span></div>
+  <div id="role">您是：等待分配角色...</div>
+  <div id="message"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
+
+### 檔案名稱: server.js
+-------------------------------------------------
+// === server.js ===
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+app.use(express.static(__dirname));
+
+let rooms = {};
+
+io.on('connection', socket => {
+  let room = findAvailableRoom();
+
+  if (!room) {
+    const roomId = `room-${socket.id}`;
+    rooms[roomId] = {
+      players: [],
+      board: createInitialBoard(),
+      turn: 'black'
+    };
+    room = rooms[roomId];
+  }
+
+  room.players.push(socket);
+  const roomId = getRoomId(socket);
+  const color = room.players.length === 1 ? 'black' : 'white';
+
+  socket.emit("playerColor", color);
+
+  if (room.players.length === 2) {
+    room.players.forEach(s => s.emit("startGame", {
+      board: room.board,
+      turn: room.turn
+    }));
+  } else {
+    socket.emit("waitingForOpponent");
+  }
+
+  socket.on("move", idx => {
+    if (room.turn !== color) return;
+
+    const x = idx % 8;
+    const y = Math.floor(idx / 8);
+
+    const flipped = getFlippable(room.board, x, y, color);
+    if (room.board[y][x] || flipped.length === 0) {
+      socket.emit("invalidMove");
+      return;
+    }
+
+    room.board[y][x] = color;
+    flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
+    room.turn = color === "black" ? "white" : "black";
+
+    room.players.forEach(s => s.emit("updateBoard", {
+      board: room.board,
+      turn: room.turn
+    }));
+
+    if (checkGameOver(room.board)) {
+      const flat = room.board.flat();
+      const black = flat.filter(c => c === 'black').length;
+      const white = flat.filter(c => c === 'white').length;
+      const winner = black > white ? 'black' : white > black ? 'white' : 'draw';
+
+      room.players.forEach(s => s.emit("gameOver", { black, white, winner }));
+    }
+  });
+
+  socket.on("disconnect", () => {
+    const id = getRoomId(socket);
+    if (id) {
+      rooms[id].players.forEach(p => {
+        if (p !== socket) p.emit("opponentLeft");
+      });
+      delete rooms[id];
+    }
+  });
+});
+
+function createInitialBoard() {
+  const board = Array(8).fill().map(() => Array(8).fill(null));
+  board[3][3] = "white";
+  board[3][4] = "black";
+  board[4][3] = "black";
+  board[4][4] = "white";
+  return board;
+}
+
+function findAvailableRoom() {
+  return Object.values(rooms).find(r => r.players.length === 1);
+}
+
+function getRoomId(socket) {
+  return Object.entries(rooms).find(([_, r]) => r.players.includes(socket))?.[0];
+}
+
+function getFlippable(board, x, y, color) {
+  const directions = [
+    [0, 1], [1, 0], [0, -1], [-1, 0],
+    [1, 1], [1, -1], [-1, 1], [-1, -1]
+  ];
+  const opponent = color === "black" ? "white" : "black";
+  let flipped = [];
+
+  for (let [dx, dy] of directions) {
+    let nx = x + dx, ny = y + dy;
+    let line = [];
+
+    while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
+      if (board[ny][nx] === opponent) {
+        line.push([nx, ny]);
+      } else if (board[ny][nx] === color && line.length) {
+        flipped = flipped.concat(line);
+        break;
+      } else {
+        break;
+      }
+      nx += dx;
+      ny += dy;
+    }
+  }
+  return flipped;
+}
+
+function checkGameOver(board) {
+  const colors = ["black", "white"];
+  for (let color of colors) {
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
+        if (!board[y][x] && getFlippable(board, x, y, color).length > 0) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+server.listen(3000, () => {
+  console.log("伺服器啟動：http://localhost:3000");
+});
+
+
+
+### 檔案名稱: style.css
+-------------------------------------------------
+body {
+  font-family: "Microsoft JhengHei", sans-serif;
+  text-align: center;
+  background-color: #ffeef4;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  color: #3567a3;
+}
+
+#status, #role {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+
+#counts {
+  font-size: 1.1em;
+  margin-bottom: 10px;
+}
+
+#message {
+  color: red;
+  height: 1.5em;
+  margin-top: 10px;
+  font-weight: bold;
+  display: inline-block;
+  transform: scale(1);
+  opacity: 0;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) scale(1);
+}
+
+#message.show {
+  transform: translateX(-50%) scale(1.4);
+  opacity: 1;
+}
+
+#game-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  gap: 5px;
+  margin: auto;
+  width: fit-content;
+}
+
+#col-labels {
+  display: grid;
+  grid-template-rows: repeat(8, 1fr);
+  height: 400px;
+  font-weight: bold;
+  color: #333;
+  margin-right: 4px;
+  align-items: center;
+  padding-top: 34px; 
+  padding-bottom: 4px;
+}
+#col-labels div {
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 2px 6px;
+  background-color: #f0f0f0;
+}
+
+#row-labels {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 400px;
+  text-align: center;
+  font-weight: bold;
+  color: #333;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+#board-frame {
+  border: 6px solid #333;
+  padding: 10px;
+  background-color: #999;
+  border-radius: 12px;
+  display: inline-block;
+}
+#row-labels div {
+  background-color: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #555;
+}
+
+
+#board {
+  width: 400px;
+  height: 400px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 2px;
+  background-color: #444;
+  border-radius: 6px;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+.cell {
+  background-color: #b4d9ee;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  cursor: pointer;
+  border-radius: 6px;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.disk {
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.disk.black {
+  background-color: black;
+}
+
+.disk.white {
+  background-color: white;
+  border: 1px solid #aaa;
+}
+
+.disk.flip {
+  animation: flip 0.4s ease;
+}
+
+@keyframes flip {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(180deg); }
+}
+
+### 檔案名稱: tempCodeRunnerFile.js
+-------------------------------------------------
+updateBoard
+
+
+翻了幾顆之後那個分數是要累計的例如說如果翻超過5顆10顆都會分數都會有一些額外加成然後有一個欄位(我想放在畫面的右上角)裡面有比分是可以看到自己和對方的累積分數如果讓對方的棋子翻面會友分數累計然後當滑鼠移動到可以背合法放置的格子的時候那個格子要稍微放大一點但如果是不合法那么那個格子就要稍微變的紅一點 直接幫我改完整程序傳給我

@@ -60,6 +60,11 @@ io.on('connection', socket => {
       turn: room.turn
     }));
 
+    room.players.forEach(s => s.emit("moveResult", {
+      flippedCount: flipped.length,
+      player: color
+    }));
+
     if (checkGameOver(room.board)) {
       const flat = room.board.flat();
       const black = flat.filter(c => c === 'black').length;
@@ -68,6 +73,13 @@ io.on('connection', socket => {
 
       room.players.forEach(s => s.emit("gameOver", { black, white, winner }));
     }
+  });
+
+  socket.on("checkMove", idx => {
+    const x = idx % 8;
+    const y = Math.floor(idx / 8);
+    const flipped = getFlippable(room.board, x, y, color);
+    socket.emit("highlightMove", { idx, isValid: !room.board[y][x] && flipped.length > 0 });
   });
 
   socket.on("disconnect", () => {
@@ -143,4 +155,3 @@ function checkGameOver(board) {
 server.listen(3000, () => {
   console.log("伺服器啟動：http://localhost:3000");
 });
-

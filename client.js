@@ -2,10 +2,13 @@
 const socket = io();
 let myColor = null;
 let currentTurn = null;
+let myScore = 0;
+let opponentScore = 0;
 
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
 const messageEl = document.getElementById("message");
+const scoreEl = document.getElementById("score");
 
 for (let i = 0; i < 64; i++) {
   const cell = document.createElement("div");
@@ -20,18 +23,22 @@ boardEl.addEventListener("click", e => {
   socket.emit("move", parseInt(idx));
 });
 
+boardEl.addEventListener("mousemove", e => {
+  document.querySelectorAll(".cell").forEach(cell => cell.classList.remove("highlight", "invalid"));
+  const idx = e.target.closest(".cell")?.dataset.index;
+  if (idx && currentTurn === myColor) {
+    socket.emit("checkMove", parseInt(idx));
+  }
+});
+
 socket.on("waitingForOpponent", () => {
   statusEl.textContent = "等待對手加入...";
 });
 
-
-
 socket.on("playerColor", color => {
   myColor = color;
-  const roleEl = document.getElementById("role");
-  roleEl.textContent = `您是：${color === "black" ? "⚫ 黑棋" : "⚪ 白棋"}`;
+  document.getElementById("role").textContent = `您是：${color === "black" ? "⚫ 黑棋" : "⚪ 白棋"}`;
 });
-
 
 socket.on("startGame", data => {
   updateBoard(data.board);
@@ -46,18 +53,31 @@ socket.on("updateBoard", data => {
 });
 
 socket.on("invalidMove", () => {
-  const messageEl = document.getElementById("message");
   messageEl.textContent = "這不是合法的落子位置";
   messageEl.classList.add("show");
-  setTimeout(() => {
-    messageEl.classList.remove("show");
-  }, 500);
+  setTimeout(() => messageEl.classList.remove("show"), 500);
+});
+
+socket.on("moveResult", ({ flippedCount, player }) => {
+  const bonus = flippedCount >= 10 ? 5 : flippedCount >= 5 ? 2 : 1;
+  if (player === myColor) {
+    myScore += flippedCount + bonus;
+  } else {
+    opponentScore += flippedCount + bonus;
+  }
+  updateScore();
+});
+
+socket.on("highlightMove", ({ idx, isValid }) => {
+  const cell = document.querySelector(`.cell[data-index='${idx}']`);
+  if (cell) {
+    cell.classList.add(isValid ? "highlight" : "invalid");
+  }
 });
 
 socket.on("gameOver", ({ black, white, winner }) => {
   let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
-  if (winner === "draw") msg += " 平手！";
-  else msg += winner === myColor ? " 你贏了！" : " 你輸了！";
+  msg += winner === "draw" ? " 平手！" : winner === myColor ? " 你贏了！" : " 你輸了！";
   statusEl.textContent = msg;
 });
 
@@ -72,54 +92,28 @@ function updateBoard(board) {
     const y = Math.floor(i / 8);
     const value = board[y][x];
 
-    // 取得前一個棋子顏色（若存在）
-    const prevDisk = cell.querySelector(".disk");
-    const prevColor = prevDisk?.classList.contains("black") ? "black" :
-                      prevDisk?.classList.contains("white") ? "white" : null;
-
-    // 清空目前這格
     cell.innerHTML = "";
 
     if (value) {
       const disk = document.createElement("div");
-
-      // 判斷是否是變色，若是則加上 flip class
-      const isFlipped = prevColor && prevColor !== value;
-      disk.className = `disk ${value}${isFlipped ? " flip" : ""}`;
-
-      // 初始動畫縮放效果
+      disk.className = `disk ${value}`;
       disk.style.transform = "scale(0)";
       setTimeout(() => disk.style.transform = "scale(1)", 10);
       cell.appendChild(disk);
 
-      // 累加數量
       if (value === "black") black++;
       else white++;
     }
   });
-
-  // 更新棋子數量顯示
   document.getElementById("blackCount").textContent = black;
   document.getElementById("whiteCount").textContent = white;
 }
 
 function updateStatus() {
   if (!myColor || !currentTurn) return;
-  if (myColor === currentTurn) {
-    statusEl.textContent = "輪到你下棋！";
-  } else {
-    statusEl.textContent = "等待對手下棋...";
-  }
-} 
+  statusEl.textContent = myColor === currentTurn ? "輪到你下棋！" : "等待對手下棋...";
+}
 
-function placeDisk(row, col, color, animate = false) {
-  const cell = document.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
-  if (!cell) return;
-  let disk = cell.querySelector(".disk");
-  if (!disk) {
-    disk = document.createElement("div");
-    disk.classList.add("disk");
-    cell.appendChild(disk);
-  }
-  disk.className = "disk " + color + (animate ? " flip" : "");
+function updateScore() {
+  scoreEl.textContent = `分數 - 你: ${myScore} | 對手: ${opponentScore}`;
 }
