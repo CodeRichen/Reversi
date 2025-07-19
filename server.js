@@ -1,3 +1,4 @@
+// === server.js ===
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -45,7 +46,10 @@ io.on('connection', socket => {
     const y = Math.floor(idx / 8);
 
     const flipped = getFlippable(room.board, x, y, color);
-    if (room.board[y][x] || flipped.length === 0) return;
+    if (room.board[y][x] || flipped.length === 0) {
+      socket.emit("invalidMove");
+      return;
+    }
 
     room.board[y][x] = color;
     flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
@@ -55,11 +59,25 @@ io.on('connection', socket => {
       board: room.board,
       turn: room.turn
     }));
+
+    if (checkGameOver(room.board)) {
+      const flat = room.board.flat();
+      const black = flat.filter(c => c === 'black').length;
+      const white = flat.filter(c => c === 'white').length;
+      const winner = black > white ? 'black' : white > black ? 'white' : 'draw';
+
+      room.players.forEach(s => s.emit("gameOver", { black, white, winner }));
+    }
   });
 
   socket.on("disconnect", () => {
     const id = getRoomId(socket);
-    if (id) delete rooms[id];
+    if (id) {
+      rooms[id].players.forEach(p => {
+        if (p !== socket) p.emit("opponentLeft");
+      });
+      delete rooms[id];
+    }
   });
 });
 
@@ -105,10 +123,24 @@ function getFlippable(board, x, y, color) {
       ny += dy;
     }
   }
-
   return flipped;
+}
+
+function checkGameOver(board) {
+  const colors = ["black", "white"];
+  for (let color of colors) {
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
+        if (!board[y][x] && getFlippable(board, x, y, color).length > 0) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
 }
 
 server.listen(3000, () => {
   console.log("伺服器啟動：http://localhost:3000");
 });
+

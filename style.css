@@ -1,7 +1,10 @@
+
 body {
   font-family: "Microsoft JhengHei", sans-serif;
   text-align: center;
   background-color: #fef7ff;
+  margin: 0;
+  padding: 20px;
 }
 
 h1 {
@@ -13,10 +16,47 @@ h1 {
   margin-bottom: 10px;
 }
 
+#counts {
+  font-size: 1.1em;
+  margin-bottom: 10px;
+}
+
+#message {
+  color: red;
+  height: 1.5em;
+  margin-top: 10px;
+  transition: opacity 0.3s;
+}
+
+#game-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  gap: 5px;
+}
+
+#col-labels {
+  display: grid;
+  grid-template-rows: repeat(8, 1fr);
+  height: 400px;
+  font-weight: bold;
+  color: #333;
+  margin-right: 4px;
+}
+
+#row-labels {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 400px;
+  text-align: center;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+}
+
 #board {
   width: 400px;
   height: 400px;
-  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
@@ -40,6 +80,7 @@ h1 {
   position: absolute;
   top: 10%;
   left: 10%;
+  transition: transform 0.3s ease;
 }
 
 .disk.black {
