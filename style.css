@@ -95,6 +95,12 @@ h1 {
   border-radius: 12px;
   display: inline-block;
 }
+.board-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
 #row-labels div {
   background-color: #f0f0f0;
   padding: 2px 6px;
@@ -171,6 +177,11 @@ h1 {
   100% { transform: rotateY(180deg); }
 }
 
+
+.opponent-hover {
+  border: 2px solid red;
+}
+
 .opponent-cursor {
   position: absolute;
   width: 16px;
@@ -180,4 +191,13 @@ h1 {
   pointer-events: none;
   transform: translate(-50%, -50%);
   z-index: 1000;
+}
+
+.flip {
+  animation: flip 0.4s ease;
+}
+
+@keyframes flip {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(180deg); }
 }

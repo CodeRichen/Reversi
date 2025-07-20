@@ -1,13 +1,16 @@
 ### 檔案名稱: client.js
 -------------------------------------------------
+
 // === client.js ===
 const socket = io();
 let myColor = null;
 let currentTurn = null;
+let myScore = 0, opponentScore = 0;
 
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
 const messageEl = document.getElementById("message");
+const scoreEl = document.getElementById("score");
 
 let opponentCursor = document.createElement('div');
 opponentCursor.className = 'opponent-cursor';
@@ -19,6 +22,7 @@ for (let i = 0; i < 64; i++) {
   cell.dataset.index = i;
 
   cell.addEventListener('mouseenter', () => handleHover(cell));
+  cell.addEventListener('mouseleave', () => clearHighlights());
   boardEl.appendChild(cell);
 }
 
@@ -37,38 +41,26 @@ function handleHover(cell) {
 
 function clearHighlights() {
   document.querySelectorAll(".cell").forEach(cell => {
-    cell.classList.remove('highlight', 'invalid');
+    cell.classList.remove('highlight', 'invalid', 'opponent-hover');
   });
 }
 
 socket.on("highlightMove", ({ idx, isValid }) => {
-  clearHighlights();
   const cell = document.querySelector(`.cell[data-index='${idx}']`);
-  if (!cell) return;
-  cell.classList.add(isValid ? 'highlight' : 'invalid');
+  if (cell) {
+    cell.classList.add(isValid ? "highlight" : "invalid");
+  }
 });
 
 socket.on("opponentMouse", idx => {
   const targetCell = document.querySelector(`.cell[data-index='${idx}']`);
   if (!targetCell) return;
+  clearHighlights();
+  targetCell.classList.add('opponent-hover');
+
   const rect = targetCell.getBoundingClientRect();
   opponentCursor.style.left = `${rect.left + rect.width / 2}px`;
   opponentCursor.style.top = `${rect.top + rect.height / 2}px`;
-});
-
-
-boardEl.addEventListener("click", e => {
-  const idx = e.target.closest(".cell")?.dataset.index;
-  if (!idx || currentTurn !== myColor) return;
-  socket.emit("move", parseInt(idx));
-});
-
-boardEl.addEventListener("mousemove", e => {
-  document.querySelectorAll(".cell").forEach(cell => cell.classList.remove("highlight", "invalid"));
-  const idx = e.target.closest(".cell")?.dataset.index;
-  if (idx && currentTurn === myColor) {
-    socket.emit("checkMove", parseInt(idx));
-  }
 });
 
 socket.on("waitingForOpponent", () => {
@@ -93,26 +85,18 @@ socket.on("updateBoard", data => {
 });
 
 socket.on("invalidMove", () => {
-  messageEl.textContent = "這不是合法的落子位置";
-  messageEl.classList.add("show");
-  setTimeout(() => messageEl.classList.remove("show"), 500);
+  showMessage("這不是合法的落子位置");
 });
 
-socket.on("moveResult", ({ flippedCount, player }) => {
+socket.on("moveResult", ({ flippedCount, flippedPositions, player }) => {
   const bonus = flippedCount >= 10 ? 5 : flippedCount >= 5 ? 2 : 1;
   if (player === myColor) {
     myScore += flippedCount + bonus;
   } else {
     opponentScore += flippedCount + bonus;
   }
+  flippedPositions.forEach(([x, y]) => animateFlip(x, y));
   updateScore();
-});
-
-socket.on("highlightMove", ({ idx, isValid }) => {
-  const cell = document.querySelector(`.cell[data-index='${idx}']`);
-  if (cell) {
-    cell.classList.add(isValid ? "highlight" : "invalid");
-  }
 });
 
 socket.on("gameOver", ({ black, white, winner }) => {
@@ -137,8 +121,6 @@ function updateBoard(board) {
     if (value) {
       const disk = document.createElement("div");
       disk.className = `disk ${value}`;
-      disk.style.transform = "scale(0)";
-      setTimeout(() => disk.style.transform = "scale(1)", 10);
       cell.appendChild(disk);
 
       if (value === "black") black++;
@@ -157,6 +139,26 @@ function updateStatus() {
 function updateScore() {
   scoreEl.textContent = `分數 - 你: ${myScore} | 對手: ${opponentScore}`;
 }
+
+function showMessage(text) {
+  messageEl.textContent = text;
+  messageEl.classList.add("show");
+  setTimeout(() => messageEl.classList.remove("show"), 500);
+}
+
+function animateFlip(x, y) {
+  const idx = y * 8 + x;
+  const cell = document.querySelector(`.cell[data-index='${idx}']`);
+  if (cell && cell.firstChild) {
+    cell.firstChild.classList.add('flip');
+    setTimeout(() => cell.firstChild.classList.remove('flip'), 400);
+  }
+}
+
+document.getElementById('aiButton').addEventListener('click', () => {
+  socket.emit('playAI');
+  statusEl.textContent = "與電腦對戰開始！";
+});
 
 
 ### 檔案名稱: game.html
@@ -181,43 +183,29 @@ function updateScore() {
 
 ### 檔案名稱: index.html
 -------------------------------------------------
+<!-- === index.html === -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>雙人黑白棋</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h1>雙人黑白棋</h1>
   <div id="status">正在連線...</div>
-
-<div id="game-wrapper">
-  <div id="board-frame">
-    <div style="display: flex;">
-      <div id="col-labels">
-        <div>8</div><div>7</div><div>6</div><div>5</div><div>4</div><div>3</div><div>2</div><div>1</div>
-      </div>
-      <div>
-        <div id="row-labels">
-          <div>A</div><div>B</div><div>C</div><div>D</div><div>E</div><div>F</div><div>G</div><div>H</div>
-        </div>
-        <div id="board"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-  <div id="counts">⚫ 黑棋: <span id="blackCount">2</span> ⚪ 白棋: <span id="whiteCount">2</span></div>
+  <button id="aiButton">與電腦對戰</button>
   <div id="role">您是：等待分配角色...</div>
+  <div id="counts">⚫ 黑棋: <span id="blackCount">2</span> ⚪ 白棋: <span id="whiteCount">2</span></div>
+  <div id="score">分數 - 你: 0 | 對手: 0</div>
+  <div id="board"></div>
   <div id="message"></div>
-<div id="score">分數 - 你: 0 | 對手: 0</div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
 </body>
 </html>
+
 
 ### 檔案名稱: server.js
 -------------------------------------------------
@@ -236,6 +224,7 @@ let rooms = {};
 
 io.on('connection', socket => {
   let room = findAvailableRoom();
+  let color;
 
   if (!room) {
     const roomId = `room-${socket.id}`;
@@ -248,8 +237,7 @@ io.on('connection', socket => {
   }
 
   room.players.push(socket);
-  const roomId = getRoomId(socket);
-  const color = room.players.length === 1 ? 'black' : 'white';
+  color = room.players.length === 1 ? 'black' : 'white';
 
   socket.emit("playerColor", color);
 
@@ -261,6 +249,18 @@ io.on('connection', socket => {
   } else {
     socket.emit("waitingForOpponent");
   }
+
+  socket.on("playAI", () => {
+    room = {
+      players: [socket],
+      board: createInitialBoard(),
+      turn: 'black',
+      ai: true
+    };
+    color = 'black';
+    socket.emit("playerColor", color);
+    socket.emit("startGame", { board: room.board, turn: room.turn });
+  });
 
   socket.on("move", idx => {
     if (room.turn !== color) return;
@@ -278,23 +278,37 @@ io.on('connection', socket => {
     flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
     room.turn = color === "black" ? "white" : "black";
 
-    room.players.forEach(s => s.emit("updateBoard", {
-      board: room.board,
-      turn: room.turn
-    }));
+    emitUpdateBoard(room);
 
-    room.players.forEach(s => s.emit("moveResult", {
+    socket.emit("moveResult", {
       flippedCount: flipped.length,
+      flippedPositions: flipped,
       player: color
-    }));
+    });
+
+    if (room.ai && room.turn === 'white') {
+      const aiMove = getRandomValidMove(room.board, 'white');
+      if (aiMove) {
+        const [ax, ay] = aiMove;
+        const aIdx = ay * 8 + ax;
+        const aiFlipped = getFlippable(room.board, ax, ay, 'white');
+
+        room.board[ay][ax] = 'white';
+        aiFlipped.forEach(([fx, fy]) => room.board[fy][fx] = 'white');
+        room.turn = 'black';
+
+        emitUpdateBoard(room);
+
+        socket.emit("moveResult", {
+          flippedCount: aiFlipped.length,
+          flippedPositions: aiFlipped,
+          player: 'white'
+        });
+      }
+    }
 
     if (checkGameOver(room.board)) {
-      const flat = room.board.flat();
-      const black = flat.filter(c => c === 'black').length;
-      const white = flat.filter(c => c === 'white').length;
-      const winner = black > white ? 'black' : white > black ? 'white' : 'draw';
-
-      room.players.forEach(s => s.emit("gameOver", { black, white, winner }));
+      endGame(room);
     }
   });
 
@@ -303,6 +317,12 @@ io.on('connection', socket => {
     const y = Math.floor(idx / 8);
     const flipped = getFlippable(room.board, x, y, color);
     socket.emit("highlightMove", { idx, isValid: !room.board[y][x] && flipped.length > 0 });
+  });
+
+  socket.on("mouseMove", idx => {
+    room.players.forEach(p => {
+      if (p !== socket) p.emit("opponentMouse", idx);
+    });
   });
 
   socket.on("disconnect", () => {
@@ -326,7 +346,7 @@ function createInitialBoard() {
 }
 
 function findAvailableRoom() {
-  return Object.values(rooms).find(r => r.players.length === 1);
+  return Object.values(rooms).find(r => r.players.length === 1 && !r.ai);
 }
 
 function getRoomId(socket) {
@@ -375,9 +395,39 @@ function checkGameOver(board) {
   return true;
 }
 
+function endGame(room) {
+  const flat = room.board.flat();
+  const black = flat.filter(c => c === 'black').length;
+  const white = flat.filter(c => c === 'white').length;
+  const winner = black > white ? 'black' : white > black ? 'white' : 'draw';
+
+  room.players.forEach(s => s.emit("gameOver", { black, white, winner }));
+}
+
+function emitUpdateBoard(room) {
+  room.players.forEach(s => s.emit("updateBoard", {
+    board: room.board,
+    turn: room.turn
+  }));
+}
+
+function getRandomValidMove(board, color) {
+  const moves = [];
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      if (!board[y][x] && getFlippable(board, x, y, color).length > 0) {
+        moves.push([x, y]);
+      }
+    }
+  }
+  if (moves.length === 0) return null;
+  return moves[Math.floor(Math.random() * moves.length)];
+}
+
 server.listen(3000, () => {
   console.log("伺服器啟動：http://localhost:3000");
 });
+
 
 
 ### 檔案名稱: style.css
@@ -540,6 +590,12 @@ h1 {
   border: 1px solid #aaa;
 }
 
+.cell.opponent-hover {
+  outline: 3px solid red;
+  outline-offset: -3px;
+  transition: outline 0.2s ease;
+}
+
 .disk.flip {
   animation: flip 0.4s ease;
 }
@@ -547,6 +603,11 @@ h1 {
 @keyframes flip {
   0% { transform: rotateY(0deg); }
   100% { transform: rotateY(180deg); }
+}
+
+
+.opponent-hover {
+  border: 2px solid red;
 }
 
 .opponent-cursor {
@@ -560,10 +621,19 @@ h1 {
   z-index: 1000;
 }
 
+.flip {
+  animation: flip 0.4s ease;
+}
+
+@keyframes flip {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(180deg); }
+}
+
 
 ### 檔案名稱: tempCodeRunnerFile.js
 -------------------------------------------------
 updateBoard
 
 
-如果是正確的話便得大一點持續時間再久一點然後當我移動到一些格子上的時候它上面判定移動到也就是滑鼠的判定要在加強然後我希望能夠看得到對手滑鼠的位置當我移動到一些格子上的時候它上面判定我移動到多個格子的上面也就是很多格子都變成紅色了也就是滑鼠的判定要在加強請把需要更動的檔案傳完整的城市給我
+棋盤錯誤地跑到了最左邊然後如果已經以電腦對戰了解除正在配對的狀態不然會和別人一起配對那如果已經和電腦對戰或是已經進入對戰狀態就不需要在寫字的電腦對戰的按鈕了然後電腦的速度不要太快要有1秒的思考時間然後不需要顯示那個會顯示滑鼠的位置的東西了我是說在與電腦對戰的時候不需要顯示對手的滑鼠位置然後想要是對戰不論是電腦還是對手按鈕都要消失

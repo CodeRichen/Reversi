@@ -1,9 +1,9 @@
+
 // === client.js ===
 const socket = io();
 let myColor = null;
 let currentTurn = null;
-let myScore = 0;
-let opponentScore = 0;
+let myScore = 0, opponentScore = 0;
 
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
@@ -14,16 +14,13 @@ let opponentCursor = document.createElement('div');
 opponentCursor.className = 'opponent-cursor';
 document.body.appendChild(opponentCursor);
 
-let lastOpponentIdx = null;
-
 for (let i = 0; i < 64; i++) {
   const cell = document.createElement("div");
   cell.className = "cell";
   cell.dataset.index = i;
 
   cell.addEventListener('mouseenter', () => handleHover(cell));
-  cell.addEventListener('mouseleave', clearHighlights);
-
+  cell.addEventListener('mouseleave', () => clearHighlights());
   boardEl.appendChild(cell);
 }
 
@@ -33,25 +30,16 @@ boardEl.addEventListener("click", e => {
   socket.emit("move", parseInt(idx));
 });
 
-boardEl.addEventListener("mousemove", e => {
-  const idx = e.target.closest(".cell")?.dataset.index;
-  if (idx && currentTurn === myColor) {
-    socket.emit("mouseMove", parseInt(idx));
-  }
-});
-
 function handleHover(cell) {
   clearHighlights();
   const idx = parseInt(cell.dataset.index);
-  if (currentTurn === myColor) {
-    socket.emit('checkMove', idx);
-  }
+  socket.emit('checkMove', idx);
+  socket.emit('mouseMove', idx);
 }
 
 function clearHighlights() {
   document.querySelectorAll(".cell").forEach(cell => {
     cell.classList.remove('highlight', 'invalid', 'opponent-hover');
-    cell.style.transform = '';
   });
 }
 
@@ -59,28 +47,18 @@ socket.on("highlightMove", ({ idx, isValid }) => {
   const cell = document.querySelector(`.cell[data-index='${idx}']`);
   if (cell) {
     cell.classList.add(isValid ? "highlight" : "invalid");
-    if (isValid) {
-      cell.style.transform = 'scale(1.3)';
-    }
   }
 });
 
 socket.on("opponentMouse", idx => {
-  if (lastOpponentIdx !== null) {
-    const lastCell = document.querySelector(`.cell[data-index='${lastOpponentIdx}']`);
-    if (lastCell) lastCell.classList.remove('opponent-hover');
-  }
-
   const targetCell = document.querySelector(`.cell[data-index='${idx}']`);
   if (!targetCell) return;
-
+  clearHighlights();
   targetCell.classList.add('opponent-hover');
 
   const rect = targetCell.getBoundingClientRect();
   opponentCursor.style.left = `${rect.left + rect.width / 2}px`;
   opponentCursor.style.top = `${rect.top + rect.height / 2}px`;
-
-  lastOpponentIdx = idx;
 });
 
 socket.on("waitingForOpponent", () => {
@@ -96,6 +74,7 @@ socket.on("startGame", data => {
   updateBoard(data.board);
   currentTurn = data.turn;
   updateStatus();
+  document.getElementById('aiButton').style.display = "none"; 
 });
 
 socket.on("updateBoard", data => {
@@ -105,9 +84,7 @@ socket.on("updateBoard", data => {
 });
 
 socket.on("invalidMove", () => {
-  messageEl.textContent = "這不是合法的落子位置";
-  messageEl.classList.add("show");
-  setTimeout(() => messageEl.classList.remove("show"), 800);
+  showMessage("這不是合法的落子位置");
 });
 
 socket.on("moveResult", ({ flippedCount, flippedPositions, player }) => {
@@ -117,20 +94,8 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player }) => {
   } else {
     opponentScore += flippedCount + bonus;
   }
+  flippedPositions.forEach(([x, y]) => animateFlip(x, y));
   updateScore();
-
-  if (flippedPositions && flippedPositions.length > 0) {
-    flippedPositions.forEach(([x, y]) => {
-      const idx = y * 8 + x;
-      const cell = document.querySelector(`.cell[data-index='${idx}']`);
-      if (!cell) return;
-      const disk = cell.querySelector('.disk');
-      if (!disk) return;
-
-      disk.classList.add('flip');
-      setTimeout(() => disk.classList.remove('flip'), 400);
-    });
-  }
 });
 
 socket.on("gameOver", ({ black, white, winner }) => {
@@ -173,3 +138,24 @@ function updateStatus() {
 function updateScore() {
   scoreEl.textContent = `分數 - 你: ${myScore} | 對手: ${opponentScore}`;
 }
+
+function showMessage(text) {
+  messageEl.textContent = text;
+  messageEl.classList.add("show");
+  setTimeout(() => messageEl.classList.remove("show"), 500);
+}
+
+function animateFlip(x, y) {
+  const idx = y * 8 + x;
+  const cell = document.querySelector(`.cell[data-index='${idx}']`);
+  if (cell && cell.firstChild) {
+    cell.firstChild.classList.add('flip');
+    setTimeout(() => cell.firstChild.classList.remove('flip'), 400);
+  }
+}
+
+document.getElementById('aiButton').addEventListener('click', () => {
+  socket.emit('playAI');
+  statusEl.textContent = "與電腦對戰開始！";
+  document.getElementById('aiButton').style.display = "none";
+});
