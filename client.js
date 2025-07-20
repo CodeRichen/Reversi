@@ -14,6 +14,8 @@ let opponentCursor = document.createElement('div');
 opponentCursor.className = 'opponent-cursor';
 document.body.appendChild(opponentCursor);
 
+let lastOpponentIdx = null;
+
 for (let i = 0; i < 64; i++) {
   const cell = document.createElement("div");
   cell.className = "cell";
@@ -48,7 +50,7 @@ function handleHover(cell) {
 
 function clearHighlights() {
   document.querySelectorAll(".cell").forEach(cell => {
-    cell.classList.remove('highlight', 'invalid');
+    cell.classList.remove('highlight', 'invalid', 'opponent-hover');
     cell.style.transform = '';
   });
 }
@@ -64,11 +66,21 @@ socket.on("highlightMove", ({ idx, isValid }) => {
 });
 
 socket.on("opponentMouse", idx => {
+  if (lastOpponentIdx !== null) {
+    const lastCell = document.querySelector(`.cell[data-index='${lastOpponentIdx}']`);
+    if (lastCell) lastCell.classList.remove('opponent-hover');
+  }
+
   const targetCell = document.querySelector(`.cell[data-index='${idx}']`);
   if (!targetCell) return;
+
+  targetCell.classList.add('opponent-hover');
+
   const rect = targetCell.getBoundingClientRect();
   opponentCursor.style.left = `${rect.left + rect.width / 2}px`;
   opponentCursor.style.top = `${rect.top + rect.height / 2}px`;
+
+  lastOpponentIdx = idx;
 });
 
 socket.on("waitingForOpponent", () => {
@@ -98,7 +110,7 @@ socket.on("invalidMove", () => {
   setTimeout(() => messageEl.classList.remove("show"), 800);
 });
 
-socket.on("moveResult", ({ flippedCount, player }) => {
+socket.on("moveResult", ({ flippedCount, flippedPositions, player }) => {
   const bonus = flippedCount >= 10 ? 5 : flippedCount >= 5 ? 2 : 1;
   if (player === myColor) {
     myScore += flippedCount + bonus;
@@ -106,6 +118,19 @@ socket.on("moveResult", ({ flippedCount, player }) => {
     opponentScore += flippedCount + bonus;
   }
   updateScore();
+
+  if (flippedPositions && flippedPositions.length > 0) {
+    flippedPositions.forEach(([x, y]) => {
+      const idx = y * 8 + x;
+      const cell = document.querySelector(`.cell[data-index='${idx}']`);
+      if (!cell) return;
+      const disk = cell.querySelector('.disk');
+      if (!disk) return;
+
+      disk.classList.add('flip');
+      setTimeout(() => disk.classList.remove('flip'), 400);
+    });
+  }
 });
 
 socket.on("gameOver", ({ black, white, winner }) => {
@@ -130,8 +155,6 @@ function updateBoard(board) {
     if (value) {
       const disk = document.createElement("div");
       disk.className = `disk ${value}`;
-      disk.style.transform = "scale(0)";
-      setTimeout(() => disk.style.transform = "scale(1)", 10);
       cell.appendChild(disk);
 
       if (value === "black") black++;
@@ -148,5 +171,5 @@ function updateStatus() {
 }
 
 function updateScore() {
-  scoreEl.textContent = `分數  你: ${myScore} | 對手: ${opponentScore}`;
+  scoreEl.textContent = `分數 - 你: ${myScore} | 對手: ${opponentScore}`;
 }

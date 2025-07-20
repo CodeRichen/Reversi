@@ -62,6 +62,7 @@ io.on('connection', socket => {
 
     room.players.forEach(s => s.emit("moveResult", {
       flippedCount: flipped.length,
+      flippedPositions: flipped,
       player: color
     }));
 
@@ -80,6 +81,14 @@ io.on('connection', socket => {
     const y = Math.floor(idx / 8);
     const flipped = getFlippable(room.board, x, y, color);
     socket.emit("highlightMove", { idx, isValid: !room.board[y][x] && flipped.length > 0 });
+  });
+
+  socket.on("mouseMove", idx => {
+    room.players.forEach(s => {
+      if (s !== socket) {
+        s.emit("opponentMouse", idx);
+      }
+    });
   });
 
   socket.on("disconnect", () => {

@@ -156,6 +156,12 @@ h1 {
   border: 1px solid #aaa;
 }
 
+.cell.opponent-hover {
+  outline: 3px solid red;
+  outline-offset: -3px;
+  transition: outline 0.2s ease;
+}
+
 .disk.flip {
   animation: flip 0.4s ease;
 }
