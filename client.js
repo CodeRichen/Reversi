@@ -10,10 +10,18 @@ const statusEl = document.getElementById("status");
 const messageEl = document.getElementById("message");
 const scoreEl = document.getElementById("score");
 
+let opponentCursor = document.createElement('div');
+opponentCursor.className = 'opponent-cursor';
+document.body.appendChild(opponentCursor);
+
 for (let i = 0; i < 64; i++) {
   const cell = document.createElement("div");
   cell.className = "cell";
   cell.dataset.index = i;
+
+  cell.addEventListener('mouseenter', () => handleHover(cell));
+  cell.addEventListener('mouseleave', clearHighlights);
+
   boardEl.appendChild(cell);
 }
 
@@ -24,11 +32,43 @@ boardEl.addEventListener("click", e => {
 });
 
 boardEl.addEventListener("mousemove", e => {
-  document.querySelectorAll(".cell").forEach(cell => cell.classList.remove("highlight", "invalid"));
   const idx = e.target.closest(".cell")?.dataset.index;
   if (idx && currentTurn === myColor) {
-    socket.emit("checkMove", parseInt(idx));
+    socket.emit("mouseMove", parseInt(idx));
   }
+});
+
+function handleHover(cell) {
+  clearHighlights();
+  const idx = parseInt(cell.dataset.index);
+  if (currentTurn === myColor) {
+    socket.emit('checkMove', idx);
+  }
+}
+
+function clearHighlights() {
+  document.querySelectorAll(".cell").forEach(cell => {
+    cell.classList.remove('highlight', 'invalid');
+    cell.style.transform = '';
+  });
+}
+
+socket.on("highlightMove", ({ idx, isValid }) => {
+  const cell = document.querySelector(`.cell[data-index='${idx}']`);
+  if (cell) {
+    cell.classList.add(isValid ? "highlight" : "invalid");
+    if (isValid) {
+      cell.style.transform = 'scale(1.3)';
+    }
+  }
+});
+
+socket.on("opponentMouse", idx => {
+  const targetCell = document.querySelector(`.cell[data-index='${idx}']`);
+  if (!targetCell) return;
+  const rect = targetCell.getBoundingClientRect();
+  opponentCursor.style.left = `${rect.left + rect.width / 2}px`;
+  opponentCursor.style.top = `${rect.top + rect.height / 2}px`;
 });
 
 socket.on("waitingForOpponent", () => {
@@ -55,7 +95,7 @@ socket.on("updateBoard", data => {
 socket.on("invalidMove", () => {
   messageEl.textContent = "這不是合法的落子位置";
   messageEl.classList.add("show");
-  setTimeout(() => messageEl.classList.remove("show"), 500);
+  setTimeout(() => messageEl.classList.remove("show"), 800);
 });
 
 socket.on("moveResult", ({ flippedCount, player }) => {
@@ -66,13 +106,6 @@ socket.on("moveResult", ({ flippedCount, player }) => {
     opponentScore += flippedCount + bonus;
   }
   updateScore();
-});
-
-socket.on("highlightMove", ({ idx, isValid }) => {
-  const cell = document.querySelector(`.cell[data-index='${idx}']`);
-  if (cell) {
-    cell.classList.add(isValid ? "highlight" : "invalid");
-  }
 });
 
 socket.on("gameOver", ({ black, white, winner }) => {
@@ -115,5 +148,5 @@ function updateStatus() {
 }
 
 function updateScore() {
-  scoreEl.textContent = `分數 - 你: ${myScore} | 對手: ${opponentScore}`;
+  scoreEl.textContent = `分數  你: ${myScore} | 對手: ${opponentScore}`;
 }
