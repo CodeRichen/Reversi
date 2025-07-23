@@ -1,25 +1,30 @@
+/* 設定整體頁面樣式 */
 body {
-  font-family: "Microsoft JhengHei", sans-serif;
-  text-align: center;
-  background-color: #ffeef4;
+  font-family: "Microsoft JhengHei", sans-serif; /* 設定字型 */
+  text-align: center; /* 文字置中 */
+  background-color: #ffeef4; /* 背景顏色 */
   margin: 0;
   padding: 20px;
 }
 
+/* 標題 h1 顏色 */
 h1 {
   color: #3567a3;
 }
 
+/* 狀態文字、角色、分數的樣式 */
 #status, #role, #score {
   font-size: 1.2em;
   margin-bottom: 10px;
 }
 
+/* 棋子數量顯示區 */
 #counts {
   font-size: 1.1em;
   margin-bottom: 10px;
 }
 
+/* 右上角的分數區 */
 #score {
   position: absolute;
   top: 10px;
@@ -31,25 +36,27 @@ h1 {
   font-weight: bold;
 }
 
+/* 訊息顯示的樣式 */
 #message {
   color: red;
   height: 1.5em;
   margin-top: 10px;
   font-weight: bold;
   display: inline-block;
-  transform: scale(1);
   opacity: 0;
-  transition: transform 0.5s ease, opacity 0.5s ease;
   position: absolute;
   left: 50%;
   transform: translateX(-50%) scale(1);
+  transition: transform 0.5s ease, opacity 0.5s ease;
 }
 
+/* 顯示訊息時的放大與顯示效果 */
 #message.show {
   transform: translateX(-50%) scale(1.4);
   opacity: 1;
 }
 
+/* 棋盤與座標標籤的整體框架 */
 #game-wrapper {
   display: flex;
   justify-content: center;
@@ -59,6 +66,7 @@ h1 {
   width: fit-content;
 }
 
+/* 左側的列標籤（數字） */
 #col-labels {
   display: grid;
   grid-template-rows: repeat(8, 1fr);
@@ -70,6 +78,8 @@ h1 {
   padding-top: 34px; 
   padding-bottom: 4px;
 }
+
+/* 列標籤每一格樣式 */
 #col-labels div {
   border: 1px solid #555;
   border-radius: 4px;
@@ -77,6 +87,7 @@ h1 {
   background-color: #f0f0f0;
 }
 
+/* 下方的行標籤（英文字母） */
 #row-labels {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
@@ -88,6 +99,7 @@ h1 {
   margin-bottom: 4px;
 }
 
+/* 棋盤的外框 */
 #board-frame {
   border: 6px solid #333;
   padding: 10px;
@@ -95,12 +107,15 @@ h1 {
   border-radius: 12px;
   display: inline-block;
 }
+
+/* 棋盤容器置中 */
 .board-container {
   display: flex;
   justify-content: center;
   margin-top: 20px;
 }
 
+/* 行標籤每格的樣式 */
 #row-labels div {
   background-color: #f0f0f0;
   padding: 2px 6px;
@@ -108,6 +123,7 @@ h1 {
   border: 1px solid #555;
 }
 
+/* 棋盤本體 */
 #board {
   width: 400px;
   height: 400px;
@@ -121,6 +137,7 @@ h1 {
   position: relative;
 }
 
+/* 棋盤的每一格 */
 .cell {
   background-color: #b4d9ee;
   width: 100%;
@@ -132,16 +149,19 @@ h1 {
   transition: transform 0.2s, background-color 0.2s;
 }
 
+/* 滑鼠移到合法位置的提示 */
 .cell.highlight {
   transform: scale(1.2);
   background-color: #a0e0a0;
   transition: transform 0.4s, background-color 0.4s;
 }
 
+/* 滑鼠移到不合法的位置 */
 .cell.invalid {
   background-color: #e88;
 }
 
+/* 棋子樣式 */
 .disk {
   width: 80%;
   height: 80%;
@@ -153,35 +173,36 @@ h1 {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
+/* 黑棋樣式 */
 .disk.black {
   background-color: black;
 }
 
+/* 白棋樣式 */
 .disk.white {
   background-color: white;
   border: 1px solid #aaa;
 }
 
+/* 對手滑鼠 hover 位置 */
 .cell.opponent-hover {
   outline: 3px solid red;
   outline-offset: -3px;
   transition: outline 0.2s ease;
 }
 
+/* 棋子翻轉動畫 class */
 .disk.flip {
   animation: flip 0.4s ease;
 }
 
+/* 翻轉動畫 keyframes */
 @keyframes flip {
   0% { transform: rotateY(0deg); }
   100% { transform: rotateY(180deg); }
 }
 
-
-.opponent-hover {
-  border: 2px solid red;
-}
-
+/* 對手滑鼠位置的紅色圓點 */
 .opponent-cursor {
   position: absolute;
   width: 16px;
@@ -193,11 +214,38 @@ h1 {
   z-index: 1000;
 }
 
-.flip {
-  animation: flip 0.4s ease;
+/* 返回匹配模式的按鈕樣式 */
+#backToMatch {
+  margin-top: 20px;
+  padding: 8px 16px;
+  font-size: 1em;
+  background-color: #77aaff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
-@keyframes flip {
-  0% { transform: rotateY(0deg); }
-  100% { transform: rotateY(180deg); }
+#backToMatch:hover {
+  background-color: #5599dd;
+}
+
+#hand {
+  position: absolute;
+  height: 600px !important;
+  width: auto !important;
+  pointer-events: none;
+  z-index: 1000;
+  transition: left 0.4s ease, top 0.4s ease;
+  display: none;     /* 預設不顯示 */
+  transform-origin: top center;
+}
+
+
+.hand-top {
+  transform: translate(-50%, 0%) ; /* 圖片的上中對齊 */
+}
+
+.hand-bottom {
+  transform: translate(-50%, -100%); /* 圖片的下中對齊 */
 }

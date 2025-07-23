@@ -76,6 +76,7 @@ socket.on("startGame", data => {
   updateBoard(data.board);
   currentTurn = data.turn;
   updateStatus();
+  document.getElementById('aiButton').style.display = "none"; 
 });
 
 socket.on("updateBoard", data => {
@@ -158,6 +159,7 @@ function animateFlip(x, y) {
 document.getElementById('aiButton').addEventListener('click', () => {
   socket.emit('playAI');
   statusEl.textContent = "與電腦對戰開始！";
+  document.getElementById('aiButton').style.display = "none";
 });
 
 
@@ -198,7 +200,10 @@ document.getElementById('aiButton').addEventListener('click', () => {
   <div id="role">您是：等待分配角色...</div>
   <div id="counts">⚫ 黑棋: <span id="blackCount">2</span> ⚪ 白棋: <span id="whiteCount">2</span></div>
   <div id="score">分數 - 你: 0 | 對手: 0</div>
+  <div class="board-container">
   <div id="board"></div>
+</div>
+
   <div id="message"></div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -250,49 +255,52 @@ io.on('connection', socket => {
     socket.emit("waitingForOpponent");
   }
 
-  socket.on("playAI", () => {
-    room = {
-      players: [socket],
-      board: createInitialBoard(),
-      turn: 'black',
-      ai: true
-    };
+ socket.on("playAI", () => {
+  const aiRoomId = `ai-${socket.id}`;
+  rooms[aiRoomId] = {
+    players: [socket],
+    board: createInitialBoard(),
+    turn: 'black',
+    ai: true
+  };
+    room = rooms[aiRoomId];
     color = 'black';
     socket.emit("playerColor", color);
     socket.emit("startGame", { board: room.board, turn: room.turn });
   });
 
-  socket.on("move", idx => {
-    if (room.turn !== color) return;
+socket.on("move", idx => { 
+  if (room.turn !== color) return;
 
-    const x = idx % 8;
-    const y = Math.floor(idx / 8);
+  const x = idx % 8;
+  const y = Math.floor(idx / 8);
 
-    const flipped = getFlippable(room.board, x, y, color);
-    if (room.board[y][x] || flipped.length === 0) {
-      socket.emit("invalidMove");
-      return;
-    }
+  const flipped = getFlippable(room.board, x, y, color);
+  if (room.board[y][x] || flipped.length === 0) {
+    socket.emit("invalidMove");
+    return;
+  }
 
-    room.board[y][x] = color;
-    flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
-    room.turn = color === "black" ? "white" : "black";
+  room.board[y][x] = color;
+  flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
+  room.turn = color === "black" ? "white" : "black";
 
-    emitUpdateBoard(room);
+  emitUpdateBoard(room);
 
-    socket.emit("moveResult", {
-      flippedCount: flipped.length,
-      flippedPositions: flipped,
-      player: color
-    });
+  socket.emit("moveResult", {
+    flippedCount: flipped.length,
+    flippedPositions: flipped,
+    player: color
+  });
 
-    if (room.ai && room.turn === 'white') {
-      const aiMove = getRandomValidMove(room.board, 'white');
-      if (aiMove) {
-        const [ax, ay] = aiMove;
-        const aIdx = ay * 8 + ax;
-        const aiFlipped = getFlippable(room.board, ax, ay, 'white');
+  // === AI 邏輯 ===
+  if (room.ai && room.turn === 'white') {
+    const aiMove = getRandomValidMove(room.board, 'white');
+    if (aiMove) {
+      const [ax, ay] = aiMove;
+      const aiFlipped = getFlippable(room.board, ax, ay, 'white');
 
+      setTimeout(() => {
         room.board[ay][ax] = 'white';
         aiFlipped.forEach(([fx, fy]) => room.board[fy][fx] = 'white');
         room.turn = 'black';
@@ -304,13 +312,19 @@ io.on('connection', socket => {
           flippedPositions: aiFlipped,
           player: 'white'
         });
-      }
-    }
 
-    if (checkGameOver(room.board)) {
-      endGame(room);
+        if (checkGameOver(room.board)) {
+          endGame(room);
+        }
+      }, 1000); 
     }
-  });
+  }
+
+  if (checkGameOver(room.board)) {
+    endGame(room);
+  }
+});
+
 
   socket.on("checkMove", idx => {
     const x = idx % 8;
@@ -320,6 +334,7 @@ io.on('connection', socket => {
   });
 
   socket.on("mouseMove", idx => {
+    if (room.ai) return; 
     room.players.forEach(p => {
       if (p !== socket) p.emit("opponentMouse", idx);
     });
@@ -529,6 +544,12 @@ h1 {
   border-radius: 12px;
   display: inline-block;
 }
+.board-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
 #row-labels div {
   background-color: #f0f0f0;
   padding: 2px 6px;
@@ -636,4 +657,4 @@ h1 {
 updateBoard
 
 
-棋盤錯誤地跑到了最左邊然後如果已經以電腦對戰了解除正在配對的狀態不然會和別人一起配對那如果已經和電腦對戰或是已經進入對戰狀態就不需要在寫字的電腦對戰的按鈕了然後電腦的速度不要太快要有1秒的思考時間然後不需要顯示那個會顯示滑鼠的位置的東西了我是說在與電腦對戰的時候不需要顯示對手的滑鼠位置然後想要是對戰不論是電腦還是對手按鈕都要消失
+當我開一個網頁跟電腦對戰之后我再開一個網頁要否配的時候就會否配到和電腦對戰的那個網頁請不要這樣然後當結束對戰之後也要有一個按鈕是否回到匹配玩家狀態
