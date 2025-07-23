@@ -159,3 +159,9 @@ document.getElementById('aiButton').addEventListener('click', () => {
   statusEl.textContent = "與電腦對戰開始！";
   document.getElementById('aiButton').style.display = "none";
 });
+
+const img = document.getElementById('floating-img');
+
+document.addEventListener('mousemove', (e) => {
+  img.style.left = `${e.clientX}px`;
+});
