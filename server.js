@@ -101,12 +101,13 @@ io.on('connection', socket => {
 
           emitUpdateBoard(room);
 
-          socket.emit("moveResult", {
-            flippedCount: aiFlipped.length,
-            flippedPositions: aiFlipped,
-            player: 'white',
-            placedPosition: [ax, ay]
-          });
+          room.players.forEach(p => p.emit("moveResult", {
+          flippedCount: aiFlipped.length,
+          flippedPositions: aiFlipped,
+          player: 'white',
+          placedPosition: [ax, ay]
+        }));
+
   
 
           if (checkGameOver(room.board)) {

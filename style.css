@@ -232,7 +232,7 @@ h1 {
 
 #hand {
   position: absolute;
-  height: 600px !important;
+  height: 500px !important;
   width: auto !important;
   pointer-events: none;
   z-index: 1000;
@@ -243,9 +243,9 @@ h1 {
 
 
 .hand-top {
-  transform: translate(-50%, 0%) ; /* 圖片的上中對齊 */
+  transform: translate(-50%, -20%) ; /* 圖片的上中對齊 */
 }
 
 .hand-bottom {
-  transform: translate(-50%, -100%); /* 圖片的下中對齊 */
+  transform: translate(-50%, -80%); /* 圖片的下中對齊 */
 }

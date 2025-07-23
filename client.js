@@ -63,19 +63,14 @@ function handleHover(cell) {
 }
 
 // 清除格子的提示樣式
-function clearHighlights() {
+function clearHighlights(keepOpponent = false) {
   document.querySelectorAll(".cell").forEach(cell => {
-    cell.classList.remove('highlight', 'invalid', 'opponent-hover');
+    cell.classList.remove('highlight', 'invalid');
+    if (!keepOpponent) cell.classList.remove('opponent-hover');
   });
 }
 
-// 伺服器回傳此格是否合法
-socket.on("highlightMove", ({ idx, isValid }) => {
-  const cell = document.querySelector(`.cell[data-index='${idx}']`);
-  if (cell) {
-    cell.classList.add(isValid ? "highlight" : "invalid");
-  }
-});
+
 
 // 對手滑鼠位置更新，顯示對手滑鼠所在格子與紅點
 socket.on("opponentMouse", idx => {
