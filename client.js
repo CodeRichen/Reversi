@@ -1,4 +1,3 @@
-
 // === client.js ===
 const socket = io();
 let myColor = null;
@@ -107,6 +106,16 @@ socket.on("gameOver", ({ black, white, winner }) => {
 socket.on("opponentLeft", () => {
   statusEl.textContent = "對手已離開房間，遊戲結束。";
 });
+function hasValidMove(board, color) {
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      if (!board[y][x] && getFlippable(board, x, y, color).length > 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 
 function updateBoard(board) {
   let black = 0, white = 0;
@@ -128,6 +137,10 @@ function updateBoard(board) {
   });
   document.getElementById("blackCount").textContent = black;
   document.getElementById("whiteCount").textContent = white;
+}
+function showMessage(text) {
+  const box = document.getElementById("messageBox");
+  box.innerText = text;
 }
 
 function updateStatus() {
@@ -160,8 +173,39 @@ document.getElementById('aiButton').addEventListener('click', () => {
   document.getElementById('aiButton').style.display = "none";
 });
 
-const img = document.getElementById('floating-img');
-
-document.addEventListener('mousemove', (e) => {
-  img.style.left = `${e.clientX}px`;
+socket.on("pass", ({ skippedColor, nextTurn }) => {
+  if (skippedColor === myColor) {
+    showMessage("你沒有合法步數，自動跳過這一回合。");
+  } else {
+    showMessage("對手無法下棋，跳過回合！");
+  }
+  currentTurn = nextTurn;
+  updateStatus();
 });
+
+const img = document.getElementById("floating-img");
+
+document.addEventListener("mousemove", (e) => {
+  const mouseX = e.clientX;
+  img.style.left = `${mouseX}px`;
+});
+
+document.addEventListener("click", (e) => {
+  const windowHeight = window.innerHeight;
+  const mouseY = e.clientY;
+
+  // 根據滑鼠距離底部的距離算出跳躍高度（最多跳 300px）
+  const distanceFromBottom = windowHeight - mouseY;
+  const jumpHeight = Math.min(distanceFromBottom, 500); // 最多跳 300px
+
+  // 加動畫 class 或直接套 transform
+  img.style.transition = "transform 0.2s ease-out";
+  img.style.transform = `translate(-50%, -${jumpHeight}px)`;
+
+  // 再跳回來
+  setTimeout(() => {
+    img.style.transition = "transform 0.2s ease-in";
+    img.style.transform = `translate(-50%, 0px)`;
+  }, 200);
+});
+

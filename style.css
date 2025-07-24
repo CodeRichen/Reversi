@@ -213,10 +213,10 @@ h1 {
 }
 #floating-img {
   position: fixed;
-  bottom: -100px;
+  bottom: -200px;
   left: 50%;
   transform: translateX(-50%);
-  height: 250px;          /* 比原本大一點 */
+  height: 350px;          /* 比原本大一點 */
   width: auto;            /* 保持圖片比例 */
   pointer-events: none;
   z-index: 999;

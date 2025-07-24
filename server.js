@@ -53,61 +53,123 @@ io.on('connection', socket => {
     socket.emit("startGame", { board: room.board, turn: room.turn });
   });
 
-socket.on("move", idx => { 
+socket.on("move", idx => {
   if (room.turn !== color) return;
 
+  // 判斷落子位置是否合法
   const x = idx % 8;
   const y = Math.floor(idx / 8);
-
   const flipped = getFlippable(room.board, x, y, color);
   if (room.board[y][x] || flipped.length === 0) {
     socket.emit("invalidMove");
     return;
   }
 
+  // 落子與翻子
   room.board[y][x] = color;
   flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
-  room.turn = color === "black" ? "white" : "black";
 
-  emitUpdateBoard(room);
-
+  // 回報落子結果
   socket.emit("moveResult", {
     flippedCount: flipped.length,
     flippedPositions: flipped,
     player: color
   });
 
-  // === AI 邏輯 ===
-  if (room.ai && room.turn === 'white') {
-    const aiMove = getRandomValidMove(room.board, 'white');
-    if (aiMove) {
-      const [ax, ay] = aiMove;
-      const aiFlipped = getFlippable(room.board, ax, ay, 'white');
+  // 更新回合為剛落子者
+  room.turn = color;
 
-      setTimeout(() => {
-        room.board[ay][ax] = 'white';
-        aiFlipped.forEach(([fx, fy]) => room.board[fy][fx] = 'white');
-        room.turn = 'black';
+  function nextTurnLoop() {
+    while (true) {
+      const opponentColor = room.turn === 'black' ? 'white' : 'black';
 
+      if (hasValidMove(room.board, opponentColor)) {
+        // 對手可以下，換回合並通知
+        room.turn = opponentColor;
         emitUpdateBoard(room);
-
-        socket.emit("moveResult", {
-          flippedCount: aiFlipped.length,
-          flippedPositions: aiFlipped,
-          player: 'white'
-        });
-
-        if (checkGameOver(room.board)) {
-          endGame(room);
-        }
-      }, 1000); 
+        room.players.forEach(s => s.emit("pass", {
+          skippedColor: null,
+          nextTurn: opponentColor
+        }));
+        break;  // 跳出迴圈，回合換給對手
+      } else if (hasValidMove(room.board, room.turn)) {
+        // 對手不能下，自己繼續下，通知跳過
+        room.players.forEach(s => s.emit("pass", {
+          skippedColor: opponentColor,
+          nextTurn: room.turn
+        }));
+        emitUpdateBoard(room);
+        // 不換回合，繼續是自己下，繼續迴圈判斷（避免無限迴圈，因為必有玩家能下）
+        break;  // 這裡也跳出迴圈，因為自己能下，暫停等待玩家行動
+      } else {
+        // 雙方都無法下，遊戲結束
+        endGame(room);
+        break;
+      }
     }
+  }
+
+ if (room.ai) {
+  emitUpdateBoard(room);
+
+  const opponentColor = color === "black" ? "white" : "black";
+
+  // 取得 AI 合法落子位置陣列
+  const validMoves = [];
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      if (!room.board[y][x] && getFlippable(room.board, x, y, opponentColor).length > 0) {
+        validMoves.push([x, y]);
+      }
+    }
+  }
+
+  // 發送給前端合法落子位置（x, y）
+  socket.emit("aiValidMoves", validMoves);
+
+  const aiMove = getRandomValidMove(room.board, opponentColor);
+
+  if (aiMove) {
+    const [ax, ay] = aiMove;
+    const aiFlipped = getFlippable(room.board, ax, ay, opponentColor);
+
+    setTimeout(() => {
+      room.board[ay][ax] = opponentColor;
+      aiFlipped.forEach(([fx, fy]) => room.board[fy][fx] = opponentColor);
+      room.turn = color; // AI 下完，回到玩家回合
+      emitUpdateBoard(room);
+      socket.emit("moveResult", {
+        flippedCount: aiFlipped.length,
+        flippedPositions: aiFlipped,
+        player: opponentColor
+      });
+
+      if (checkGameOver(room.board)) {
+        endGame(room);
+        return;
+      }
+
+      nextTurnLoop(); // AI 下完也檢查跳過回合
+    }, 1000);
+  } else {
+    socket.emit("pass", {
+      skippedColor: opponentColor,
+      nextTurn: color
+    });
+    nextTurnLoop();
   }
 
   if (checkGameOver(room.board)) {
     endGame(room);
   }
+} else {
+  // 玩家對戰
+  nextTurnLoop();
+}
+
 });
+
+
 
 
   socket.on("checkMove", idx => {
@@ -137,10 +199,13 @@ socket.on("move", idx => {
 
 function createInitialBoard() {
   const board = Array(8).fill().map(() => Array(8).fill(null));
-  board[3][3] = "white";
-  board[3][4] = "black";
+  // board[3][3] = "white";
+  board[0][1] = "black";
+  board[0][0] = "white";
   board[4][3] = "black";
   board[4][4] = "white";
+  board[4][5] = "white";
+  board[4][7] = "white";
   return board;
 }
 
@@ -178,6 +243,16 @@ function getFlippable(board, x, y, color) {
     }
   }
   return flipped;
+}
+function hasValidMove(board, color) {
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      if (!board[y][x] && getFlippable(board, x, y, color).length > 0) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function checkGameOver(board) {
