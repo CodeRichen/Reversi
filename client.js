@@ -24,9 +24,11 @@ for (let i = 0; i < 64; i++) {
 }
 
 boardEl.addEventListener("click", e => {
+  setTimeout(() => {
   const idx = e.target.closest(".cell")?.dataset.index;
   if (!idx || currentTurn !== myColor) return;
   socket.emit("move", parseInt(idx));
+  },300);
 });
 
 function handleHover(cell) {
@@ -168,6 +170,7 @@ function animateFlip(x, y) {
 }
 
 document.getElementById('aiButton').addEventListener('click', () => {
+  
   socket.emit('playAI');
   statusEl.textContent = "與電腦對戰開始！";
   document.getElementById('aiButton').style.display = "none";
@@ -185,27 +188,61 @@ socket.on("pass", ({ skippedColor, nextTurn }) => {
 
 const img = document.getElementById("floating-img");
 
+let mouseX = 0;
+let isJumping = false; // 控制是否正在跳躍動畫中
+
+// 滑鼠移動時圖片左右跟著動（上下不動）
 document.addEventListener("mousemove", (e) => {
-  const mouseX = e.clientX;
-  img.style.left = `${mouseX}px`;
+  mouseX = e.clientX;
+  if (!isJumping) {
+    img.style.transition = "left 0.1s linear";
+    img.style.left = `${mouseX}px`;
+  }
 });
 
 document.addEventListener("click", (e) => {
-  const windowHeight = window.innerHeight + 150;
+  if (isJumping) return; // 防止在跳躍時多次觸發
+  isJumping = true;
+
+  const jumpTargetX = e.clientX;
+  const offsetX = 10;
+  const jumpStartX = jumpTargetX + offsetX;
+
+  const windowHeight = window.innerHeight + 100;
   const mouseY = e.clientY;
-
-  // 根據滑鼠距離底部的距離算出跳躍高度（最多跳 xx）
   const distanceFromBottom = windowHeight - mouseY;
-  const jumpHeight = Math.min(distanceFromBottom, 750); // 最多跳 xx
+  const jumpHeight = Math.min(distanceFromBottom, 750);
 
-  // 加動畫 class 或直接套 transform
-  img.style.transition = "transform 0.2s ease-out";
-  img.style.transform = `translate(-50%, -${jumpHeight}px)`;
+  // 移到起跳點
+  img.style.transition = "none";
+  img.style.left = `${jumpStartX}px`;
+  img.style.transform = `translate(-50%, 0px)`;
 
-  // 再跳回來
-  setTimeout(() => {
-    img.style.transition = "transform 0.2s ease-in";
-    img.style.transform = `translate(-50%, 0px)`;
-  }, 200);
+  requestAnimationFrame(() => {
+    // 第一步：往滑鼠點跳（左 + 上）
+    img.style.transition = "transform 0.17s ease-out, left 0.17s ease-out";
+    img.style.left = `${jumpTargetX}px`;
+    img.style.transform = `translate(-50%, -${jumpHeight}px)`;
+
+    setTimeout(() => {
+      // 第二步：左下彈一下
+      img.style.transition = "transform 0.05s ease";
+      img.style.transform = `translate(-55%, -${jumpHeight - 50}px)`;
+
+      setTimeout(() => {
+        // ⭐ 第 2.5 步：停頓 （維持在原地）
+        setTimeout(() => {
+          // 第三步：回到起跳點（右 + 下來）
+          img.style.transition = "transform 0.17s ease-in, left 0.17s ease-in";
+          img.style.left = `${jumpStartX}px`;
+          img.style.transform = `translate(-50%, 0px)`;
+
+          setTimeout(() => {
+            isJumping = false; // 跳完才允許再次跟隨滑鼠
+          }, 170); // 確保結束後解除鎖定
+        }, 150); // ⭐ 停頓時間
+      }, 50); // 第二步結束時間
+    }, 170); // 第一步結束時間
+  });
 });
 

@@ -4,6 +4,7 @@ body {
   background-color: #ffeef4;
   margin: 0;
   padding: 20px;
+  overflow: hidden;
 }
 
 h1 {
@@ -212,13 +213,13 @@ h1 {
   cursor: pointer;
 }
 #floating-img {
-  position: fixed;
+  position: absolute;
   bottom: -800px;
   left: 50%;
-  transform: translateX(-50%);
+   transform: translate(-50%, 0px);
+  transition: transform 0.2s ease;
   height: 900px;          /* 比原本大一點 */
   width: auto;            /* 保持圖片比例 */
   pointer-events: none;
   z-index: 999;
-  transition: left 0.1s linear;
 }
