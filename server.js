@@ -1,4 +1,3 @@
-// === server.js ===
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -20,7 +19,8 @@ io.on('connection', socket => {
     rooms[roomId] = {
       players: [],
       board: createInitialBoard(),
-      turn: 'black'
+      turn: 'black',
+      ai: false
     };
     room = rooms[roomId];
   }
@@ -39,138 +39,59 @@ io.on('connection', socket => {
     socket.emit("waitingForOpponent");
   }
 
- socket.on("playAI", () => {
-  const aiRoomId = `ai-${socket.id}`;
-  rooms[aiRoomId] = {
-    players: [socket],
-    board: createInitialBoard(),
-    turn: 'black',
-    ai: true
-  };
+  // 玩家選擇與 AI 對戰
+  socket.on("playAI", () => {
+    const aiRoomId = `ai-${socket.id}`;
+    rooms[aiRoomId] = {
+      players: [socket],
+      board: createInitialBoard(),
+      turn: 'black',
+      ai: true,
+      playerColor: 'black',  // 玩家是黑棋先手
+      aiColor: 'white'       // AI 是白棋
+    };
     room = rooms[aiRoomId];
     color = 'black';
+
     socket.emit("playerColor", color);
     socket.emit("startGame", { board: room.board, turn: room.turn });
   });
 
-socket.on("move", idx => {
-  if (room.turn !== color) return;
+  socket.on("move", idx => {
+    if (room.turn !== color) return;
 
-  // 判斷落子位置是否合法
-  const x = idx % 8;
-  const y = Math.floor(idx / 8);
-  const flipped = getFlippable(room.board, x, y, color);
-  if (room.board[y][x] || flipped.length === 0) {
-    socket.emit("invalidMove");
-    return;
-  }
+    const x = idx % 8;
+    const y = Math.floor(idx / 8);
+    const flipped = getFlippable(room.board, x, y, color);
 
-  // 落子與翻子
-  room.board[y][x] = color;
-  flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
-
-  // 回報落子結果
-  socket.emit("moveResult", {
-    flippedCount: flipped.length,
-    flippedPositions: flipped,
-    player: color
-  });
-
-  // 更新回合為剛落子者
-  room.turn = color;
-
-  function nextTurnLoop() {
-    while (true) {
-      const opponentColor = room.turn === 'black' ? 'white' : 'black';
-
-      if (hasValidMove(room.board, opponentColor)) {
-        // 對手可以下，換回合並通知
-        room.turn = opponentColor;
-        emitUpdateBoard(room);
-        room.players.forEach(s => s.emit("pass", {
-          skippedColor: null,
-          nextTurn: opponentColor
-        }));
-        break;  // 跳出迴圈，回合換給對手
-      } else if (hasValidMove(room.board, room.turn)) {
-        // 對手不能下，自己繼續下，通知跳過
-        room.players.forEach(s => s.emit("pass", {
-          skippedColor: opponentColor,
-          nextTurn: room.turn
-        }));
-        emitUpdateBoard(room);
-        // 不換回合，繼續是自己下，繼續迴圈判斷（避免無限迴圈，因為必有玩家能下）
-        break;  // 這裡也跳出迴圈，因為自己能下，暫停等待玩家行動
-      } else {
-        // 雙方都無法下，遊戲結束
-        endGame(room);
-        break;
-      }
+    if (room.board[y][x] || flipped.length === 0) {
+      socket.emit("invalidMove");
+      return;
     }
-  }
 
- if (room.ai) {
-  emitUpdateBoard(room);
+    // 落子並翻轉棋子
+    room.board[y][x] = color;
+    flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
 
-  const opponentColor = color === "black" ? "white" : "black";
-
-  // 取得 AI 合法落子位置陣列
-  const validMoves = [];
-  for (let y = 0; y < 8; y++) {
-    for (let x = 0; x < 8; x++) {
-      if (!room.board[y][x] && getFlippable(room.board, x, y, opponentColor).length > 0) {
-        validMoves.push([x, y]);
-      }
-    }
-  }
-
-  // 發送給前端合法落子位置（x, y）
-  socket.emit("aiValidMoves", validMoves);
-
-  const aiMove = getRandomValidMove(room.board, opponentColor);
-
-  if (aiMove) {
-    const [ax, ay] = aiMove;
-    const aiFlipped = getFlippable(room.board, ax, ay, opponentColor);
-
-    setTimeout(() => {
-      room.board[ay][ax] = opponentColor;
-      aiFlipped.forEach(([fx, fy]) => room.board[fy][fx] = opponentColor);
-      room.turn = color; // AI 下完，回到玩家回合
-      emitUpdateBoard(room);
-      socket.emit("moveResult", {
-        flippedCount: aiFlipped.length,
-        flippedPositions: aiFlipped,
-        player: opponentColor
-      });
-
-      if (checkGameOver(room.board)) {
-        endGame(room);
-        return;
-      }
-
-      nextTurnLoop(); // AI 下完也檢查跳過回合
-    }, 1000);
-  } else {
-    socket.emit("pass", {
-      skippedColor: opponentColor,
-      nextTurn: color
+    socket.emit("moveResult", {
+      flippedCount: flipped.length,
+      flippedPositions: flipped,
+      player: color
     });
-    nextTurnLoop();
-  }
 
-  if (checkGameOver(room.board)) {
-    endGame(room);
-  }
-} else {
-  // 玩家對戰
-  nextTurnLoop();
-}
+    // 換對手回合
+    room.turn = color === 'black' ? 'white' : 'black';
 
-});
+    emitUpdateBoard(room);
 
-
-
+    if (room.ai) {
+      // AI 自動下棋
+      aiMoveLogic(room);
+    } else {
+      // 玩家對戰，判斷下一回合
+      nextTurnLoop(room);
+    }
+  });
 
   socket.on("checkMove", idx => {
     const x = idx % 8;
@@ -180,7 +101,7 @@ socket.on("move", idx => {
   });
 
   socket.on("mouseMove", idx => {
-    if (room.ai) return; 
+    if (room.ai) return;
     room.players.forEach(p => {
       if (p !== socket) p.emit("opponentMouse", idx);
     });
@@ -197,15 +118,92 @@ socket.on("move", idx => {
   });
 });
 
+function aiMoveLogic(room) {
+  const aiColor = room.aiColor;
+  const playerColor = room.playerColor;
+
+  const aiMove = getRandomValidMove(room.board, aiColor);
+
+  if (aiMove) {
+    const [ax, ay] = aiMove;
+    const aiFlipped = getFlippable(room.board, ax, ay, aiColor);
+
+    setTimeout(() => {
+      room.board[ay][ax] = aiColor;
+      aiFlipped.forEach(([fx, fy]) => room.board[fy][fx] = aiColor);
+
+      emitUpdateBoard(room);
+
+      room.players.forEach(s => s.emit("moveResult", {
+        flippedCount: aiFlipped.length,
+        flippedPositions: aiFlipped,
+        player: aiColor
+      }));
+
+      if (checkGameOver(room.board)) {
+        endGame(room);
+        return;
+      }
+
+      // 換回玩家回合
+      room.turn = playerColor;
+      nextTurnLoop(room);
+    }, 1000);
+  } else {
+    console.log(`AI ${aiColor} 跳過回合，因為無法下子`);
+    room.players.forEach(s => s.emit("pass", {
+      skippedColor: aiColor,
+      nextTurn: playerColor
+    }));
+
+    room.turn = playerColor;
+    nextTurnLoop(room);
+  }
+}
+
+function nextTurnLoop(room) {
+  while (true) {
+    const currentColor = room.turn;
+    const opponentColor = currentColor === 'black' ? 'white' : 'black';
+
+    console.log(`目前是 ${currentColor} 的回合`);
+
+    if (hasValidMove(room.board, currentColor)) {
+      // 目前玩家能下棋，等待玩家行動
+      emitUpdateBoard(room);
+      break;
+    } else if (hasValidMove(room.board, opponentColor)) {
+      // 目前玩家不能下，但對手能下，跳過回合換對手下
+      room.turn = opponentColor;
+      emitUpdateBoard(room);
+
+      room.players.forEach(s => s.emit("pass", {
+        skippedColor: currentColor,
+        nextTurn: opponentColor
+      }));
+
+      console.log(`玩家 ${currentColor} 無法下棋，跳過回合，換 ${opponentColor}`);
+
+      // 如果是 AI 回合，自動執行 AI 下棋
+      if (room.ai && opponentColor === room.aiColor) {
+        setTimeout(() => aiMoveLogic(room), 500);
+      }
+      break;
+    } else {
+      // 雙方都無法下，遊戲結束
+      console.log("雙方都無法下棋，遊戲結束");
+      endGame(room);
+      break;
+    }
+  }
+}
+
 function createInitialBoard() {
-  const board = Array(8).fill().map(() => Array(8).fill(null));
-  // board[3][3] = "white";
-  board[0][1] = "black";
-  board[0][0] = "white";
-  board[4][3] = "black";
-  board[4][4] = "white";
-  board[4][5] = "white";
-  board[4][7] = "white";
+  const board = Array(8).fill(null).map(() => Array(8).fill(null));
+  board[3][3] = 'white';
+  board[3][4] = 'black';
+  board[4][3] = 'black';
+  board[4][4] = 'white';
   return board;
 }
 
@@ -244,6 +242,7 @@ function getFlippable(board, x, y, color) {
   }
   return flipped;
 }
+
 function hasValidMove(board, color) {
   for (let y = 0; y < 8; y++) {
     for (let x = 0; x < 8; x++) {
@@ -256,17 +255,7 @@ function hasValidMove(board, color) {
 }
 
 function checkGameOver(board) {
-  const colors = ["black", "white"];
-  for (let color of colors) {
-    for (let y = 0; y < 8; y++) {
-      for (let x = 0; x < 8; x++) {
-        if (!board[y][x] && getFlippable(board, x, y, color).length > 0) {
-          return false;
-        }
-      }
-    }
-  }
-  return true;
+  return !hasValidMove(board, 'black') && !hasValidMove(board, 'white');
 }
 
 function endGame(room) {
@@ -301,4 +290,3 @@ function getRandomValidMove(board, color) {
 server.listen(3000, () => {
   console.log("伺服器啟動：http://localhost:3000");
 });
-

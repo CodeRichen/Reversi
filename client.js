@@ -191,12 +191,12 @@ document.addEventListener("mousemove", (e) => {
 });
 
 document.addEventListener("click", (e) => {
-  const windowHeight = window.innerHeight;
+  const windowHeight = window.innerHeight + 150;
   const mouseY = e.clientY;
 
-  // 根據滑鼠距離底部的距離算出跳躍高度（最多跳 300px）
+  // 根據滑鼠距離底部的距離算出跳躍高度（最多跳 xx）
   const distanceFromBottom = windowHeight - mouseY;
-  const jumpHeight = Math.min(distanceFromBottom, 500); // 最多跳 300px
+  const jumpHeight = Math.min(distanceFromBottom, 750); // 最多跳 xx
 
   // 加動畫 class 或直接套 transform
   img.style.transition = "transform 0.2s ease-out";
