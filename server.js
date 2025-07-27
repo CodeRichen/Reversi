@@ -72,23 +72,22 @@ io.on('connection', socket => {
     // 落子並翻轉棋子
     room.board[y][x] = color;
     flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
-
+      room.turn = color === "black" ? "white" : "black";
+      emitUpdateBoard(room);
     socket.emit("moveResult", {
       flippedCount: flipped.length,
       flippedPositions: flipped,
       player: color
     });
 
-    // 換對手回合
-    room.turn = color === 'black' ? 'white' : 'black';
 
-    emitUpdateBoard(room);
 
-    if (room.ai) {
+     if (room.ai) {
       // AI 自動下棋
       aiMoveLogic(room);
     } else {
       // 玩家對戰，判斷下一回合
+      console.log(`玩家 ${color} 的回合`);
       nextTurnLoop(room);
     }
   });
@@ -170,7 +169,9 @@ function nextTurnLoop(room) {
 
     if (hasValidMove(room.board, currentColor)) {
       // 目前玩家能下棋，等待玩家行動
-      emitUpdateBoard(room);
+      setTimeout(() => {
+        emitUpdateBoard(room);
+      }, 500);
       break;
     } else if (hasValidMove(room.board, opponentColor)) {
       // 目前玩家不能下，但對手能下，跳過回合換對手下

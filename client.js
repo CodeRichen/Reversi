@@ -1,49 +1,67 @@
-// === client.js ===
+// 建立與伺服器的 Socket.IO 連線
 const socket = io();
+
+// 儲存自己的棋子顏色（"black" 或 "white"）
 let myColor = null;
+
+// 當前輪到哪個顏色的玩家
 let currentTurn = null;
+
+// 雙方的得分
 let myScore = 0, opponentScore = 0;
 
+// 獲取 DOM 元素：棋盤、狀態欄、訊息欄、分數欄
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
 const messageEl = document.getElementById("message");
 const scoreEl = document.getElementById("score");
 
+// 建立一個用來顯示對手滑鼠位置的虛擬游標
 let opponentCursor = document.createElement('div');
 opponentCursor.className = 'opponent-cursor';
 document.body.appendChild(opponentCursor);
 
+// 產生 64 格棋盤（8x8）
 for (let i = 0; i < 64; i++) {
   const cell = document.createElement("div");
   cell.className = "cell";
-  cell.dataset.index = i;
+  cell.dataset.index = i; // 每一格都用 data-index 標記位置
 
+  // 滑鼠移入該格時要檢查合法性與同步游標
   cell.addEventListener('mouseenter', () => handleHover(cell));
+
+  // 滑鼠離開時清除所有高亮
   cell.addEventListener('mouseleave', () => clearHighlights());
+
+  // 將每一格加入棋盤 DOM 中
   boardEl.appendChild(cell);
 }
 
+// 點擊棋盤時發送 move 事件給伺服器，延遲 300ms 讓動畫可以先跑
 boardEl.addEventListener("click", e => {
   setTimeout(() => {
-  const idx = e.target.closest(".cell")?.dataset.index;
-  if (!idx || currentTurn !== myColor) return;
-  socket.emit("move", parseInt(idx));
-  },300);
+    const idx = e.target.closest(".cell")?.dataset.index;
+    if (!idx || currentTurn !== myColor) return; // 不是自己回合就不能動
+    socket.emit("move", parseInt(idx)); // 傳送落子位置
+  }, 300);
 });
 
+// 滑鼠移到某格時，要求伺服器檢查該格是否合法、並同步滑鼠位置
 function handleHover(cell) {
-  clearHighlights();
+  clearHighlights(); // 每次移動前先清掉所有高亮
   const idx = parseInt(cell.dataset.index);
-  socket.emit('checkMove', idx);
-  socket.emit('mouseMove', idx);
+  socket.emit('checkMove', idx);     // 要求伺服器檢查這步是否合法
+  socket.emit('mouseMove', idx);     // 同步滑鼠位置給對手
 }
 
+// 清除棋盤上所有格子的高亮狀態
 function clearHighlights() {
   document.querySelectorAll(".cell").forEach(cell => {
     cell.classList.remove('highlight', 'invalid', 'opponent-hover');
   });
 }
 
+// 當伺服器告知某格是否合法落子時，客戶端更新該格的樣式
 socket.on("highlightMove", ({ idx, isValid }) => {
   const cell = document.querySelector(`.cell[data-index='${idx}']`);
   if (cell) {
@@ -51,53 +69,68 @@ socket.on("highlightMove", ({ idx, isValid }) => {
   }
 });
 
+// 接收對手的滑鼠位置，顯示 hover 效果與同步虛擬游標位置
 socket.on("opponentMouse", idx => {
   const targetCell = document.querySelector(`.cell[data-index='${idx}']`);
   if (!targetCell) return;
-  clearHighlights();
-  targetCell.classList.add('opponent-hover');
 
+  clearHighlights(); // 先清空前一次高亮
+  targetCell.classList.add('opponent-hover'); // 加上對手 hover 樣式
+
+  // 把虛擬游標移到那一格中心位置
   const rect = targetCell.getBoundingClientRect();
   opponentCursor.style.left = `${rect.left + rect.width / 2}px`;
   opponentCursor.style.top = `${rect.top + rect.height / 2}px`;
 });
 
+// 等待對手加入時更新畫面提示
 socket.on("waitingForOpponent", () => {
   statusEl.textContent = "等待對手加入...";
 });
 
+// 告知玩家分配到的顏色
 socket.on("playerColor", color => {
   myColor = color;
   document.getElementById("role").textContent = `您是：${color === "black" ? "⚫ 黑棋" : "⚪ 白棋"}`;
 });
 
+// 遊戲開始時初始化畫面與狀態
 socket.on("startGame", data => {
-  updateBoard(data.board);
-  currentTurn = data.turn;
-  updateStatus();
-  document.getElementById('aiButton').style.display = "none"; 
+  updateBoard(data.board);       // 更新棋盤內容
+  currentTurn = data.turn;       // 設定當前回合
+  updateStatus();                // 更新畫面狀態
+  document.getElementById('aiButton').style.display = "none"; // 隱藏 AI 對戰按鈕（若有）
 });
 
+// 每次落子或對手行動後，伺服器傳回新棋盤與回合
 socket.on("updateBoard", data => {
   updateBoard(data.board);
   currentTurn = data.turn;
   updateStatus();
 });
 
+// 若玩家點了非法位置（例如不能落子處），顯示錯誤訊息
 socket.on("invalidMove", () => {
   showMessage("這不是合法的落子位置");
 });
 
+// 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player }) => {
+  // 根據翻轉的棋子數量給額外分數（bonus）
   const bonus = flippedCount >= 10 ? 5 : flippedCount >= 5 ? 2 : 1;
+
   if (player === myColor) {
     myScore += flippedCount + bonus;
   } else {
     opponentScore += flippedCount + bonus;
   }
+
+  // 執行每個被翻轉的動畫效果
   flippedPositions.forEach(([x, y]) => animateFlip(x, y));
-  updateScore();
+
+  updateScore(); // 更新畫面分數顯示
 });
+
 
 socket.on("gameOver", ({ black, white, winner }) => {
   let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
