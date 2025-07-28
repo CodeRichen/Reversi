@@ -1,39 +1,47 @@
- socket.on("move", idx => {
-    if (room.turn !== color) return;
+socket.on("opponentDoJump", ({ x, y }) => {
+   if (isJumping) return;
+  isJumping = true;
 
-    const x = idx % 8;
-    const y = Math.floor(idx / 8);
-    const flipped = getFlippable(room.board, x, y, color);
+  const jumpTargetX = e.clientX;
+  const offsetX = 70;
+  const jumpStartX = jumpTargetX + offsetX;
 
-    if (room.board[y][x] || flipped.length === 0) {
-      socket.emit("invalidMove");
-      return;
-    }
+  const mouseY = e.clientY;
+  const distanceFromTop = mouseY;  // 從上往下
+  const jumpHeight = Math.min(distanceFromTop, 750);
 
-    // 落子並翻轉棋子
-    room.board[y][x] = color;
-    flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
-      room.turn = color === "black" ? "white" : "black";
-      emitUpdateBoard(room);
 
-      if (!room.scores) room.scores = { black: 0, white: 0 };
-  const bonus = flipped.length >= 10 ? 5 : flipped.length >= 5 ? 2 : 1;
-  room.scores[color] += flipped.length + bonus;
+  console.log("從上而降！");
 
-  // 廣播結果給所有該房間玩家
-  io.to(room.id).emit("moveResult", {
-    flippedCount: flipped.length,
-    flippedPositions: flipped,
-    player: color,
-    scores: room.scores // 把黑白分數一起傳回 client
+  // 移到起始點（畫面上方）
+  img2.style.transition = "none";
+  img2.style.left = `${jumpStartX}px`;
+  img2.style.transform = `translate(-50%, -${jumpHeight}px)`; // 先高高在上
+
+  requestAnimationFrame(() => {
+    // 第一步：降落到底部（滑鼠點附近）
+    img2.style.transition = "transform 0.17s ease-out, left 0.17s ease-out";
+    img2.style.left = `${jumpTargetX}px`;
+    img2.style.transform = `translate(-50%, 0px)`;
+
+    setTimeout(() => {
+      // 第二步：反彈一下（微微往上）
+      img2.style.transition = "transform 0.07s ease";
+      img2.style.transform = `translate(-55%, -80px)`;
+
+      setTimeout(() => {
+        // ⭐ 停頓一會兒
+        setTimeout(() => {
+          // 第三步：飛回上方原位
+          img2.style.transition = "transform 0.17s ease-in, left 0.17s ease-in";
+          img2.style.left = `${jumpStartX}px`;
+          img2.style.transform = `translate(-50%, -${jumpHeight}px)`;
+
+          setTimeout(() => {
+            isJumping = false;
+          }, 170);
+        }, 150);
+      }, 70);
+    }, 170);
   });
-     if (room.ai) {
-      // AI 自動下棋
-      console.log(`AI ${room.aiColor} 的回合`);
-      aiMoveLogic(room);
-    } else {
-      // 玩家對戰，判斷下一回合
-      console.log(`玩家 ${color} 的回合`);
-      nextTurnLoop(room);
-    }
-  });
+});

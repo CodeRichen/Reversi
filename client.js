@@ -216,7 +216,7 @@ socket.on("pass", ({ skippedColor, nextTurn }) => {
 });
 
 const img = document.getElementById("floating-img");
-
+const img2 = document.getElementById("floating-img2");
 let mouseX = 0;
 let isJumping = false; // 控制是否正在跳躍動畫中
 
@@ -234,14 +234,17 @@ document.addEventListener("click", (e) => {
   isJumping = true;
 
   const jumpTargetX = e.clientX;
-  const offsetX = 10;
+  const offsetX = 70;
   const jumpStartX = jumpTargetX + offsetX;
 
-  const windowHeight = window.innerHeight + 100;
+  const windowHeight = window.innerHeight + 130;
   const mouseY = e.clientY;
   const distanceFromBottom = windowHeight - mouseY;
   const jumpHeight = Math.min(distanceFromBottom, 750);
 
+  //發送給伺服器，請對手也跳一次
+  socket.emit("opponentJump", { x: e.clientX, y: e.clientY });
+  console.log("跳躍動畫");
   // 移到起跳點
   img.style.transition = "none";
   img.style.left = `${jumpStartX}px`;
@@ -255,8 +258,8 @@ document.addEventListener("click", (e) => {
 
     setTimeout(() => {
       // 第二步：左下彈一下
-      img.style.transition = "transform 0.05s ease";
-      img.style.transform = `translate(-55%, -${jumpHeight - 50}px)`;
+      img.style.transition = "transform 0.07s ease";
+      img.style.transform = `translate(-55%, -${jumpHeight - 80}px)`;
 
       setTimeout(() => {
         // ⭐ 第 2.5 步：停頓 （維持在原地）
@@ -270,8 +273,57 @@ document.addEventListener("click", (e) => {
             isJumping = false; // 跳完才允許再次跟隨滑鼠
           }, 170); // 確保結束後解除鎖定
         }, 150); // ⭐ 停頓時間
-      }, 50); // 第二步結束時間
+      }, 70); // 第二步結束時間
     }, 170); // 第一步結束時間
   });
 });
+
+socket.on("opponentDoJump", ({ x, y }) => {
+   if (isJumping) return;
+  isJumping = true;
+
+  const jumpTargetX = x;
+  const jumpTargetY = y;
+  const offsetX = 70;
+  const jumpStartX = jumpTargetX + offsetX;
+
+  const distanceFromTop = jumpTargetY;  // 從上往下
+  const jumpHeight = Math.min(distanceFromTop, 750);
+
+
+  console.log("從上而降！");
+
+  // 移到起始點（畫面上方）
+  img2.style.transition = "none";
+  img2.style.left = `${jumpStartX}px`;
+  img2.style.transform = `translate(-50%, ${jumpHeight}px)`; // 先高高在上
+
+  requestAnimationFrame(() => {
+    // 第一步：降落到底部（滑鼠點附近）
+    img2.style.transition = "transform 0.17s ease-out, left 0.17s ease-out";
+    img2.style.left = `${jumpTargetX}px`;
+    img2.style.transform = `translate(50%, 0px)`;
+
+    setTimeout(() => {
+      // 第二步：反彈一下（微微往上）
+      img2.style.transition = "transform 0.07s ease";
+      img2.style.transform = `translate(-55%, -80px)`;
+
+      setTimeout(() => {
+        // ⭐ 停頓一會兒
+        setTimeout(() => {
+          // 第三步：飛回上方原位
+          img2.style.transition = "transform 0.17s ease-in, left 0.17s ease-in";
+          img2.style.left = `${jumpStartX}px`;
+          img2.style.transform = `translate(-50%, -${jumpHeight}px)`;
+
+          setTimeout(() => {
+            isJumping = false;
+          }, 170);
+        }, 150);
+      }, 70);
+    }, 170);
+  });
+});
+
 

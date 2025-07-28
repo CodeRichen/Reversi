@@ -134,7 +134,16 @@ let roomId;
       delete rooms[id];
     }
   });
+  
+  socket.on("opponentJump", ({ x, y }) => {
+  room.players.forEach(p => {
+    if (p !== socket) p.emit("opponentDoJump", { x, y });
+  });
 });
+
+});
+
+
 
 function aiMoveLogic(room) {
   const aiColor = room.aiColor;
