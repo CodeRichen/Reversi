@@ -115,21 +115,17 @@ socket.on("invalidMove", () => {
 });
 
 // 當伺服器回傳落子結果時，更新分數與動畫
-socket.on("moveResult", ({ flippedCount, flippedPositions, player }) => {
-  // 根據翻轉的棋子數量給額外分數（bonus）
-  const bonus = flippedCount >= 10 ? 5 : flippedCount >= 5 ? 2 : 1;
+socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => {
+  console.log(`玩家 ${player} 翻轉了 ${flippedCount} 顆棋子`);
+  
+  // 不用自己算分數，直接使用 server 傳來的
+  myScore = scores[myColor];
+  opponentScore = scores[myColor === "black" ? "white" : "black"];
 
-  if (player === myColor) {
-    myScore += flippedCount + bonus;
-  } else {
-    opponentScore += flippedCount + bonus;
-  }
-
-  // 執行每個被翻轉的動畫效果
   flippedPositions.forEach(([x, y]) => animateFlip(x, y));
-
-  updateScore(); // 更新畫面分數顯示
+  updateScore();
 });
+
 
 
 socket.on("gameOver", ({ black, white, winner }) => {

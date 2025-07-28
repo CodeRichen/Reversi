@@ -13,18 +13,25 @@ let rooms = {};
 io.on('connection', socket => {
   let room = findAvailableRoom();
   let color;
-
+let roomId;
   if (!room) {
-    const roomId = `room-${socket.id}`;
+    roomId = `room-${socket.id}`;
     rooms[roomId] = {
+      id: roomId, 
       players: [],
       board: createInitialBoard(),
       turn: 'black',
-      ai: false
+      ai: false,
+      score: {
+      black: 0,
+      white: 0
+  }
     };
     room = rooms[roomId];
-  }
-
+  }else {
+  roomId = room.id; // 拿現有房間的 ID
+}
+  socket.join(roomId);
   room.players.push(socket);
   color = room.players.length === 1 ? 'black' : 'white';
 
@@ -48,7 +55,8 @@ io.on('connection', socket => {
       turn: 'black',
       ai: true,
       playerColor: 'black',  // 玩家是黑棋先手
-      aiColor: 'white'       // AI 是白棋
+      aiColor: 'white',       // AI 是白棋
+      scores: { black: 0, white: 0 }
     };
     room = rooms[aiRoomId];
     color = 'black';
@@ -74,16 +82,27 @@ io.on('connection', socket => {
     flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
       room.turn = color === "black" ? "white" : "black";
       emitUpdateBoard(room);
-    socket.emit("moveResult", {
-      flippedCount: flipped.length,
-      flippedPositions: flipped,
-      player: color
-    });
 
+      if (!room.scores) room.scores = { black: 0, white: 0 };
+  const bonus = flipped.length >= 10 ? 5 : flipped.length >= 5 ? 2 : 1;
+  room.scores[color] += flipped.length + bonus;
 
-
+  // 廣播結果給所有該房間玩家
+  io.to(room.id).emit("moveResult", {
+    flippedCount: flipped.length,
+    flippedPositions: flipped,
+    player: color,
+    scores: room.scores // 把黑白分數一起傳回 client
+  });
+    room.players.forEach(s => s.emit("moveResult", {
+    flippedCount: flipped.length,
+    flippedPositions: flipped,
+    player: color,
+    scores: room.scores
+  }));
      if (room.ai) {
       // AI 自動下棋
+      console.log(`AI ${room.aiColor} 的回合`);
       aiMoveLogic(room);
     } else {
       // 玩家對戰，判斷下一回合
@@ -131,13 +150,21 @@ function aiMoveLogic(room) {
       room.board[ay][ax] = aiColor;
       aiFlipped.forEach(([fx, fy]) => room.board[fy][fx] = aiColor);
 
-      emitUpdateBoard(room);
 
-      room.players.forEach(s => s.emit("moveResult", {
-        flippedCount: aiFlipped.length,
-        flippedPositions: aiFlipped,
-        player: aiColor
-      }));
+
+  if (!room.scores) room.scores = { black: 0, white: 0 };
+  const bonus = aiFlipped.length >= 10 ? 5 : aiFlipped.length >= 5 ? 2 : 1;
+  room.scores[aiColor] += aiFlipped.length + bonus;
+
+  emitUpdateBoard(room);
+
+  // ✅ 可以廣播這次 AI 的動作給 client（選擇性）
+  room.players.forEach(s => s.emit("moveResult", {
+    flippedCount: aiFlipped.length,
+    flippedPositions: aiFlipped,
+    player: aiColor,
+    scores: room.scores
+  }));
 
       if (checkGameOver(room.board)) {
         endGame(room);
@@ -169,6 +196,7 @@ function nextTurnLoop(room) {
 
     if (hasValidMove(room.board, currentColor)) {
       // 目前玩家能下棋，等待玩家行動
+      console.log(`玩家 ${currentColor} 可以下棋`);
       setTimeout(() => {
         emitUpdateBoard(room);
       }, 500);
@@ -196,6 +224,7 @@ function nextTurnLoop(room) {
       endGame(room);
       break;
     }
+    con
   }
 }
 
