@@ -227,6 +227,7 @@ document.addEventListener("mousemove", (e) => {
     img.style.transition = "left 0.1s linear";
     img.style.left = `${mouseX}px`;
   }
+  socket.emit("opponentMove", { x: e.clientX });
 });
 
 document.addEventListener("click", (e) => {
@@ -272,10 +273,18 @@ document.addEventListener("click", (e) => {
           setTimeout(() => {
             isJumping = false; // 跳完才允許再次跟隨滑鼠
           }, 170); // 確保結束後解除鎖定
-        }, 150); // ⭐ 停頓時間
+        }, 150); // 停頓時間
       }, 70); // 第二步結束時間
     }, 170); // 第一步結束時間
   });
+});
+
+socket.on("opponentDoMove", ({ x }) => {
+  mouseX = x;
+  if (!isJumping) {
+    img2.style.transition = "left 0.1s linear";
+    img2.style.left = `${mouseX}px`;
+  }
 });
 
 socket.on("opponentDoJump", ({ x, y }) => {
@@ -284,30 +293,30 @@ socket.on("opponentDoJump", ({ x, y }) => {
 
   const jumpTargetX = x;
   const jumpTargetY = y;
-  const offsetX = 70;
-  const jumpStartX = jumpTargetX + offsetX;
+  const offsetX = 50;
+  const jumpStartX = jumpTargetX - offsetX;
+  const windowHeight = 0;
 
-  const distanceFromTop = jumpTargetY;  // 從上往下
+  const distanceFromTop = jumpTargetY + 100;  // 從上往下
   const jumpHeight = Math.min(distanceFromTop, 750);
 
 
   console.log("從上而降！");
 
   // 移到起始點（畫面上方）
-  img2.style.transition = "none";
+  img2.style.transition = "transform 0.17s ease-out, left 0.17s ease-out";
   img2.style.left = `${jumpStartX}px`;
-  img2.style.transform = `translate(-50%, ${jumpHeight}px)`; // 先高高在上
+  img2.style.transform = `translate(-50%, ${windowHeight}px)`; // 先高高在上
 
   requestAnimationFrame(() => {
     // 第一步：降落到底部（滑鼠點附近）
-    img2.style.transition = "transform 0.17s ease-out, left 0.17s ease-out";
-    img2.style.left = `${jumpTargetX}px`;
-    img2.style.transform = `translate(50%, 0px)`;
+    img2.style.transition = "transform 0.07s ease-out, left 0.07s ease-out";
+    img2.style.transform = `translate(-50%, ${jumpHeight}px)`;
 
     setTimeout(() => {
       // 第二步：反彈一下（微微往上）
       img2.style.transition = "transform 0.07s ease";
-      img2.style.transform = `translate(-55%, -80px)`;
+      img2.style.transform = `translate(-35%, ${jumpHeight - 60}px)`;
 
       setTimeout(() => {
         // ⭐ 停頓一會兒
@@ -315,7 +324,7 @@ socket.on("opponentDoJump", ({ x, y }) => {
           // 第三步：飛回上方原位
           img2.style.transition = "transform 0.17s ease-in, left 0.17s ease-in";
           img2.style.left = `${jumpStartX}px`;
-          img2.style.transform = `translate(-50%, -${jumpHeight}px)`;
+          img2.style.transform = `translate(-50%, -${windowHeight}px)`;
 
           setTimeout(() => {
             isJumping = false;

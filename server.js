@@ -140,7 +140,12 @@ let roomId;
     if (p !== socket) p.emit("opponentDoJump", { x, y });
   });
 });
+socket.on("opponentMove", ({ x }) => {
+  room.players.forEach(p => {
+    if (p !== socket) p.emit("opponentDoMove", { x });
+  });
 
+});
 });
 
 
