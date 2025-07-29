@@ -72,10 +72,8 @@ h1 {
   padding-bottom: 4px;
 }
 #col-labels div {
-  border: 1px solid #555;
   border-radius: 4px;
   padding: 2px 6px;
-  background-color: #f0f0f0;
 }
 
 #row-labels {
@@ -87,6 +85,11 @@ h1 {
   color: #333;
   margin-top: 8px;
   margin-bottom: 4px;
+}
+#row-labels div {
+  padding: 2px 6px;
+  border-radius: 4px;
+
 }
 
 #board-frame {
@@ -102,12 +105,7 @@ h1 {
   margin-top: 20px;
 }
 
-#row-labels div {
-  background-color: #f0f0f0;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid #555;
-}
+
 
 #board {
   width: 400px;
@@ -151,17 +149,23 @@ h1 {
   top: 10%;
   left: 10%;
   transition: transform 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  border: none;
 }
 
 .disk.black {
-  background-color: black;
+  background-image: url('chess2.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 .disk.white {
-  background-color: white;
-  border: 1px solid #aaa;
+  background-image: url('chess1.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
+
 
 .cell.opponent-hover {
   outline: 3px solid red;
@@ -203,7 +207,7 @@ h1 {
   100% { transform: rotateY(180deg); }
 }
 #aiButton {
-  margin-top: 20px;
+  margin-top: 10px;
   padding: 8px 16px;
   font-size: 1em;
   background-color: #77aaff;
