@@ -39,11 +39,11 @@ for (let i = 0; i < 64; i++) {
 
 // 點擊棋盤時發送 move 事件給伺服器，延遲 300ms 讓動畫可以先跑
 boardEl.addEventListener("click", e => {
-  setTimeout(() => {
+
     const idx = e.target.closest(".cell")?.dataset.index;
     if (!idx || currentTurn !== myColor) return; // 不是自己回合就不能動
     socket.emit("move", parseInt(idx)); // 傳送落子位置
-  }, 300);
+
 });
 
 // 滑鼠移到某格時，要求伺服器檢查該格是否合法、並同步滑鼠位置
@@ -113,11 +113,17 @@ socket.on("updateBoard", data => {
 socket.on("invalidMove", () => {
   showMessage("這不是合法的落子位置");
 });
-
+socket.on("place", idx => {
+    const audio = new Audio("place.mp3");
+    audio.play();
+});
 // 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => {
   console.log(`玩家 ${player} 翻轉了 ${flippedCount} 顆棋子`);
-  
+    if (flippedCount > 0) {
+    const audio = new Audio("meow.mp3");
+    audio.play();
+  }
   // 不用自己算分數，直接使用 server 傳來的
   myScore = scores[myColor];
   opponentScore = scores[myColor === "black" ? "white" : "black"];

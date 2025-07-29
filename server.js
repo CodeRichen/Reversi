@@ -76,7 +76,10 @@ let roomId;
       socket.emit("invalidMove");
       return;
     }
-
+    room.players.forEach(p => {
+       p.emit("place", idx);
+    });
+      setTimeout(() => {
     // 落子並翻轉棋子
     room.board[y][x] = color;
     flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
@@ -109,6 +112,7 @@ let roomId;
       console.log(`玩家 ${color} 的回合`);
       nextTurnLoop(room);
     }
+      }, 300);
   });
 
   socket.on("checkMove", idx => {
@@ -155,7 +159,9 @@ function aiMoveLogic(room) {
   const playerColor = room.playerColor;
 
   const aiMove = getRandomValidMove(room.board, aiColor);
-
+    room.players.forEach(p => {
+       p.emit("place", idx);
+    });
   if (aiMove) {
     const [ax, ay] = aiMove;
     const aiFlipped = getFlippable(room.board, ax, ay, aiColor);
