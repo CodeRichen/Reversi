@@ -318,6 +318,7 @@ function endGame(room) {
 }
 
 function emitUpdateBoard(room) {
+  // console.log(`更新房間 ${room.id} 的棋盤，目前輪到 ${room.turn}`);
   room.players.forEach(s => s.emit("updateBoard", {
     board: room.board,
     turn: room.turn

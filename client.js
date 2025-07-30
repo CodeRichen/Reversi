@@ -108,6 +108,20 @@ socket.on("updateBoard", data => {
   updateBoard(data.board);
   currentTurn = data.turn;
   updateStatus();
+      const overlayImg = document.getElementById("cat_bw");
+      
+  // 假設是依據目前輪到誰
+  if (currentTurn === "black" || currentTurn === "white") {
+    overlayImg.style.display = "block"; // 顯示圖片
+  if (currentTurn === "black") {
+    overlayImg.src = "cat_b.png";
+  } else {
+    overlayImg.src = "cat_w.png";
+  }}
+  else {
+    // 如果不符合條件就隱藏
+    overlayImg.style.display = "none";
+  }
 });
 
 // 若玩家點了非法位置（例如不能落子處），顯示錯誤訊息
@@ -166,9 +180,9 @@ function updateBoard(board) {
       const disk = document.createElement("div");
       disk.className = `disk ${value}`;
       cell.appendChild(disk);
-
       if (value === "black") black++;
       else white++;
+
     }
   });
   document.getElementById("blackCount").textContent = black;

@@ -58,6 +58,7 @@ h1 {
   gap: 5px;
   margin: auto;
   width: fit-content;
+  position: relative;
 }
 
 #col-labels {
@@ -272,4 +273,14 @@ h1 {
   pointer-events: none;
   animation: popFadeOut2 1s forwards;
   z-index: 999;
+}
+#cat_bw {
+  display: none; /* 預設不顯示 */
+  position: absolute;
+  top: 0;
+  right: 0;
+    transform: translate(45%, -45%); /* 向右上位移一點點 */
+  width: 80px;
+  z-index: 1000;
+  pointer-events: none;
 }
