@@ -77,7 +77,7 @@ let roomId;
       return;
     }
     room.players.forEach(p => {
-       p.emit("place", idx);
+       p.emit("place");
     });
       setTimeout(() => {
     // 落子並翻轉棋子
@@ -159,9 +159,7 @@ function aiMoveLogic(room) {
   const playerColor = room.playerColor;
 
   const aiMove = getRandomValidMove(room.board, aiColor);
-    room.players.forEach(p => {
-       p.emit("place", idx);
-    });
+
   if (aiMove) {
     const [ax, ay] = aiMove;
     const aiFlipped = getFlippable(room.board, ax, ay, aiColor);
@@ -177,8 +175,10 @@ function aiMoveLogic(room) {
   room.scores[aiColor] += aiFlipped.length + bonus;
 
   emitUpdateBoard(room);
-
-  // ✅ 可以廣播這次 AI 的動作給 client（選擇性）
+    room.players.forEach(p => {
+       p.emit("place");
+    });
+  // 廣播這次 AI 的動作給 client（
   room.players.forEach(s => s.emit("moveResult", {
     flippedCount: aiFlipped.length,
     flippedPositions: aiFlipped,

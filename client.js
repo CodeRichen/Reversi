@@ -15,7 +15,8 @@ const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
 const messageEl = document.getElementById("message");
 const scoreEl = document.getElementById("score");
-
+const audio_place = new Audio("place.mp3");
+const audio_meow = new Audio("meow.mp3");
 // 建立一個用來顯示對手滑鼠位置的虛擬游標
 let opponentCursor = document.createElement('div');
 opponentCursor.className = 'opponent-cursor';
@@ -114,15 +115,13 @@ socket.on("invalidMove", () => {
   showMessage("這不是合法的落子位置");
 });
 socket.on("place", idx => {
-    const audio = new Audio("place.mp3");
-    audio.play();
+    audio_place.play();
 });
 // 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => {
   console.log(`玩家 ${player} 翻轉了 ${flippedCount} 顆棋子`);
     if (flippedCount > 0) {
-    const audio = new Audio("meow.mp3");
-    audio.play();
+    audio_meow.play();
   }
   // 不用自己算分數，直接使用 server 傳來的
   myScore = scores[myColor];
@@ -239,7 +238,6 @@ document.addEventListener("mousemove", (e) => {
 document.addEventListener("click", (e) => {
   if (isJumping) return; // 防止在跳躍時多次觸發
   isJumping = true;
-
   const jumpTargetX = e.clientX;
   const offsetX = 70;
   const jumpStartX = jumpTargetX + offsetX;
@@ -269,13 +267,15 @@ document.addEventListener("click", (e) => {
       img.style.transform = `translate(-55%, -${jumpHeight - 80}px)`;
 
       setTimeout(() => {
-        // ⭐ 第 2.5 步：停頓 （維持在原地）
+        // 第 2.5 步：停頓 （維持在原地）
+        showcat_real(e.clientX, e.clientY, "cat_real.png");
+        
         setTimeout(() => {
           // 第三步：回到起跳點（右 + 下來）
           img.style.transition = "transform 0.17s ease-in, left 0.17s ease-in";
           img.style.left = `${jumpStartX}px`;
           img.style.transform = `translate(-50%, 0px)`;
-
+showcat_real(e.clientX, e.clientY, "cat.png");
           setTimeout(() => {
             isJumping = false; // 跳完才允許再次跟隨滑鼠
           }, 170); // 確保結束後解除鎖定
@@ -341,4 +341,30 @@ socket.on("opponentDoJump", ({ x, y }) => {
   });
 });
 
+function showcat_real(x, y, imageUrl) {
+  if (imageUrl === "cat_real.png") {
+  const img = document.createElement("img");
+  img.src = imageUrl;
+  img.className = "effect-image";
+  img.style.left = `${x - 50}px`; // 讓圖片中心對齊點（扣掉一半寬度）
+  img.style.top = `${y - 50}px`;  // 同上
 
+  document.body.appendChild(img);
+
+  img.addEventListener("animationend", () => {
+    img.remove(); // 動畫結束後自動刪除
+  });
+  }
+  if(imageUrl === "cat.png") {
+    const img = document.createElement("img");
+    img.src = imageUrl;
+    img.className = "effect-image2";
+    img.style.left = `${x - 220}px`; // 讓圖片中心對齊點（扣掉一半寬度）
+    img.style.top = `${y - 220}px`;  // 同上
+
+    document.body.appendChild(img);
+  img.addEventListener("animationend", () => {
+    img.remove(); // 動畫結束後自動刪除
+  });
+  }
+}
