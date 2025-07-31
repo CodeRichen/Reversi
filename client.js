@@ -220,10 +220,38 @@ function animateFlip(x, y) {
   const idx = y * 8 + x;
   const cell = document.querySelector(`.cell[data-index='${idx}']`);
   if (cell && cell.firstChild) {
-    cell.firstChild.classList.add('flip');
-    setTimeout(() => cell.firstChild.classList.remove('flip'), 400);
+    const disk = cell.firstChild;
+    disk.classList.add('flip');
+
+    // 爆星星 ✨
+    for (let i = 0; i < 6; i++) {
+      const star = document.createElement('span');
+      star.classList.add('star');
+      const angle = Math.random() * 2 * Math.PI;
+      const radius = Math.random() * 30 + 10;
+      const xOffset = Math.cos(angle) * radius + 'px';
+      const yOffset = Math.sin(angle) * radius + 'px';
+      star.style.setProperty('--x', xOffset);
+      star.style.setProperty('--y', yOffset);
+      disk.appendChild(star);
+      setTimeout(() => star.remove(), 600);
+    }
+
+    // 衝擊波 💥
+    const shockwave = document.createElement('div');
+    shockwave.classList.add('shockwave');
+    disk.appendChild(shockwave);
+    setTimeout(() => shockwave.remove(), 1000);
+
+    // 移除 flip 動畫
+    setTimeout(() => {
+      disk.classList.remove('flip');
+    }, 400);
   }
 }
+
+
+
 
 document.getElementById('aiButton').addEventListener('click', () => {
   
