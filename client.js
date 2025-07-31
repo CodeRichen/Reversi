@@ -97,10 +97,10 @@ socket.on("playerColor", color => {
 
 // 遊戲開始時初始化畫面與狀態
 socket.on("startGame", data => {
-  updateBoard(data.board);       // 更新棋盤內容
   currentTurn = data.turn;       // 設定當前回合
   updateStatus();                // 更新畫面狀態
   document.getElementById('aiButton').style.display = "none"; // 隱藏 AI 對戰按鈕（若有）
+  updateBoard(data.board);       // 更新棋盤內容
 });
 
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
@@ -108,9 +108,16 @@ socket.on("updateBoard", data => {
   updateBoard(data.board);
   currentTurn = data.turn;
   updateStatus();
-      const overlayImg = document.getElementById("cat_bw");
-      
+  const overlayImg = document.getElementById("cat_bw");
+  console.log(`當前回合: ${currentTurn}, 我的顏色: ${myColor}`);
   // 假設是依據目前輪到誰
+  const boardFrame = document.getElementById('board-frame');
+  if (currentTurn === myColor) {
+    boardFrame.classList.add('glowing');  
+  }
+  else{
+    boardFrame.classList.remove('glowing');
+  }
   if (currentTurn === "black" || currentTurn === "white") {
     overlayImg.style.display = "block"; // 顯示圖片
   if (currentTurn === "black") {
@@ -188,6 +195,7 @@ function updateBoard(board) {
   document.getElementById("blackCount").textContent = black;
   document.getElementById("whiteCount").textContent = white;
 }
+
 function showMessage(text) {
   const box = document.getElementById("messageBox");
   box.innerText = text;

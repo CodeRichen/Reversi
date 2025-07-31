@@ -37,12 +37,21 @@ let roomId;
 
   socket.emit("playerColor", color);
 
-  if (room.players.length === 2) {
-    room.players.forEach(s => s.emit("startGame", {
+ if (room.players.length === 2) {
+  room.players.forEach(s => {
+    s.emit("startGame", {
       board: room.board,
       turn: room.turn
-    }));
-  } else {
+    });
+
+    // 這一行是新增的
+    s.emit("updateBoard", {
+      board: room.board,
+      turn: room.turn
+    });
+  });
+}
+ else {
     socket.emit("waitingForOpponent");
   }
 
@@ -63,6 +72,7 @@ let roomId;
 
     socket.emit("playerColor", color);
     socket.emit("startGame", { board: room.board, turn: room.turn });
+    socket.emit("updateBoard", { board: room.board, turn: room.turn });
   });
 
   socket.on("move", idx => {
