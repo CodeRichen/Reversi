@@ -144,6 +144,11 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => 
     if (flippedCount > 0) {
     audio_meow.play();
   }
+    if (flippedCount >= 5) {
+    const board = document.getElementById("board-frame");
+    board.classList.add("shake");
+    setTimeout(() => board.classList.remove("shake"), 800);
+  }
   // 不用自己算分數，直接使用 server 傳來的
   myScore = scores[myColor];
   opponentScore = scores[myColor === "black" ? "white" : "black"];

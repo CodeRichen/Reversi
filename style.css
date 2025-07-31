@@ -101,11 +101,11 @@ h1 {
 
 .glowing {
   animation: glow 1.5s infinite;
-  border: 6px solid #84f375;
+  border: 6px solid #84f375 !important;
 }
 
 #board-frame {
-  border: 6px solid #333333;
+  border: 6px solid #9a2424;
   padding: 10px;
   background-color: #999;
   border-radius: 12px;
@@ -131,7 +131,7 @@ h1 {
   border-radius: 6px;
   box-shadow: inset 0 0 8px  #444;
   position: relative;
-   border: 2px solid #444;
+  border: 2px solid #444;
 }
 
 .cell {
@@ -196,7 +196,7 @@ h1 {
   position: absolute;
   width: 40px;
   height: 40px;
-  border: 2px solid rgba(255, 255, 255);  /* 深一點的白色外框 */
+  border: 3px solid rgb(137, 233, 211);  
   border-radius: 50%;
   z-index: 5;
   left: 50%;
@@ -218,14 +218,13 @@ h1 {
   }
 }
 
-
-
 .star {
   position: absolute;
   width: 10px;
   height: 10px;
   background: yellow;
   border-radius: 50%;
+  transform: rotate(45deg);
   pointer-events: none;
   z-index: 10;
   animation: sparkle 1s ease-out forwards;
@@ -338,4 +337,21 @@ h1 {
   width: 60px;
   z-index: 1000;
   pointer-events: none;
+}
+
+@keyframes shake {
+  0% { transform: translate(0px, 0px); }
+  10% { transform: translate(-4px, 4px); }
+  20% { transform: translate(4px, -4px); }
+  30% { transform: translate(-4px, 4px); }
+  40% { transform: translate(4px, -4px); }
+  50% { transform: translate(-4px, 4px); }
+  60% { transform: translate(4px, -4px); }
+  70% { transform: translate(-4px, 4px); }
+  80% { transform: translate(4px, -4px); }
+  100% { transform: translate(0px, 0px); }
+}
+
+.shake {
+  animation: shake 0.4s ease-in-out;
 }
