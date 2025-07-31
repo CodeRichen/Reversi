@@ -176,7 +176,6 @@ h1 {
 }
 
 .disk.white {
-  background-image: url('chess1.png');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -192,7 +191,7 @@ h1 {
   100% { transform: rotateY(180deg); }
 }
 
-.shockwave {
+.shockwave { /* 爆炸效果 */
   position: absolute;
   width: 40px;
   height: 40px;
@@ -210,11 +209,11 @@ h1 {
 @keyframes explode {
   0% {
     transform: translate(-50%, -50%) scale(0.2);
-    opacity: 0.8;
+    opacity: 1;
   }
   100% {
     transform: translate(-50%, -50%) scale(5);
-    opacity: 0;
+    opacity: 0.5;
   }
 }
 

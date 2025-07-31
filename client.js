@@ -101,6 +101,7 @@ socket.on("startGame", data => {
   updateStatus();                // 更新畫面狀態
   document.getElementById('aiButton').style.display = "none"; // 隱藏 AI 對戰按鈕（若有）
   updateBoard(data.board);       // 更新棋盤內容
+
 });
 
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
@@ -140,6 +141,7 @@ socket.on("place", idx => {
 });
 // 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => {
+  
   console.log(`玩家 ${player} 翻轉了 ${flippedCount} 顆棋子`);
     if (flippedCount > 0) {
     audio_meow.play();
@@ -178,9 +180,9 @@ function hasValidMove(board, color) {
   }
   return false;
 }
-
-function updateBoard(board) {
+function updateBoard(board, changeWhiteImage = false) {
   let black = 0, white = 0;
+
   document.querySelectorAll(".cell").forEach((cell, i) => {
     const x = i % 8;
     const y = Math.floor(i / 8);
@@ -191,15 +193,36 @@ function updateBoard(board) {
     if (value) {
       const disk = document.createElement("div");
       disk.className = `disk ${value}`;
-      cell.appendChild(disk);
-      if (value === "black") black++;
-      else white++;
 
+      if (value === "white") {
+        let imgName;
+
+        if (changeWhiteImage || !cell.dataset.whiteImage) {
+          const rand = Math.floor(Math.random() * 6) + 1;
+          imgName = rand === 1 ? 'chess1.png' : `chess1_${rand}.png`;
+          cell.dataset.whiteImage = imgName;  // 儲存起來
+        } else {
+          imgName = cell.dataset.whiteImage;  // 使用先前的
+        }
+
+        disk.style.backgroundImage = `url('${imgName}')`;
+        white++;
+      } else {
+        black++;
+      }
+
+      cell.appendChild(disk);
+    } else {
+      // 若格子為空，清掉紀錄
+      delete cell.dataset.whiteImage;
     }
   });
+
   document.getElementById("blackCount").textContent = black;
   document.getElementById("whiteCount").textContent = white;
 }
+
+
 
 function showMessage(text) {
   const box = document.getElementById("messageBox");
@@ -252,6 +275,7 @@ function animateFlip(x, y) {
     setTimeout(() => {
       disk.classList.remove('flip');
     }, 400);
+
   }
 }
 
@@ -423,3 +447,6 @@ function showcat_real(x, y, imageUrl) {
   });
   }
 }
+
+
+

@@ -227,7 +227,11 @@ function nextTurnLoop(room) {
       // 目前玩家能下棋，等待玩家行動
       console.log(`玩家 ${currentColor} 可以下棋`);
       setTimeout(() => {
-        emitUpdateBoard(room);
+          room.players.forEach(s => s.emit("updateBoard", {
+    board: room.board,
+    turn: room.turn,
+    changeWhiteImage : true
+  }));
       }, 1000); // TODO: 因應每個動畫也不同可以改這邊的持續時間
       break;
     } else if (hasValidMove(room.board, opponentColor)) {
