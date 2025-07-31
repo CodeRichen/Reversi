@@ -44,7 +44,6 @@ let roomId;
       turn: room.turn
     });
 
-    // 這一行是新增的
     s.emit("updateBoard", {
       board: room.board,
       turn: room.turn
@@ -229,7 +228,7 @@ function nextTurnLoop(room) {
       console.log(`玩家 ${currentColor} 可以下棋`);
       setTimeout(() => {
         emitUpdateBoard(room);
-      }, 500);
+      }, 1000); // TODO: 因應每個動畫也不同可以改這邊的持續時間
       break;
     } else if (hasValidMove(room.board, opponentColor)) {
       // 目前玩家不能下，但對手能下，跳過回合換對手下

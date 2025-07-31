@@ -234,14 +234,14 @@ function animateFlip(x, y) {
       star.style.setProperty('--x', xOffset);
       star.style.setProperty('--y', yOffset);
       disk.appendChild(star);
-      setTimeout(() => star.remove(), 600);
+      setTimeout(() => star.remove(), 1000);
     }
 
     // 衝擊波 💥
     const shockwave = document.createElement('div');
     shockwave.classList.add('shockwave');
     disk.appendChild(shockwave);
-    setTimeout(() => shockwave.remove(), 1000);
+    setTimeout(() => shockwave.remove(), 1500);
 
     // 移除 flip 動畫
     setTimeout(() => {
