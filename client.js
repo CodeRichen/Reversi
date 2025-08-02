@@ -172,6 +172,24 @@ socket.on("updateBoard", data => {
     // 如果不符合條件就隱藏
     overlayImg.style.display = "none";
   }
+document.querySelectorAll(".cell").forEach((cell, i) => {
+  const y = Math.floor(i / 8);
+  const x = i % 8;
+
+  // 清除之前的 fogged 樣式
+  cell.classList.remove("fogged");
+
+  console.log(`更新格子 (${x}, ${y})`);
+
+  if (data.board[y][x]) {
+    // 有棋子 → 加上 fogged 效果
+    cell.classList.add("fogged");
+  } else {
+    // 無棋子 → 清空內容
+    cell.innerHTML = "";
+  }
+});
+
 });
 
 // 若玩家點了非法位置（例如不能落子處），顯示錯誤訊息
