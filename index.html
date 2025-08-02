@@ -8,7 +8,7 @@
 </head>
 <body>
   <video id="background-video" autoplay muted loop playsinline>
-  <source src="picture/background1.mp4" type="video/mp4">
+  <source  type="video/mp4">
   您的瀏覽器不支援 HTML5 video。
 </video>
   <!-- <h1>雙人黑白棋</h1> -->
@@ -41,7 +41,11 @@
         <div id="row-labels">
           <div>A</div><div>B</div><div>C</div><div>D</div><div>E</div><div>F</div><div>G</div><div>H</div>
         </div>
-        <div id="board"></div>
+        <div id="board">            
+          <video id="board-video" autoplay muted loop playsinline>
+              <source id="board-video-source"  type="video/mp4">
+            </video>
+          </div>
       </div>
     </div>
   </div><img id="cat_bw" src="cat_b.png" alt="Overlay" />

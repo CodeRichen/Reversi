@@ -92,8 +92,42 @@ socket.on("waitingForOpponent", () => {
 // 告知玩家分配到的顏色
 socket.on("playerColor", color => {
   myColor = color;
-  // document.getElementById("role").textContent = `您是：${color === "black" ? "⚫ 黑棋" : "⚪ 白棋"}`;
+
+  // 棋盤影片（cat 系列）
+  const catVideo = document.getElementById("board-video");
+  const catSource = document.getElementById("board-video-source");
+  const catOptions = color === "black"
+    ? ["cat_b1.mp4", "cat_b2.mp4", ]
+    : ["cat_w1.mp4", "cat_w2.mp4", ];
+  const randomCat = catOptions[Math.floor(Math.random() * catOptions.length)];
+  catSource.src = `picture/${randomCat}`;
+  catVideo.load();
+  catVideo.play();
+
+  // 背景影片（背景系列）
+  const bgVideo = document.getElementById("background-video");
+  const bgSource = bgVideo.querySelector("source");
+
+  // 定義各種背景影片清單
+  const wBackgrounds = ["w-background1.mp4", "w-background2.mp4"];
+  const bBackgrounds = ["b-background1.mp4", "b-background2.mp4" ];
+  const wbBackgrounds = ["wb-background1.mp4"];
+
+  // 根據玩家顏色組出可用的背景列表
+  let availableBackgrounds = [];
+  if (color === "black") {
+    availableBackgrounds = [...bBackgrounds, ...wbBackgrounds];
+  } else {
+    availableBackgrounds = [...wBackgrounds, ...wbBackgrounds];
+  }
+
+  // 隨機選擇其中一個
+  const randomBg = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
+  bgSource.src = `picture/${randomBg}`;
+  bgVideo.load();
+  bgVideo.play();
 });
+
 
 // 遊戲開始時初始化畫面與狀態
 socket.on("startGame", data => {
