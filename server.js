@@ -114,11 +114,11 @@ let roomId;
   }));
      if (room.ai) {
       // AI 自動下棋
-      console.log(`AI ${room.aiColor} 的回合`);
+      // console.log(`AI ${room.aiColor} 的回合`);
       aiMoveLogic(room);
     } else {
       // 玩家對戰，判斷下一回合
-      console.log(`玩家 ${color} 的回合`);
+      // console.log(`玩家 ${color} 的回合`);
       nextTurnLoop(room);
     }
       }, 300);
@@ -221,11 +221,11 @@ function nextTurnLoop(room) {
     const currentColor = room.turn;
     const opponentColor = currentColor === 'black' ? 'white' : 'black';
 
-    console.log(`目前是 ${currentColor} 的回合`);
+    // console.log(`目前是 ${currentColor} 的回合`);
 
     if (hasValidMove(room.board, currentColor)) {
       // 目前玩家能下棋，等待玩家行動
-      console.log(`玩家 ${currentColor} 可以下棋`);
+      // console.log(`玩家 ${currentColor} 可以下棋`);
       setTimeout(() => {
           room.players.forEach(s => s.emit("updateBoard", {
     board: room.board,
@@ -257,7 +257,7 @@ function nextTurnLoop(room) {
       endGame(room);
       break;
     }
-    con
+
   }
 }
 

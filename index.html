@@ -3,19 +3,33 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>雙人黑白棋</title>
+  <!-- <title>雙人黑白棋</title> -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>雙人黑白棋</h1>
+  <video id="background-video" autoplay muted loop playsinline>
+  <source src="picture/background1.mp4" type="video/mp4">
+  您的瀏覽器不支援 HTML5 video。
+</video>
+  <!-- <h1>雙人黑白棋</h1> -->
   <div id="status">正在連線...</div>
   <button id="aiButton">與電腦對戰</button>
   <div id="pass-message" style="text-align: center; font-weight: bold; color: red; margin-bottom: 10px;"></div>
   <div id="messageBox" style="margin-top:10px; font-weight:bold; color:red;"></div>
 
-  <div id="role">您是：等待分配角色...</div>
-  <div id="counts">⚫ 黑棋: <span id="blackCount">2</span> ⚪ 白棋: <span id="whiteCount">2</span></div>
-  <div id="score">分數 - 你: 0 | 對手: 0</div>
+  <!-- <div id="role">您是：等待分配角色...</div> -->
+ <div id="counts">
+<div class="count-item" id="blackCounter" data-score="0">
+  <img src="chess2.png" class="count-icon"> X <span id="blackCount">0</span>
+</div>
+<div class="count-item" id="whiteCounter" data-score="0">
+  <img src="chess1.png" class="count-icon"> X <span id="whiteCount">0</span>
+</div>
+
+</div>
+
+
+  <!-- <div id="score">分數 - 你: 0 | 對手: 0</div> -->
   <div class="board-container">
   <div id="game-wrapper">
   <div id="board-frame">

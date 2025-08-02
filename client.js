@@ -14,7 +14,7 @@ let myScore = 0, opponentScore = 0;
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
 const messageEl = document.getElementById("message");
-const scoreEl = document.getElementById("score");
+// const scoreEl = document.getElementById("score");
 const audio_place = new Audio("place.mp3");
 const audio_meow = new Audio("meow.mp3");
 // 建立一個用來顯示對手滑鼠位置的虛擬游標
@@ -92,15 +92,23 @@ socket.on("waitingForOpponent", () => {
 // 告知玩家分配到的顏色
 socket.on("playerColor", color => {
   myColor = color;
-  document.getElementById("role").textContent = `您是：${color === "black" ? "⚫ 黑棋" : "⚪ 白棋"}`;
+  // document.getElementById("role").textContent = `您是：${color === "black" ? "⚫ 黑棋" : "⚪ 白棋"}`;
 });
 
 // 遊戲開始時初始化畫面與狀態
 socket.on("startGame", data => {
   currentTurn = data.turn;       // 設定當前回合
   updateStatus();                // 更新畫面狀態
-  document.getElementById('aiButton').style.display = "none"; // 隱藏 AI 對戰按鈕（若有）
-  updateBoard(data.board);       // 更新棋盤內容
+  document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById('aiButton').style.display = "none";
+});// 隱藏 AI 對戰按鈕（若有）
+const aiBtn = document.getElementById('aiButton');
+if (aiBtn) {
+  aiBtn.style.display = "none";
+} else {
+  console.warn("找不到 aiButton，可能尚未載入 DOM！");
+}
+  // updateBoard(data.board);       // 更新棋盤內容
 
 });
 
@@ -110,7 +118,7 @@ socket.on("updateBoard", data => {
   currentTurn = data.turn;
   updateStatus();
   const overlayImg = document.getElementById("cat_bw");
-  console.log(`當前回合: ${currentTurn}, 我的顏色: ${myColor}`);
+  // console.log(`當前回合: ${currentTurn}, 我的顏色: ${myColor}`);
   // 假設是依據目前輪到誰
   const boardFrame = document.getElementById('board-frame');
   if (currentTurn === myColor) {
@@ -142,7 +150,7 @@ socket.on("place", idx => {
 // 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => {
   
-  console.log(`玩家 ${player} 翻轉了 ${flippedCount} 顆棋子`);
+  // console.log(`玩家 ${player} 翻轉了 ${flippedCount} 顆棋子`);
     if (flippedCount > 0) {
     audio_meow.play();
   }
@@ -180,7 +188,7 @@ function hasValidMove(board, color) {
   }
   return false;
 }
-function updateBoard(board, changeWhiteImage = false) {
+function updateBoard(board, changeImage = false) {
   let black = 0, white = 0;
 
   document.querySelectorAll(".cell").forEach((cell, i) => {
@@ -197,29 +205,45 @@ function updateBoard(board, changeWhiteImage = false) {
       if (value === "white") {
         let imgName;
 
-        if (changeWhiteImage || !cell.dataset.whiteImage) {
+        if (changeImage || !cell.dataset.whiteImage) {
           const rand = Math.floor(Math.random() * 6) + 1;
-          imgName = rand === 1 ? 'chess1.png' : `chess1_${rand}.png`;
-          cell.dataset.whiteImage = imgName;  // 儲存起來
+          imgName = rand === 1 ? 'chess1.png' : `chess/chess1_${rand}.png`;
+          cell.dataset.whiteImage = imgName;
+          updateBoardOffset();
         } else {
-          imgName = cell.dataset.whiteImage;  // 使用先前的
+          imgName = cell.dataset.whiteImage;
         }
 
         disk.style.backgroundImage = `url('${imgName}')`;
         white++;
-      } else {
+      } else if (value === "black") {
+        let imgName;
+
+        if (changeImage || !cell.dataset.blackImage) {
+          const rand = Math.floor(Math.random() * 6) + 1;
+          imgName = rand === 1 ? 'chess2.png' : `chess/chess2_${rand}.png`;
+          cell.dataset.blackImage = imgName;
+          updateBoardOffset();
+        } else {
+          imgName = cell.dataset.blackImage;
+        }
+
+        disk.style.backgroundImage = `url('${imgName}')`;
         black++;
       }
 
       cell.appendChild(disk);
     } else {
-      // 若格子為空，清掉紀錄
       delete cell.dataset.whiteImage;
+      delete cell.dataset.blackImage;
     }
   });
 
   document.getElementById("blackCount").textContent = black;
   document.getElementById("whiteCount").textContent = white;
+        if(!changeImage) {
+        updateCounts(black, white);
+      }
 }
 
 
@@ -231,11 +255,12 @@ function showMessage(text) {
 
 function updateStatus() {
   if (!myColor || !currentTurn) return;
-  statusEl.textContent = myColor === currentTurn ? "輪到你下棋！" : "等待對手下棋...";
+  // statusEl.textContent = myColor === currentTurn ? "輪到你下棋！" : "等待對手下棋...";
+  statusEl.textContent="";
 }
 
 function updateScore() {
-  scoreEl.textContent = `分數 - 你: ${myScore} | 對手: ${opponentScore}`;
+  // scoreEl.textContent = `分數 - 你: ${myScore} | 對手: ${opponentScore}`;
 }
 
 function showMessage(text) {
@@ -328,7 +353,7 @@ document.addEventListener("click", (e) => {
 
   //發送給伺服器，請對手也跳一次
   socket.emit("opponentJump", { x: e.clientX, y: e.clientY });
-  console.log("跳躍動畫");
+
   // 移到起跳點
   img.style.transition = "none";
   img.style.left = `${jumpStartX}px`;
@@ -385,13 +410,10 @@ socket.on("opponentDoJump", ({ x, y }) => {
   const distanceFromTop = jumpTargetY + 100;  // 從上往下
   const jumpHeight = Math.min(distanceFromTop, 750);
 
-
-  console.log("從上而降！");
-
   // 移到起始點（畫面上方）
   img2.style.transition = "transform 0.17s ease-out, left 0.17s ease-out";
   img2.style.left = `${jumpStartX}px`;
-  img2.style.transform = `translate(-50%, ${windowHeight}px)`; // 先高高在上
+  img2.style.transform = `translate(-50%, ${windowHeight}px)`; 
 
   requestAnimationFrame(() => {
     // 第一步：降落到底部（滑鼠點附近）
@@ -448,5 +470,68 @@ function showcat_real(x, y, imageUrl) {
   }
 }
 
+function updateBoardOffset() {
+  const black = parseInt(document.getElementById("blackCount").textContent);
+  const white = parseInt(document.getElementById("whiteCount").textContent);
+  const delta = black - white;
+
+  // 設定每顆棋子差距所移動的像素
+  const pixelPerDifference = 12;
+  const maxOffset = 200;
+
+  // 計算偏移量，限制最大偏移
+  let offset = delta * pixelPerDifference;
+  offset = Math.max(-maxOffset, Math.min(maxOffset, offset)); 
+  // console.log(`偏移量: ${offset}px`); // 調試輸出
+
+  // 套用到棋盤容器上
+  const boardWrapper = document.getElementById("game-wrapper");
+  boardWrapper.style.transform = `translateX(${offset}px)`;
+  boardWrapper.style.transition = "transform 0.5s ease";
+
+  // 移動黑白棋數量顯示
+  const countsEl = document.getElementById("counts");
+  countsEl.style.transform = `translateX(${offset}px)`;
+  countsEl.style.transition = "transform 0.5s ease";
+}
+let lastState = "black"; // "black"、"white" 或 "tie"
+
+function updateCounts(blackScore, whiteScore) {
+  const blackDiv = document.getElementById("blackCounter");
+  const whiteDiv = document.getElementById("whiteCounter");
+
+  console.log(`黑棋: ${blackScore}, 白棋: ${whiteScore}`);
+
+  // 決定這次狀態
+  let currentState;
+  if (blackScore > whiteScore) {
+    currentState = "black";
+  } else if (whiteScore > blackScore) {
+    currentState = "white";
+  } else {
+    currentState = "tie";
+  }
+  if(blackScore === 2 && whiteScore === 2) {
+    currentState = "black"; // 特例：兩人都只有 2 分時，強制顯示黑棋
+  }
+  console.log(`當前狀態: ${currentState}， 上次狀態: ${lastState}`);
+
+  console.log(`黑棋: ${blackScore}, 白棋: ${whiteScore}`);
+
+  // 根據目前狀態與分數，決定是否要交換
+  if (lastState === "black" && currentState === "white") {
+    // 白棋逆轉，白在上
+    blackDiv.style.transform = "translateY(100%)";
+    whiteDiv.style.transform = "translateY(-100%)";
+    lastState = "white";
+    console.log("白棋逆轉，白在上");
+  } else if (lastState === "white" && currentState === "black") {
+    // 黑棋逆轉，黑在上
+    blackDiv.style.transform = "translateY(-0%)";
+    whiteDiv.style.transform = "translateY(0%)";
+    lastState = "black";
+    console.log("黑棋逆轉，黑在上");
+  }
+}
 
 

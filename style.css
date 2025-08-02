@@ -17,8 +17,30 @@ h1 {
 }
 
 #counts {
-  font-size: 1.1em;
-  margin-bottom: 10px;
+  background-color: rgba(255, 255, 255, 0.6); /* 半透明背景，可依需求調整 */
+  padding: 5px 10px;
+  border-radius: 8px;
+  gap: 20px; /* 黑棋與白棋之間的間距 */
+  align-items: center; /* 垂直置中 */
+  font-weight: bold;
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 16px;
+  backdrop-filter: blur(3px); /* 讓背景更有質感 */
+  position: relative;
+}
+
+.count-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.4s ease;
+}
+
+.count-icon {
+  width: 30px;
+  height: auto;
+  vertical-align: middle;
 }
 
 #score {
@@ -353,4 +375,19 @@ h1 {
 
 .shake {
   animation: shake 0.4s ease-in-out;
+}
+#background-video {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100vw;
+  min-height: 100vh;
+  object-fit: cover;
+  z-index: -1; /* 確保在最底層 */
+}
+
+#game-content {
+  position: relative;
+  z-index: 1;
+  /* 其他你原本的樣式 */
 }
