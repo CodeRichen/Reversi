@@ -126,6 +126,70 @@ h1 {
   border: 6px solid #84f375 !important;
 }
 
+.frame-videos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  z-index: 10;
+}
+
+.frame-video {
+  width: auto;
+  height: 30px;
+  object-fit: cover;
+  opacity: 0; /* 預設不顯示，等回合開始時淡入播放 */
+  transition: opacity 0.3s ease;
+}
+
+/* 上、下、左、右邊框的位置 */
+.top-frame {
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bottom-frame {
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.left-frame {
+  flex-direction: column;
+  left: -34px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.right-frame {
+  flex-direction: column;
+  right: -34px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.top-frame .frame-video {
+  transform: rotate(0deg); /* 無需旋轉 */
+}
+
+.bottom-frame .frame-video {
+  transform: rotate(180deg);
+}
+
+.left-frame .frame-video {
+  transform: rotate(270deg);
+}
+
+.right-frame .frame-video {
+  transform: rotate(90deg);
+}
+
+.side-container {
+  display: flex;
+}
+
+
 #board-frame {
   border: 6px solid #9a2424;
   padding: 10px;

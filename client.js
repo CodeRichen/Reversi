@@ -157,8 +157,11 @@ socket.on("updateBoard", data => {
   const boardFrame = document.getElementById('board-frame');
   if (currentTurn === myColor) {
     boardFrame.classList.add('glowing');  
+    playBorderAnimationOnTurn();
+
   }
   else{
+    resetBorderVideos();
     boardFrame.classList.remove('glowing');
   }
   if (currentTurn === "black" || currentTurn === "white") {
@@ -179,7 +182,7 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
   // 清除之前的 fogged 樣式
   cell.classList.remove("fogged");
 
-  console.log(`更新格子 (${x}, ${y})`);
+  // console.log(`更新格子 (${x}, ${y})`);
 
   if (data.board[y][x]) {
     // 有棋子 → 加上 fogged 效果
@@ -261,7 +264,6 @@ function updateBoard(board, changeImage = false) {
           const rand = Math.floor(Math.random() * 6) + 1;
           imgName = rand === 1 ? 'chess1.png' : `chess/chess1_${rand}.png`;
           cell.dataset.whiteImage = imgName;
-          updateBoardOffset();
         } else {
           imgName = cell.dataset.whiteImage;
         }
@@ -275,7 +277,6 @@ function updateBoard(board, changeImage = false) {
           const rand = Math.floor(Math.random() * 6) + 1;
           imgName = rand === 1 ? 'chess2.png' : `chess/chess2_${rand}.png`;
           cell.dataset.blackImage = imgName;
-          updateBoardOffset();
         } else {
           imgName = cell.dataset.blackImage;
         }
@@ -295,6 +296,7 @@ function updateBoard(board, changeImage = false) {
   document.getElementById("whiteCount").textContent = white;
         if(!changeImage) {
         updateCounts(black, white);
+        updateBoardOffset();
       }
 }
 
@@ -584,6 +586,52 @@ function updateCounts(blackScore, whiteScore) {
     lastState = "black";
     console.log("黑棋逆轉，黑在上");
   }
+}
+
+const videoUrl = "picture/output.webm"; 
+let hasPlayed = false; // 只播放一次
+function playBorderAnimationOnTurn() {
+  console.log("播放邊框動畫");
+  if (hasPlayed) return;
+  hasPlayed = true;
+
+  const allVideos = document.querySelectorAll(".frame-video");
+  allVideos.forEach((vid) => {
+    vid.src = videoUrl;
+    vid.load();
+    vid.currentTime = 0;
+    vid.style.opacity = "1";
+    vid.play();
+
+    function playWithRandomPause() {
+      const minTime = 0.9;
+      const maxTime = 1.1;
+      const randomTime = Math.random() * (maxTime - minTime) + minTime;
+      console.log(`隨機時間: ${randomTime} 秒`);
+      setTimeout(() => {
+        vid.pause();
+        vid.currentTime = randomTime;
+      }, randomTime * 1000);
+    }
+
+    if (vid.readyState >= 1) {
+      // metadata 已載入，直接執行
+      playWithRandomPause();
+    } else {
+      // 還沒載入，等事件觸發
+      vid.addEventListener("loadedmetadata", playWithRandomPause, { once: true });
+    }
+  });
+}
+
+function resetBorderVideos() {
+  const allVideos = document.querySelectorAll(".frame-video");
+  allVideos.forEach((vid) => {
+    vid.pause();          // 先暫停影片
+    vid.currentTime = 0;  // 時間設回 0
+    vid.style.opacity = "0"; // 隱藏（如果需要）
+  });
+    hasPlayed = false;
 }
 
 

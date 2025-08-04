@@ -30,27 +30,98 @@
 
 
   <!-- <div id="score">分數 - 你: 0 | 對手: 0</div> -->
-  <div class="board-container">
+<div class="board-container">
   <div id="game-wrapper">
-  <div id="board-frame">
-    <div style="display: flex;">
-      <div id="col-labels">
-        <div>8</div><div>7</div><div>6</div><div>5</div><div>4</div><div>3</div><div>2</div><div>1</div>
+    <div id="board-frame">
+
+      <!-- 上邊框影片 -->
+      <div class="frame-videos top-frame">
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
       </div>
-      <div>
-        <div id="row-labels">
-          <div>A</div><div>B</div><div>C</div><div>D</div><div>E</div><div>F</div><div>G</div><div>H</div>
+
+      <div style="display: flex;">
+        <!-- 左邊框影片 -->
+        <div class="side-container">
+          <div class="frame-videos left-frame">
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+          </div>
+          <div id="col-labels">
+            <div>8</div><div>7</div><div>6</div><div>5</div><div>4</div><div>3</div><div>2</div><div>1</div>
+          </div>
         </div>
-        <div id="board">            
-          <video id="board-video" autoplay muted loop playsinline>
+
+        <div>
+          <div id="row-labels">
+            <div>A</div><div>B</div><div>C</div><div>D</div><div>E</div><div>F</div><div>G</div><div>H</div>
+          </div>
+
+          <div id="board">
+              <video id="board-video" autoplay muted loop playsinline>
               <source id="board-video-source"  type="video/mp4">
             </video>
           </div>
+        </div>
+
+        <!-- 右邊框影片 -->
+        <div class="frame-videos right-frame">
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        </div>
       </div>
+
+      <!-- 下邊框影片 -->
+      <div class="frame-videos bottom-frame">
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+        <video class="frame-video" muted playsinline></video>
+      </div>
+
     </div>
-  </div><img id="cat_bw" src="cat_b.png" alt="Overlay" />
+    <img id="cat_bw" src="cat_b.png" alt="Overlay" />
+  </div>
 </div>
-</div>
+
 
   <div id="message"></div>
 
