@@ -96,13 +96,29 @@ socket.on("playerColor", color => {
   // 棋盤影片（cat 系列）
   const catVideo = document.getElementById("board-video");
   const catSource = document.getElementById("board-video-source");
+  const boardImage = document.getElementById("board-image");
   const catOptions = color === "black"
-    ? ["cat_b1.mp4", "cat_b2.mp4", ]
+    ? ["cat_b1.mp4", "cat_b2.mp4","cat_b1.jpg" ]
     : ["cat_w1.mp4", "cat_w2.mp4", ];
   const randomCat = catOptions[Math.floor(Math.random() * catOptions.length)];
   catSource.src = `picture/${randomCat}`;
-  catVideo.load();
-  catVideo.play();
+  const mediaPath = `picture/${randomCat}`;
+    const isVideo = randomCat.endsWith(".mp4");
+    if (isVideo) {
+    // 顯示影片，隱藏圖片
+    boardImage.style.display = "none";
+    catVideo.style.display = "block";
+
+    catSource.src = mediaPath;
+    catVideo.load();
+    catVideo.play();
+  } else {
+    // 顯示圖片，隱藏影片
+    catVideo.style.display = "none";
+    boardImage.style.display = "block";
+
+    boardImage.src = mediaPath;
+  }
 
   // 背景影片（背景系列）
   const bgVideo = document.getElementById("background-video");
@@ -157,11 +173,10 @@ socket.on("updateBoard", data => {
   const boardFrame = document.getElementById('board-frame');
   if (currentTurn === myColor) {
     boardFrame.classList.add('glowing');  
-    playBorderAnimationOnTurn();
-
+    // playBorderAnimationOnTurn();
   }
   else{
-    resetBorderVideos();
+    // resetBorderVideos();
     boardFrame.classList.remove('glowing');
   }
   if (currentTurn === "black" || currentTurn === "white") {
@@ -587,42 +602,92 @@ function updateCounts(blackScore, whiteScore) {
     console.log("黑棋逆轉，黑在上");
   }
 }
+const videoUrl = "picture/output.webm";
+let hasPlayed = false;
 
-const videoUrl = "picture/output.webm"; 
-let hasPlayed = false; // 只播放一次
+// 產生邊框影片，放入 DOM
+function setupBorderVideos() {
+  const template = document.getElementById("video-template");
+  const top = document.querySelector(".top-frame");
+  const bottom = document.querySelector(".bottom-frame");
+  const left = document.querySelector(".left-frame");
+  const right = document.querySelector(".right-frame");
+
+  const createClones = (container, count) => {
+    for (let i = 0; i < count; i++) {
+      const clone = template.cloneNode(true);
+      clone.removeAttribute("id");
+      clone.classList.add("frame-video");
+
+      // 初始設定
+      clone.src = videoUrl;  // ✅ 提前設定好 src
+      clone.muted = true;
+      clone.autoplay = false; // ✅ 不自動播放
+      clone.playsInline = true;
+      clone.setAttribute("muted", "");
+      clone.setAttribute("playsinline", "");
+
+      container.appendChild(clone);
+    }
+  };
+
+  createClones(top, 9);
+  createClones(bottom, 9);
+  createClones(left, 15);
+  createClones(right, 15);
+}
+
 function playBorderAnimationOnTurn() {
   console.log("播放邊框動畫");
   if (hasPlayed) return;
   hasPlayed = true;
 
   const allVideos = document.querySelectorAll(".frame-video");
-  allVideos.forEach((vid) => {
-    vid.src = videoUrl;
-    vid.load();
-    vid.currentTime = 0;
+  console.log("影片元素數量：", allVideos.length);
+
+  let loadedCount = 0;
+
+  allVideos.forEach((vid, i) => {
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.loop = false;
     vid.style.opacity = "1";
-    vid.play();
 
-    function playWithRandomPause() {
-      const minTime = 0.9;
-      const maxTime = 1.1;
-      const randomTime = Math.random() * (maxTime - minTime) + minTime;
-      console.log(`隨機時間: ${randomTime} 秒`);
-      setTimeout(() => {
-        vid.pause();
-        vid.currentTime = randomTime;
-      }, randomTime * 1000);
-    }
+    // 在載入影片時，加上防快取參數（讓瀏覽器當成新影片）
+vid.src = videoUrl + "?t=" + Date.now();
 
-    if (vid.readyState >= 1) {
-      // metadata 已載入，直接執行
-      playWithRandomPause();
-    } else {
-      // 還沒載入，等事件觸發
-      vid.addEventListener("loadedmetadata", playWithRandomPause, { once: true });
-    }
+
+    vid.addEventListener("loadeddata", () => {
+      loadedCount++;
+      console.log(`影片 ${i} 已載入 (${loadedCount}/${allVideos.length})`);
+
+      if (loadedCount === allVideos.length) {
+        console.log("全部影片都載入完成，開始播放");
+
+        allVideos.forEach((v) => {
+          v.currentTime = 0;
+          v.play().then(() => {
+            const minTime = 0.9;
+            const maxTime = 1.1;
+            const randomTime = Math.random() * (maxTime - minTime) + minTime;
+
+            setTimeout(() => {
+              v.pause();
+              v.currentTime = randomTime;
+            }, randomTime * 1000);
+          }).catch(err => {
+            console.warn("播放失敗：", err);
+          });
+        });
+      }
+    }, { once: true });
   });
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  setupBorderVideos(); // 初始化邊框影片
+});
+
 
 function resetBorderVideos() {
   const allVideos = document.querySelectorAll(".frame-video");
