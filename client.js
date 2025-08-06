@@ -92,13 +92,12 @@ socket.on("waitingForOpponent", () => {
 // 告知玩家分配到的顏色
 socket.on("playerColor", color => {
   myColor = color;
-
   // 棋盤影片（cat 系列）
   const catVideo = document.getElementById("board-video");
   const catSource = document.getElementById("board-video-source");
   const boardImage = document.getElementById("board-image");
   const catOptions = color === "black"
-    ? ["cat_b1.mp4", "cat_b2.mp4","cat_b1.jpg" ]
+    ? ["cat_b1.jpg" ]
     : ["cat_w1.mp4", "cat_w2.mp4", ];
   const randomCat = catOptions[Math.floor(Math.random() * catOptions.length)];
   catSource.src = `picture/${randomCat}`;
@@ -149,17 +148,8 @@ socket.on("playerColor", color => {
 socket.on("startGame", data => {
   currentTurn = data.turn;       // 設定當前回合
   updateStatus();                // 更新畫面狀態
-  document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById('aiButton').style.display = "none";
-});// 隱藏 AI 對戰按鈕（若有）
-const aiBtn = document.getElementById('aiButton');
-if (aiBtn) {
-  aiBtn.style.display = "none";
-} else {
-  console.warn("找不到 aiButton，可能尚未載入 DOM！");
-}
   // updateBoard(data.board);       // 更新棋盤內容
-
+   initializeMask(); // 初始化遮罩位置
 });
 
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
@@ -325,7 +315,7 @@ function showMessage(text) {
 function updateStatus() {
   if (!myColor || !currentTurn) return;
   // statusEl.textContent = myColor === currentTurn ? "輪到你下棋！" : "等待對手下棋...";
-  statusEl.textContent="";
+  // statusEl.textContent="";
 }
 
 function updateScore() {
@@ -348,7 +338,7 @@ function animateFlip(x, y) {
     // 爆星星 ✨
     for (let i = 0; i < 6; i++) {
       const star = document.createElement('span');
-      star.classList.add('star');
+      star.classList.add('star');none2l
       const angle = Math.random() * 2 * Math.PI;
       const radius = Math.random() * 30 + 10;
       const xOffset = Math.cos(angle) * radius + 'px';
@@ -380,7 +370,7 @@ document.getElementById('aiButton').addEventListener('click', () => {
   
   socket.emit('playAI');
   statusEl.textContent = "與電腦對戰開始！";
-  document.getElementById('aiButton').style.display = "none";
+  // document.getElementById('aiButton').style.display = "none";
 });
 
 socket.on("pass", ({ skippedColor, nextTurn }) => {
@@ -539,30 +529,56 @@ function showcat_real(x, y, imageUrl) {
   }
 }
 
+// let Mask_x = 0;
+initializeMask(); // 初始化遮罩位置
+window.addEventListener('resize', () => {
+  initializeMask(); // 每次視窗大小變化就重新定位遮罩
+});
+
+function initializeMask() {
+  const maskRect = document.getElementById('maskRect');
+  const board = document.getElementById("board");
+  const rect = board.getBoundingClientRect();  // 取得棋盤在視窗的實際位置
+  const svg = maskRect.getBoundingClientRect(); // 取得 SVG 的位置
+  // 計算棋盤相對於 SVG 的位置
+  const x = rect.left - svg.left;
+  const y = rect.top - svg.top;
+
+  // 設定遮罩位置
+  maskRect.setAttribute("x", x);
+  maskRect.setAttribute("y", y);
+  // Mask_x = x; // 儲存初始位置
+  console.log(`遮罩位置初始化：x=${x}, y=${y}`);
+}
+
 function updateBoardOffset() {
   const black = parseInt(document.getElementById("blackCount").textContent);
   const white = parseInt(document.getElementById("whiteCount").textContent);
-  const delta = black - white;
+  
 
-  // 設定每顆棋子差距所移動的像素
   const pixelPerDifference = 12;
   const maxOffset = 200;
 
-  // 計算偏移量，限制最大偏移
-  let offset = delta * pixelPerDifference;
-  offset = Math.max(-maxOffset, Math.min(maxOffset, offset)); 
-  // console.log(`偏移量: ${offset}px`); // 調試輸出
+  let offset = (black - white) * pixelPerDifference;
+  offset = Math.max(-maxOffset, Math.min(maxOffset, offset));
 
-  // 套用到棋盤容器上
   const boardWrapper = document.getElementById("game-wrapper");
-  boardWrapper.style.transform = `translateX(${offset}px)`;
-  boardWrapper.style.transition = "transform 0.5s ease";
+  boardWrapper.style.position = "relative"; // 確保可以用 left
+  boardWrapper.style.left = `${offset}px`;  // 偏移而不破壞布局
+  boardWrapper.style.transition = "left 0.5s ease";
 
-  // 移動黑白棋數量顯示
   const countsEl = document.getElementById("counts");
-  countsEl.style.transform = `translateX(${offset}px)`;
-  countsEl.style.transition = "transform 0.5s ease";
+  countsEl.style.position = "relative";
+  countsEl.style.left = `${offset}px`;
+  countsEl.style.transition = "left 0.5s ease";
+
+  const maskRect = document.getElementById('maskRect');
+  maskRect.style.transform = `translateX(${offset}px)`;
+  maskRect.style.transition = "transform 0.5s ease";
+
+
 }
+
 let lastState = "black"; // "black"、"white" 或 "tie"
 
 function updateCounts(blackScore, whiteScore) {
@@ -570,7 +586,8 @@ function updateCounts(blackScore, whiteScore) {
   const whiteDiv = document.getElementById("whiteCounter");
 
   console.log(`黑棋: ${blackScore}, 白棋: ${whiteScore}`);
-
+  // getComputedStyle(document.getElementById('image-layer')).maskImage
+  // console.log("遮罩圖片：", getComputedStyle(document.getElementById('image-layer')).maskImage);
   // 決定這次狀態
   let currentState;
   if (blackScore > whiteScore) {

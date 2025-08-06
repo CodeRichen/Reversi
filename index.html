@@ -64,7 +64,7 @@
               <video id="board-video" autoplay muted loop playsinline>
               <source id="board-video-source"  type="video/mp4">
             </video>
-            <img id="board-image" >
+           
           </div>
         </div>
 
@@ -82,6 +82,21 @@
   </div>
 </div>
 
+<div id="image-layer">
+ <img id="board-image" >
+</div>
+
+<!-- 定義 SVG mask -->
+<svg width="100%" height="100%">
+  <defs>
+    <mask id="myMask">
+      <!-- 先把整個畫面塗黑(不透明度0)，完全遮住 -->
+      <rect width="100%" height="100%" fill="black"/>
+      <!-- 白色區塊代表可見，稍後用 JS 改變位置 -->
+      <rect id="maskRect" x="100" y="100" width="400" height="380" rx="10" ry="10" fill="white"/>
+    </mask>
+  </defs>
+</svg>
 
   <div id="message"></div>
 
