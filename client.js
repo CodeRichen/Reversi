@@ -315,7 +315,7 @@ function showMessage(text) {
 function updateStatus() {
   if (!myColor || !currentTurn) return;
   // statusEl.textContent = myColor === currentTurn ? "輪到你下棋！" : "等待對手下棋...";
-  // statusEl.textContent="";
+  statusEl.textContent="";
 }
 
 function updateScore() {
@@ -370,7 +370,7 @@ document.getElementById('aiButton').addEventListener('click', () => {
   
   socket.emit('playAI');
   statusEl.textContent = "與電腦對戰開始！";
-  // document.getElementById('aiButton').style.display = "none";
+  document.getElementById('aiButton').style.display = "none";
 });
 
 socket.on("pass", ({ skippedColor, nextTurn }) => {
@@ -530,6 +530,7 @@ function showcat_real(x, y, imageUrl) {
 }
 
 // let Mask_x = 0;
+let offset = 0; // 偏移量
 initializeMask(); // 初始化遮罩位置
 window.addEventListener('resize', () => {
   initializeMask(); // 每次視窗大小變化就重新定位遮罩
@@ -541,7 +542,7 @@ function initializeMask() {
   const rect = board.getBoundingClientRect();  // 取得棋盤在視窗的實際位置
   const svg = maskRect.getBoundingClientRect(); // 取得 SVG 的位置
   // 計算棋盤相對於 SVG 的位置
-  const x = rect.left - svg.left;
+  const x = rect.left - svg.left-offset; // 減去偏移量
   const y = rect.top - svg.top;
 
   // 設定遮罩位置
@@ -556,10 +557,10 @@ function updateBoardOffset() {
   const white = parseInt(document.getElementById("whiteCount").textContent);
   
 
-  const pixelPerDifference = 12;
-  const maxOffset = 200;
+  const pixelPerDifference = 14;
+  const maxOffset = 425;
 
-  let offset = (black - white) * pixelPerDifference;
+  offset = (black - white) * pixelPerDifference;
   offset = Math.max(-maxOffset, Math.min(maxOffset, offset));
 
   const boardWrapper = document.getElementById("game-wrapper");
@@ -575,8 +576,6 @@ function updateBoardOffset() {
   const maskRect = document.getElementById('maskRect');
   maskRect.style.transform = `translateX(${offset}px)`;
   maskRect.style.transition = "transform 0.5s ease";
-
-
 }
 
 let lastState = "black"; // "black"、"white" 或 "tie"
@@ -600,9 +599,9 @@ function updateCounts(blackScore, whiteScore) {
   if(blackScore === 2 && whiteScore === 2) {
     currentState = "black"; // 特例：兩人都只有 2 分時，強制顯示黑棋
   }
-  console.log(`當前狀態: ${currentState}， 上次狀態: ${lastState}`);
+  // console.log(`當前狀態: ${currentState}， 上次狀態: ${lastState}`);
 
-  console.log(`黑棋: ${blackScore}, 白棋: ${whiteScore}`);
+  // console.log(`黑棋: ${blackScore}, 白棋: ${whiteScore}`);
 
   // 根據目前狀態與分數，決定是否要交換
   if (lastState === "black" && currentState === "white") {
@@ -610,13 +609,13 @@ function updateCounts(blackScore, whiteScore) {
     blackDiv.style.transform = "translateY(100%)";
     whiteDiv.style.transform = "translateY(-100%)";
     lastState = "white";
-    console.log("白棋逆轉，白在上");
+    // console.log("白棋逆轉，白在上");
   } else if (lastState === "white" && currentState === "black") {
     // 黑棋逆轉，黑在上
     blackDiv.style.transform = "translateY(-0%)";
     whiteDiv.style.transform = "translateY(0%)";
     lastState = "black";
-    console.log("黑棋逆轉，黑在上");
+    // console.log("黑棋逆轉，黑在上");
   }
 }
 const videoUrl = "picture/output.webm";

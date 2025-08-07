@@ -267,6 +267,12 @@ function createInitialBoard() {
   board[3][4] = 'black';
   board[4][3] = 'black';
   board[4][4] = 'white';
+  //   for (let y = 0; y < 8; y++) {
+  //   for (let x = 0; x < 7; x++) {
+  //    board[y][x] = 'white'; 
+  //   }
+  // }
+  // board[0][0] = 'black'; // 在左上角放置白棋
   return board;
 }
 
@@ -310,6 +316,7 @@ function hasValidMove(board, color) {
   for (let y = 0; y < 8; y++) {
     for (let x = 0; x < 8; x++) {
       if (!board[y][x] && getFlippable(board, x, y, color).length > 0) {
+        // console.log(`玩家 ${color} 可以在 (${x}, ${y}) 下棋`);
         return true;
       }
     }
