@@ -206,7 +206,7 @@ h1 {
   
 }
 
-#board-image {
+#board-image, #board-video {
   position: absolute;
   top: 0;
   left: 0;
@@ -224,8 +224,8 @@ svg {
   left: 0;
   pointer-events: none;
 }
-    
-#image-layer {
+
+#image-layer , #video-layer {
   position: fixed;
   top: 0;
   left: 0;
@@ -512,6 +512,7 @@ svg {
 .shake {
   animation: shake 0.4s ease-in-out;
 }
+
 #background-video {
   position: fixed;
   right: 0;

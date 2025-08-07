@@ -97,7 +97,7 @@ socket.on("playerColor", color => {
   const catSource = document.getElementById("board-video-source");
   const boardImage = document.getElementById("board-image");
   const catOptions = color === "black"
-    ? ["cat_b1.jpg" ]
+    ? ["cat_b1.jpg","cat_b2.jpg","cat_b1.mp4" ]
     : ["cat_w1.mp4", "cat_w2.mp4", ];
   const randomCat = catOptions[Math.floor(Math.random() * catOptions.length)];
   catSource.src = `picture/${randomCat}`;
@@ -147,6 +147,12 @@ socket.on("playerColor", color => {
 // 遊戲開始時初始化畫面與狀態
 socket.on("startGame", data => {
   currentTurn = data.turn;       // 設定當前回合
+  const aiBtn = document.getElementById('aiButton');
+if (aiBtn) {
+  aiBtn.style.display = "none";
+} else {
+  console.warn("找不到 aiButton，可能尚未載入 DOM！");
+}
   updateStatus();                // 更新畫面狀態
   // updateBoard(data.board);       // 更新棋盤內容
    initializeMask(); // 初始化遮罩位置
@@ -233,10 +239,12 @@ socket.on("gameOver", ({ black, white, winner }) => {
   let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
   msg += winner === "draw" ? " 平手！" : winner === myColor ? " 你贏了！" : " 你輸了！";
   statusEl.textContent = msg;
+   initializeMask();
 });
 
 socket.on("opponentLeft", () => {
   statusEl.textContent = "對手已離開房間，遊戲結束。";
+   initializeMask();
 });
 function hasValidMove(board, color) {
   for (let y = 0; y < 8; y++) {
