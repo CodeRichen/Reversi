@@ -96,18 +96,28 @@ socket.on("playerColor", color => {
   const catVideo = document.getElementById("board-video");
   const catSource = document.getElementById("board-video-source");
   const boardImage = document.getElementById("board-image");
-  const catOptions = color === "black"
-    ? ["cat_b1.jpg","cat_b2.jpg","cat_b1.mp4" ]
-    : ["cat_w1.mp4", "cat_w2.mp4", ];
-  const randomCat = catOptions[Math.floor(Math.random() * catOptions.length)];
+
+  const bcat =  ["cat_b1.jpg","cat_b2.jpg","cat_b3.jpg","cat_b5.jpg","cat_b1.mp4","cat_b2.mp4" ];
+  const wcat = ["cat_w1.jpg","cat_w1.mp4","cat_w2.mp4","cat_w3.mp4"];
+  const wbcat = ["cat_wb1.jpg"];
+
+  // 根據玩家顏色組出可用的背景列表
+  let availableBackgrounds = [];
+  if (color === "black") {
+    availableBackgrounds = [...bcat, ...wbcat];
+  } else {
+    availableBackgrounds = [...wcat, ...wbcat];
+  }
+
+  const randomCat = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
   catSource.src = `picture/${randomCat}`;
+
   const mediaPath = `picture/${randomCat}`;
     const isVideo = randomCat.endsWith(".mp4");
     if (isVideo) {
     // 顯示影片，隱藏圖片
     boardImage.style.display = "none";
     catVideo.style.display = "block";
-
     catSource.src = mediaPath;
     catVideo.load();
     catVideo.play();
@@ -119,28 +129,41 @@ socket.on("playerColor", color => {
     boardImage.src = mediaPath;
   }
 
-  // 背景影片（背景系列）
-  const bgVideo = document.getElementById("background-video");
-  const bgSource = bgVideo.querySelector("source");
+ const bgVideo = document.getElementById("bgVideo");
+const bgImage = document.getElementById("bgImage");
 
-  // 定義各種背景影片清單
-  const wBackgrounds = ["w-background1.mp4", "w-background2.mp4"];
-  const bBackgrounds = ["b-background1.mp4", "b-background2.mp4" ];
-  const wbBackgrounds = ["wb-background1.mp4"];
+// 背景檔案清單
+const bBackgrounds = ["b-background1.mp4", "b-background2.mp4", "b-background1.jpg", "b-background2.jpg", "b-background3.jpg", "b-background4.jpg"];
+const wBackgrounds = ["w-background1.mp4", "w-background1.jpg", "w-background2.jpg"];
+const wbBackgrounds = ["wb-background1.mp4", "wb-background1.jpg"];
 
-  // 根據玩家顏色組出可用的背景列表
-  let availableBackgrounds = [];
-  if (color === "black") {
-    availableBackgrounds = [...bBackgrounds, ...wbBackgrounds];
-  } else {
-    availableBackgrounds = [...wBackgrounds, ...wbBackgrounds];
-  }
+// 假設玩家顏色
 
-  // 隨機選擇其中一個
-  const randomBg = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
-  bgSource.src = `picture/${randomBg}`;
-  bgVideo.load();
+// 組出可用背景
+ availableBackgrounds = [];
+if (color === "black") {
+  availableBackgrounds = [...bBackgrounds, ...wbBackgrounds];
+} else {
+  availableBackgrounds = [...wBackgrounds, ...wbBackgrounds];
+}
+
+// 隨機選一個
+const randomBg = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
+ const mediaPath2 = `picture/${randomBg}`;
+ const isVideo2 = randomBg.endsWith(".mp4");
+
+if (isVideo2) {
+  bgImage.style.display = "none";
+  bgVideo.style.display = "block";
+  bgVideo.src = mediaPath2;
   bgVideo.play();
+} else {
+  bgVideo.pause();
+  bgVideo.style.display = "none";
+  bgImage.style.display = "block";
+  bgImage.src = mediaPath2;
+}
+
 });
 
 
@@ -215,7 +238,7 @@ socket.on("place", idx => {
 });
 // 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => {
-  
+  updateBoardOffset(flippedPositions);
   // console.log(`玩家 ${player} 翻轉了 ${flippedCount} 顆棋子`);
     if (flippedCount > 0) {
     audio_meow.play();
@@ -230,6 +253,8 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => 
   opponentScore = scores[myColor === "black" ? "white" : "black"];
 
   flippedPositions.forEach(([x, y]) => animateFlip(x, y));
+
+  
   updateScore();
 });
 
@@ -309,7 +334,7 @@ function updateBoard(board, changeImage = false) {
   document.getElementById("whiteCount").textContent = white;
         if(!changeImage) {
         updateCounts(black, white);
-        updateBoardOffset();
+        
       }
 }
 
@@ -538,7 +563,8 @@ function showcat_real(x, y, imageUrl) {
 }
 
 // let Mask_x = 0;
-let offset = 0; // 偏移量
+let verticalOffset = -2; // Y 偏移量
+let horizontalOffset = -2; // X 偏移量
 initializeMask(); // 初始化遮罩位置
 window.addEventListener('resize', () => {
   initializeMask(); // 每次視窗大小變化就重新定位遮罩
@@ -550,41 +576,86 @@ function initializeMask() {
   const rect = board.getBoundingClientRect();  // 取得棋盤在視窗的實際位置
   const svg = maskRect.getBoundingClientRect(); // 取得 SVG 的位置
   // 計算棋盤相對於 SVG 的位置
-  const x = rect.left - svg.left-offset; // 減去偏移量
-  const y = rect.top - svg.top;
+  const x = rect.left - svg.left-horizontalOffset; // 減去偏移量
+  const y = rect.top - svg.top-verticalOffset;
 
   // 設定遮罩位置
   maskRect.setAttribute("x", x);
   maskRect.setAttribute("y", y);
   // Mask_x = x; // 儲存初始位置
-  console.log(`遮罩位置初始化：x=${x}, y=${y}`);
-}
-
-function updateBoardOffset() {
-  const black = parseInt(document.getElementById("blackCount").textContent);
-  const white = parseInt(document.getElementById("whiteCount").textContent);
-  
-
-  const pixelPerDifference = 14;
-  const maxOffset = 425;
-
-  offset = (black - white) * pixelPerDifference;
-  offset = Math.max(-maxOffset, Math.min(maxOffset, offset));
-
+  // console.log(`遮罩位置初始化：x=${x}, y=${y}`);
   const boardWrapper = document.getElementById("game-wrapper");
-  boardWrapper.style.position = "relative"; // 確保可以用 left
-  boardWrapper.style.left = `${offset}px`;  // 偏移而不破壞布局
-  boardWrapper.style.transition = "left 0.5s ease";
-
-  const countsEl = document.getElementById("counts");
-  countsEl.style.position = "relative";
-  countsEl.style.left = `${offset}px`;
-  countsEl.style.transition = "left 0.5s ease";
-
-  const maskRect = document.getElementById('maskRect');
-  maskRect.style.transform = `translateX(${offset}px)`;
+    // 先設定好 transition，確保第一次動作同步
+  boardWrapper.style.left = "0px";
+  boardWrapper.style.top = "0px";
+  maskRect.style.transform = "translate(0px, 0px)";
+  boardWrapper.style.transition = "left 0.5s ease, top 0.5s ease";
   maskRect.style.transition = "transform 0.5s ease";
 }
+
+function updateBoardOffset(flippedPositions) {
+  const black = parseInt(document.getElementById("blackCount").textContent);
+  const white = parseInt(document.getElementById("whiteCount").textContent);
+
+  const boardWrapper = document.getElementById("game-wrapper");
+  const countsEl = document.getElementById("counts");
+  const maskRect = document.getElementById("maskRect");
+
+  /* ---------- 水平偏移計算（分數差） ---------- */
+  const pixelPerDifference = 14;
+  const maxHorizontalOffset = window.innerWidth / 2;
+  horizontalOffset = (black - white) * pixelPerDifference;
+  horizontalOffset = Math.max(-maxHorizontalOffset, Math.min(maxHorizontalOffset, horizontalOffset,425),-425);
+
+  /* ---------- 垂直偏移計算（翻轉位置分佈） ---------- */
+  const middleY = 4; // 棋盤上半部/下半部分界
+  let topCount = 0, bottomCount = 0;
+  flippedPositions.forEach(([x, y]) => {
+    if (y < middleY) topCount++;
+    else bottomCount++;
+  });
+
+  const pixelPerFlip = 18;
+  const maxVerticalOffset = window.innerHeight / 2;
+  verticalOffset = (bottomCount - topCount) * pixelPerFlip;
+  verticalOffset = Math.max(-maxVerticalOffset, Math.min(maxVerticalOffset, verticalOffset,110),-110);
+  console.log(`水平偏移: ${horizontalOffset}, 垂直偏移: ${verticalOffset}，最高偏移y: ${window.innerHeight/2}，最高偏移x: ${window.innerWidth/2}`);
+  /* ---------- 棋盤本體偏移 ---------- */
+  boardWrapper.style.position = "relative";
+  boardWrapper.style.left = `${horizontalOffset}px`;
+  boardWrapper.style.top = `${verticalOffset}px`;
+  boardWrapper.style.transition = "left 0.5s ease, top 0.5s ease";
+
+  /* ---------- counts 偏移 & 防出界處理 ---------- */
+  countsEl.style.transition = "left 0.5s ease, top 0.5s ease";
+  const boardRect = boardWrapper.getBoundingClientRect();
+  const countsHeight = countsEl.offsetHeight;
+
+  // if (boardRect.top + verticalOffset < countsHeight + 10) {
+  //   // 超出上方 → 放棋盤底下
+  //   countsEl.style.position = "absolute";
+  //   countsEl.style.top = "100%";
+  //   countsEl.style.marginTop = "10px";
+  //   countsEl.style.left = "0";
+  // } else if (boardRect.bottom + verticalOffset > window.innerHeight - countsHeight - 10) {
+  //   // 超出下方 → 放棋盤上方
+  //   countsEl.style.position = "absolute";
+  //   countsEl.style.top = `-${countsHeight + 10}px`;
+  //   countsEl.style.marginTop = "0";
+  //   countsEl.style.left = "0";
+  // } else {
+    // 正常位置（隨偏移移動）
+    countsEl.style.position = "relative";
+    countsEl.style.left = `${horizontalOffset}px`;
+    countsEl.style.top = `${verticalOffset}px`;
+  // }
+
+  /* ---------- maskRect 同步 2D 偏移 ---------- */
+  maskRect.style.transform = `translate(${horizontalOffset}px, ${verticalOffset}px)`;
+  maskRect.style.transition = "transform 0.5s ease";
+}
+
+
 
 let lastState = "black"; // "black"、"white" 或 "tie"
 
@@ -708,9 +779,9 @@ vid.src = videoUrl + "?t=" + Date.now();
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  setupBorderVideos(); // 初始化邊框影片
-});
+
+setupBorderVideos(); // 初始化邊框影片
+
 
 
 function resetBorderVideos() {

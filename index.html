@@ -7,10 +7,12 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <video id="background-video" autoplay muted loop playsinline>
-  <source  type="video/mp4">
-  您的瀏覽器不支援 HTML5 video。
-</video>
+<div id="background">
+  <img id="bgImage" src="" alt="背景圖片">
+  <video id="bgVideo" autoplay muted loop></video>
+</div>
+
+
   <!-- <h1>雙人黑白棋</h1> -->
   <div id="status">正在連線...</div>
   <button id="aiButton">與電腦對戰</button>
@@ -32,9 +34,6 @@
   id="video-template"
   style="display: none;"
 ></video>
-
-
-
 
   <!-- <div id="score">分數 - 你: 0 | 對手: 0</div> -->
 <div class="board-container">
