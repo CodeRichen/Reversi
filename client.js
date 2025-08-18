@@ -264,7 +264,8 @@ socket.on("gameOver", ({ black, white, winner }) => {
   let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
   msg += winner === "draw" ? " 平手！" : winner === myColor ? " 你贏了！" : " 你輸了！";
   statusEl.textContent = msg;
-   initializeMask();
+    setTimeout(() => initializeMask(), 200); //TODO
+  
 });
 
 socket.on("opponentLeft", () => {
