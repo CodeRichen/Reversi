@@ -28,6 +28,7 @@ h1 {
   font-size: 16px;
   backdrop-filter: blur(3px); /* 讓背景更有質感 */
   position: relative;
+  z-index: 10; /* 確保 counts 在其他元素之上 */
 }
 
 .count-item {

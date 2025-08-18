@@ -585,9 +585,12 @@ function initializeMask() {
   // Mask_x = x; // 儲存初始位置
   // console.log(`遮罩位置初始化：x=${x}, y=${y}`);
   const boardWrapper = document.getElementById("game-wrapper");
+  const countsEl = document.getElementById("counts");
     // 先設定好 transition，確保第一次動作同步
   boardWrapper.style.left = "0px";
   boardWrapper.style.top = "0px";
+  countsEl.style.left = "0px";
+  countsEl.style.top = "0px";
   maskRect.style.transform = "translate(0px, 0px)";
   boardWrapper.style.transition = "left 0.5s ease, top 0.5s ease";
   maskRect.style.transition = "transform 0.5s ease";
@@ -626,29 +629,16 @@ function updateBoardOffset(flippedPositions) {
   boardWrapper.style.top = `${verticalOffset}px`;
   boardWrapper.style.transition = "left 0.5s ease, top 0.5s ease";
 
+
   /* ---------- counts 偏移 & 防出界處理 ---------- */
   countsEl.style.transition = "left 0.5s ease, top 0.5s ease";
-  const boardRect = boardWrapper.getBoundingClientRect();
-  const countsHeight = countsEl.offsetHeight;
-
-  // if (boardRect.top + verticalOffset < countsHeight + 10) {
-  //   // 超出上方 → 放棋盤底下
-  //   countsEl.style.position = "absolute";
-  //   countsEl.style.top = "100%";
-  //   countsEl.style.marginTop = "10px";
-  //   countsEl.style.left = "0";
-  // } else if (boardRect.bottom + verticalOffset > window.innerHeight - countsHeight - 10) {
-  //   // 超出下方 → 放棋盤上方
-  //   countsEl.style.position = "absolute";
-  //   countsEl.style.top = `-${countsHeight + 10}px`;
-  //   countsEl.style.marginTop = "0";
-  //   countsEl.style.left = "0";
-  // } else {
-    // 正常位置（隨偏移移動）
-    countsEl.style.position = "relative";
-    countsEl.style.left = `${horizontalOffset}px`;
+  console.log(countsEl.getBoundingClientRect().top);
+if (!(countsEl.getBoundingClientRect().top + verticalOffset < 0) ) {
     countsEl.style.top = `${verticalOffset}px`;
-  // }
+  }
+    // 正常位置（隨偏移移動）
+    countsEl.style.left = `${horizontalOffset}px`;
+  
 
   /* ---------- maskRect 同步 2D 偏移 ---------- */
   maskRect.style.transform = `translate(${horizontalOffset}px, ${verticalOffset}px)`;
