@@ -267,7 +267,7 @@ function createInitialBoard() {
   board[3][4] = 'black';
   board[4][3] = 'black';
   board[4][4] = 'white';
-  //TODO
+  //TODO 測試結束用
     for (let y = 0; y < 7; y++) {
     for (let x = 0; x < 8; x++) {
      board[y][x] = 'white'; 
@@ -280,6 +280,7 @@ function createInitialBoard() {
   board[7][3] = 'black';
   board[7][4] = 'black';
   board[7][5] = 'black';
+  
   return board;
 }
 
@@ -341,7 +342,7 @@ function endGame(room) {
   const white = flat.filter(c => c === 'white').length;
   const winner = black > white ? 'black' : white > black ? 'white' : 'draw';
 
-  room.players.forEach(s => s.emit("gameOver", { black, white, winner, color: s === room.players[0] ? 'black' : 'white' }));
+  room.players.forEach(s => s.emit("gameOver", { black, white, winner}));
 }
 
 function emitUpdateBoard(room) {

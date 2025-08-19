@@ -260,20 +260,42 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => 
 
 
 
-socket.on("gameOver", ({ black, white, winner,color }) => {
+socket.on("gameOver", ({ black, white, winner}) => {
   // let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
   // msg += winner === "draw" ? " 平手！" : winner === myColor ? " 你贏了！" : " 你輸了！";
   // statusEl.textContent = msg;
-    setTimeout(() => initializeMask(), 300); //TODO
+    setTimeout(() => initializeMask(), 350); //TODO
     
-  showGameOver(winner, color);
+  showGameOver(winner);
 });
 
-function showGameOver(winner, myColor) {
-  let overlay = document.createElement("div");
-  overlay.id = "game-over-overlay";
-  document.body.appendChild(overlay);
+function showGameOver(winner) {
+  let overlay = document.getElementById("game-over-overlay");
 
+  // 如果不存在就建立
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "game-over-overlay";
+    document.body.appendChild(overlay);
+  }
+
+  // 清空舊的內容
+  overlay.innerHTML = "";
+  
+  // 根據顏色加 class
+  if (myColor === "black") {
+    overlay.classList.add("dark");
+    overlay.classList.remove("light");
+    overlay.classList.remove("striped");
+  } else if (myColor === "white") {
+    overlay.classList.add("light");
+    overlay.classList.remove("dark");
+    overlay.classList.remove("striped");
+  }
+  if (winner === "draw") {
+  }
+
+  // 建立三行文字
   let texts = [];
   for (let i = 0; i < 3; i++) {
     let text = document.createElement("div");
@@ -282,6 +304,7 @@ function showGameOver(winner, myColor) {
     overlay.appendChild(text);
   }
 
+  // 設定文字內容
   if (winner === "draw") {
     texts[0].textContent = "THIS";
     texts[1].textContent = "ARE";
@@ -289,25 +312,25 @@ function showGameOver(winner, myColor) {
   } else if (winner === myColor) {
     texts[0].textContent = "YOU";
     texts[1].textContent = "ARE";
-    texts[2].textContent = "WIN";
+    texts[2].textContent = "WINNER";
   } else {
     texts[0].textContent = "YOU";
     texts[1].textContent = "ARE";
-    texts[2].textContent = "LOSE";
+    texts[2].textContent = "LOSER";
   }
 
-  // 延遲 1 秒後依序顯示文字
+  // 延遲依序顯示文字
   texts.forEach((t, i) => {
     setTimeout(() => {
       t.classList.remove("hidden");
       t.classList.add("show", `slide-${i % 2 === 0 ? "left" : "right"}`);
-    }, 1000 + i * 500); // 先等 1 秒，再每行間隔 0.5 秒
+    }, 1000 + i * 500);
   });
 
   // 3 秒後清空
   setTimeout(() => {
     overlay.remove();
-  }, 1000 + texts.length * 500 + 3000); // 全部顯示完再等 3 秒
+  }, 1000 + texts.length * 500 + 3000);
 }
 
 
@@ -416,7 +439,7 @@ function animateFlip(x, y) {
     // 爆星星 ✨
     for (let i = 0; i < 6; i++) {
       const star = document.createElement('span');
-      star.classList.add('star');none2l
+      star.classList.add('star');
       const angle = Math.random() * 2 * Math.PI;
       const radius = Math.random() * 30 + 10;
       const xOffset = Math.cos(angle) * radius + 'px';
@@ -667,7 +690,7 @@ function updateBoardOffset(flippedPositions) {
   const maxVerticalOffset = window.innerHeight / 2;
   verticalOffset = (bottomCount - topCount) * pixelPerFlip;
   verticalOffset = Math.max(-maxVerticalOffset, Math.min(maxVerticalOffset, verticalOffset,110),-110);
-  console.log(`水平偏移: ${horizontalOffset}, 垂直偏移: ${verticalOffset}，最高偏移y: ${window.innerHeight/2}，最高偏移x: ${window.innerWidth/2}`);
+  // console.log(`水平偏移: ${horizontalOffset}, 垂直偏移: ${verticalOffset}，最高偏移y: ${window.innerHeight/2}，最高偏移x: ${window.innerWidth/2}`);
   /* ---------- 棋盤本體偏移 ---------- */
   boardWrapper.style.position = "relative";
   boardWrapper.style.left = `${horizontalOffset}px`;
@@ -677,7 +700,7 @@ function updateBoardOffset(flippedPositions) {
 
   /* ---------- counts 偏移 & 防出界處理 ---------- */
   countsEl.style.transition = "left 0.5s ease, top 0.5s ease";
-  console.log(countsEl.getBoundingClientRect().top);
+  
 if (!(countsEl.getBoundingClientRect().top + verticalOffset < 0) ) {
     countsEl.style.top = `${verticalOffset}px`;
   }
