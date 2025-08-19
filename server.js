@@ -268,12 +268,18 @@ function createInitialBoard() {
   board[4][3] = 'black';
   board[4][4] = 'white';
   //TODO
-  //   for (let y = 0; y < 8; y++) {
-  //   for (let x = 0; x < 7; x++) {
-  //    board[y][x] = 'white'; 
-  //   }
-  // }
-  // board[0][0] = 'black'; // 在左上角放置白棋
+    for (let y = 0; y < 7; y++) {
+    for (let x = 0; x < 8; x++) {
+     board[y][x] = 'white'; 
+    }
+  }
+  board[0][0] = 'black'; 
+  board[7][0] = 'black';
+  board[7][1] = 'black';
+  board[7][2] = 'black';
+  board[7][3] = 'black';
+  board[7][4] = 'black';
+  board[7][5] = 'black';
   return board;
 }
 
@@ -335,7 +341,7 @@ function endGame(room) {
   const white = flat.filter(c => c === 'white').length;
   const winner = black > white ? 'black' : white > black ? 'white' : 'draw';
 
-  room.players.forEach(s => s.emit("gameOver", { black, white, winner }));
+  room.players.forEach(s => s.emit("gameOver", { black, white, winner, color: s === room.players[0] ? 'black' : 'white' }));
 }
 
 function emitUpdateBoard(room) {

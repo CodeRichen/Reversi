@@ -16,6 +16,64 @@ h1 {
   margin-bottom: 10px;
 }
 
+#game-over-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around; /* 三行分佈在上/中/下 */
+  align-items: center;
+  z-index: 9999;
+}
+
+#game-over-overlay .game-over-text {
+  font-size: 14vw;
+  font-weight: bold;
+  color: red;
+  text-shadow: 0 0 20px #ff0000, 0 0 40px #ff4444, 0 0 60px #ff8888;
+  opacity: 0;
+}
+
+/* YOU (第一行) → 從左進來，立即播放 */
+#game-over-overlay .game-over-text:nth-child(1) {
+  animation: slide-left 1.5s forwards, neon-glow 1.5s infinite alternate;
+  animation-delay: 0s;
+}
+
+/* ARE (第二行) → 從右進來，延遲 1s */
+#game-over-overlay .game-over-text:nth-child(2) {
+  animation: slide-right 1.5s forwards, neon-glow 1.5s infinite alternate;
+  animation-delay: 0.5s;
+}
+
+/* WIN (第三行) → 從左進來，延遲 2s */
+#game-over-overlay .game-over-text:nth-child(3) {
+  animation: slide-left 1.5s forwards, neon-glow 1.5s infinite alternate;
+  animation-delay: 1s;
+}
+
+/* 左滑入動畫 */
+@keyframes slide-left {
+  from { transform: translateX(-100vw); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+/* 右滑入動畫 */
+@keyframes slide-right {
+  from { transform: translateX(100vw); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+/* 霓虹閃爍 */
+@keyframes neon-glow {
+  from { text-shadow: 0 0 10px #ff0000, 0 0 20px #ff4444, 0 0 30px #ff8888; }
+  to   { text-shadow: 0 0 20px #ff4444, 0 0 40px #ff6666, 0 0 60px #ffaaaa; }
+}
+
+
+
 #counts {
   background-color: rgba(255, 255, 255, 0.6); /* 半透明背景，可依需求調整 */
   padding: 5px 10px;

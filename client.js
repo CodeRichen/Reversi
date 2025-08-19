@@ -260,13 +260,57 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => 
 
 
 
-socket.on("gameOver", ({ black, white, winner }) => {
-  let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
-  msg += winner === "draw" ? " 平手！" : winner === myColor ? " 你贏了！" : " 你輸了！";
-  statusEl.textContent = msg;
-    setTimeout(() => initializeMask(), 200); //TODO
-  
+socket.on("gameOver", ({ black, white, winner,color }) => {
+  // let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
+  // msg += winner === "draw" ? " 平手！" : winner === myColor ? " 你贏了！" : " 你輸了！";
+  // statusEl.textContent = msg;
+    setTimeout(() => initializeMask(), 300); //TODO
+    
+  showGameOver(winner, color);
 });
+
+function showGameOver(winner, myColor) {
+  let overlay = document.createElement("div");
+  overlay.id = "game-over-overlay";
+  document.body.appendChild(overlay);
+
+  let texts = [];
+  for (let i = 0; i < 3; i++) {
+    let text = document.createElement("div");
+    text.className = "game-over-text hidden"; // 初始隱藏
+    texts.push(text);
+    overlay.appendChild(text);
+  }
+
+  if (winner === "draw") {
+    texts[0].textContent = "THIS";
+    texts[1].textContent = "ARE";
+    texts[2].textContent = "DRAW";
+  } else if (winner === myColor) {
+    texts[0].textContent = "YOU";
+    texts[1].textContent = "ARE";
+    texts[2].textContent = "WIN";
+  } else {
+    texts[0].textContent = "YOU";
+    texts[1].textContent = "ARE";
+    texts[2].textContent = "LOSE";
+  }
+
+  // 延遲 1 秒後依序顯示文字
+  texts.forEach((t, i) => {
+    setTimeout(() => {
+      t.classList.remove("hidden");
+      t.classList.add("show", `slide-${i % 2 === 0 ? "left" : "right"}`);
+    }, 1000 + i * 500); // 先等 1 秒，再每行間隔 0.5 秒
+  });
+
+  // 3 秒後清空
+  setTimeout(() => {
+    overlay.remove();
+  }, 1000 + texts.length * 500 + 3000); // 全部顯示完再等 3 秒
+}
+
+
 
 socket.on("opponentLeft", () => {
   statusEl.textContent = "對手已離開房間，遊戲結束。";
