@@ -399,6 +399,27 @@ svg {
   z-index: 2;
   
 }
+.disk.swing::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  height: 200%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 5;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0) 20%, rgba(255,255,102,0.8) 50%, rgba(255,255,102,0) 70%);
+  animation: neonPulse 2s infinite ease-in-out;
+}
+
+/* 調整 keyframes */
+@keyframes neonPulse {
+  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } /* 中間也有光 */
+  40%  { transform: translate(-50%, -50%) scale(0.7); opacity: 0.6; }
+  100%  { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+}
+
 
 @keyframes swing {
   0% { transform: rotate(0deg); }

@@ -436,7 +436,7 @@ function animateFlip(x, y) {
     const disk = cell.firstChild;
     disk.classList.add('flip');
     disk.classList.add("swing");
-  
+    
     // 爆星星 ✨
     for (let i = 0; i < 6; i++) {
       const star = document.createElement('span');

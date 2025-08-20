@@ -268,12 +268,12 @@ function createInitialBoard() {
   board[4][3] = 'black';
   board[4][4] = 'white';
   //TODO 測試結束用
-    for (let y = 0; y < 7; y++) {
-    for (let x = 0; x < 8; x++) {
-     board[y][x] = 'white'; 
-    }
-  }
-  board[0][0] = 'black'; 
+  //   for (let y = 0; y < 7; y++) {
+  //   for (let x = 0; x < 8; x++) {
+  //    board[y][x] = 'white'; 
+  //   }
+  // }
+  // board[0][0] = 'black'; 
   // board[7][0] = 'black';
   // board[7][1] = 'black';
   // board[7][2] = 'black';
