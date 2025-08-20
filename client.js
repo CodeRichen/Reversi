@@ -431,33 +431,35 @@ function showMessage(text) {
   messageEl.classList.add("show");
   setTimeout(() => messageEl.classList.remove("show"), 500);
 }
-
 function attachNotes(cell) {
-  const notes = [ "♩", "♪", "♫"];
+  const notes = ["♩", "♪", "♫"];
   const colors = ["gold", "deepskyblue", "hotpink", "limegreen", "orange", "violet"];
   const count = 5; // 每次 5 個音符
-  const minStartDist = 19; // 初始與棋子中心的距離
+  const minStartDist = 17;
   const maxStartDist = 21;
-  const stepDist = 10; // 每次擴散距離
-  const duration = 1.5; // 動畫時間
-
-  function createNote() {
+  const stepDist = 10;
+  const duration = 1.5;
+  const offsetY = 3; // 往下調整的量
+  function createNote(index) {
     const note = document.createElement("span");
     note.classList.add("note");
     note.textContent = notes[Math.floor(Math.random() * notes.length)];
     note.style.color = colors[Math.floor(Math.random() * colors.length)];
 
-    // 隨機角度
-    const angle = Math.random() * 2 * Math.PI;
+    // 等分角度，避免重疊
+    const baseAngle = (index / count) * 2 * Math.PI;
 
-    // 初始位置（不是正中心，稍微有一段距離）
+    // 加入一點隨機偏移（最多 ±10°）
+    const angle = baseAngle + (Math.random() - 0.5) * (Math.PI / 18);
+
+    // 初始半徑
     const r = minStartDist + Math.random() * (maxStartDist - minStartDist);
     const startX = Math.cos(angle) * r;
-    const startY = Math.sin(angle) * r;
+    const startY = Math.sin(angle) * r+ offsetY; ;
 
-    // 終點位置（再往外散一步）
+    // 終點位置
     const endX = Math.cos(angle) * (r + stepDist);
-    const endY = Math.sin(angle) * (r + stepDist);
+    const endY = Math.sin(angle) * (r + stepDist)+ offsetY; 
 
     note.style.setProperty("--startX", `${startX}px`);
     note.style.setProperty("--startY", `${startY}px`);
@@ -467,17 +469,17 @@ function attachNotes(cell) {
 
     cell.appendChild(note);
 
-    // 動畫結束後刪掉並重新生一個
     note.addEventListener("animationend", () => {
       note.remove();
-      createNote();
+      createNote(index); // 確保角度區隔仍然保持
     });
   }
 
   for (let i = 0; i < count; i++) {
-    createNote();
+    createNote(i);
   }
 }
+
 
 
 
