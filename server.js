@@ -274,12 +274,12 @@ function createInitialBoard() {
     }
   }
   board[0][0] = 'black'; 
-  board[7][0] = 'black';
-  board[7][1] = 'black';
-  board[7][2] = 'black';
-  board[7][3] = 'black';
-  board[7][4] = 'black';
-  board[7][5] = 'black';
+  // board[7][0] = 'black';
+  // board[7][1] = 'black';
+  // board[7][2] = 'black';
+  // board[7][3] = 'black';
+  // board[7][4] = 'black';
+  // board[7][5] = 'black';
   
   return board;
 }

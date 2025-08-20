@@ -223,8 +223,9 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
     cell.classList.add("fogged");
   } else {
     // 無棋子 → 清空內容
-    cell.innerHTML = "";
+    // cell.innerHTML = "";
   }
+
 });
 
 });
@@ -251,10 +252,10 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => 
   // 不用自己算分數，直接使用 server 傳來的
   myScore = scores[myColor];
   opponentScore = scores[myColor === "black" ? "white" : "black"];
-
+    document.querySelectorAll('.disk.swing').forEach(disk => {
+    disk.classList.remove('swing');
+  });
   flippedPositions.forEach(([x, y]) => animateFlip(x, y));
-
-  
   updateScore();
 });
 
@@ -264,7 +265,7 @@ socket.on("gameOver", ({ black, white, winner}) => {
   // let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
   // msg += winner === "draw" ? " 平手！" : winner === myColor ? " 你贏了！" : " 你輸了！";
   // statusEl.textContent = msg;
-    setTimeout(() => initializeMask(), 350); //TODO
+    setTimeout(() => initializeMask(), 550); //TODO
     
   showGameOver(winner);
 });
@@ -357,12 +358,14 @@ function updateBoard(board, changeImage = false) {
     const y = Math.floor(i / 8);
     const value = board[y][x];
 
-    cell.innerHTML = "";
+    const hadSwing = cell.firstChild?.classList.contains("swing");
+
+  cell.innerHTML = ""; // 砍掉
 
     if (value) {
       const disk = document.createElement("div");
       disk.className = `disk ${value}`;
-
+     if (hadSwing) disk.classList.add("swing");
       if (value === "white") {
         let imgName;
 
@@ -408,10 +411,7 @@ function updateBoard(board, changeImage = false) {
 
 
 
-function showMessage(text) {
-  const box = document.getElementById("messageBox");
-  box.innerText = text;
-}
+
 
 function updateStatus() {
   if (!myColor || !currentTurn) return;
@@ -435,7 +435,8 @@ function animateFlip(x, y) {
   if (cell && cell.firstChild) {
     const disk = cell.firstChild;
     disk.classList.add('flip');
-
+    disk.classList.add("swing");
+  
     // 爆星星 ✨
     for (let i = 0; i < 6; i++) {
       const star = document.createElement('span');

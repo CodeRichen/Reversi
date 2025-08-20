@@ -400,6 +400,18 @@ svg {
   
 }
 
+@keyframes swing {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.disk.swing {
+  animation: swing 1s infinite ease-in-out;
+}
+
 .disk.black {
   background-image: url('chess2.png');
   background-size: cover;
