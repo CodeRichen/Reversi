@@ -399,7 +399,29 @@ svg {
   z-index: 2;
   
 }
-.disk.swing::after {
+
+.note {
+  position: absolute;
+  font-size: 13px;
+  opacity: 1;
+  transform: translate(var(--startX), var(--startY)) scale(0.8);
+  animation: noteExpand forwards;
+  pointer-events: none;
+}
+
+@keyframes noteExpand {
+  0% {
+    opacity: 1;
+    transform: translate(var(--startX), var(--startY)) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--endX), var(--endY)) scale(1);
+  }
+}
+
+
+/* .disk.swing::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -411,7 +433,7 @@ svg {
   z-index: 5;
   background: radial-gradient(circle, rgba(255, 255, 255, 0) 20%, rgba(255,255,102,0.8) 50%, rgba(255,255,102,0) 70%);
   animation: neonPulse 2s infinite ease-in-out;
-}
+} */
 
 /* 調整 keyframes */
 @keyframes neonPulse {

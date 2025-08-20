@@ -255,6 +255,7 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => 
     document.querySelectorAll('.disk.swing').forEach(disk => {
     disk.classList.remove('swing');
   });
+  document.querySelectorAll('.note').forEach(note => note.remove());
   flippedPositions.forEach(([x, y]) => animateFlip(x, y));
   updateScore();
 });
@@ -359,13 +360,15 @@ function updateBoard(board, changeImage = false) {
     const value = board[y][x];
 
     const hadSwing = cell.firstChild?.classList.contains("swing");
-
-  cell.innerHTML = ""; // 砍掉
-
+    const hadNotes = cell.querySelector(".note") !== null;
+  // cell.innerHTML = ""; // 砍掉
+    const oldDisk = cell.querySelector(".disk");
+    if (oldDisk) oldDisk.remove();
     if (value) {
       const disk = document.createElement("div");
       disk.className = `disk ${value}`;
-     if (hadSwing) disk.classList.add("swing");
+      if (hadSwing) disk.classList.add("swing");
+      if (hadNotes) attachNotes(disk);
       if (value === "white") {
         let imgName;
 
@@ -429,6 +432,55 @@ function showMessage(text) {
   setTimeout(() => messageEl.classList.remove("show"), 500);
 }
 
+function attachNotes(cell) {
+  const notes = [ "♩", "♪", "♫"];
+  const colors = ["gold", "deepskyblue", "hotpink", "limegreen", "orange", "violet"];
+  const count = 5; // 每次 5 個音符
+  const minStartDist = 19; // 初始與棋子中心的距離
+  const maxStartDist = 21;
+  const stepDist = 10; // 每次擴散距離
+  const duration = 1.5; // 動畫時間
+
+  function createNote() {
+    const note = document.createElement("span");
+    note.classList.add("note");
+    note.textContent = notes[Math.floor(Math.random() * notes.length)];
+    note.style.color = colors[Math.floor(Math.random() * colors.length)];
+
+    // 隨機角度
+    const angle = Math.random() * 2 * Math.PI;
+
+    // 初始位置（不是正中心，稍微有一段距離）
+    const r = minStartDist + Math.random() * (maxStartDist - minStartDist);
+    const startX = Math.cos(angle) * r;
+    const startY = Math.sin(angle) * r;
+
+    // 終點位置（再往外散一步）
+    const endX = Math.cos(angle) * (r + stepDist);
+    const endY = Math.sin(angle) * (r + stepDist);
+
+    note.style.setProperty("--startX", `${startX}px`);
+    note.style.setProperty("--startY", `${startY}px`);
+    note.style.setProperty("--endX", `${endX}px`);
+    note.style.setProperty("--endY", `${endY}px`);
+    note.style.animationDuration = `${duration}s`;
+
+    cell.appendChild(note);
+
+    // 動畫結束後刪掉並重新生一個
+    note.addEventListener("animationend", () => {
+      note.remove();
+      createNote();
+    });
+  }
+
+  for (let i = 0; i < count; i++) {
+    createNote();
+  }
+}
+
+
+
 function animateFlip(x, y) {
   const idx = y * 8 + x;
   const cell = document.querySelector(`.cell[data-index='${idx}']`);
@@ -436,7 +488,8 @@ function animateFlip(x, y) {
     const disk = cell.firstChild;
     disk.classList.add('flip');
     disk.classList.add("swing");
-    
+    attachNotes(disk);
+
     // 爆星星 ✨
     for (let i = 0; i < 6; i++) {
       const star = document.createElement('span');
