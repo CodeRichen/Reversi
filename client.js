@@ -179,6 +179,9 @@ if (aiBtn) {
   updateStatus();                // 更新畫面狀態
   // updateBoard(data.board);       // 更新棋盤內容
    initializeMask(); // 初始化遮罩位置
+   renderScore(2, "blackScore");
+  renderScore(2, "whiteScore");
+
 });
 
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
@@ -192,7 +195,7 @@ socket.on("updateBoard", data => {
   const boardFrame = document.getElementById('board-frame');
   if (currentTurn === myColor) {
     boardFrame.classList.add('glowing');  
-    // playBorderAnimationOnTurn();
+    // playBorderAnimationOnTurn(); TODO
   }
   else{
     // resetBorderVideos();
@@ -236,6 +239,10 @@ socket.on("invalidMove", () => {
 });
 socket.on("place", idx => {
     audio_place.play();
+    const targetIndex = idx; 
+const specialCell = boardEl.querySelector(`[data-index="${targetIndex}"]`);
+// specialCell.classList.add("special"); TODO
+
 });
 // 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => {
@@ -404,17 +411,16 @@ function updateBoard(board, changeImage = false) {
     }
   });
 
-  document.getElementById("blackCount").textContent = black;
-  document.getElementById("whiteCount").textContent = white;
+  document.getElementById("blackScore").dataset.value = black;
+  document.getElementById("whiteScore").dataset.value = white;
+
+  // document.getElementById("blackScore").textContent = black; 
+  // document.getElementById("whiteScore").textContent = white;
         if(!changeImage) {
         updateCounts(black, white);
         
       }
 }
-
-
-
-
 
 function updateStatus() {
   if (!myColor || !currentTurn) return;
@@ -480,9 +486,6 @@ function attachNotes(cell) {
   }
 }
 
-
-
-
 function animateFlip(x, y) {
   const idx = y * 8 + x;
   const cell = document.querySelector(`.cell[data-index='${idx}']`);
@@ -519,9 +522,6 @@ function animateFlip(x, y) {
 
   }
 }
-
-
-
 
 document.getElementById('aiButton').addEventListener('click', () => {
   
@@ -719,10 +719,43 @@ function initializeMask() {
   boardWrapper.style.transition = "left 0.5s ease, top 0.5s ease";
   maskRect.style.transition = "transform 0.5s ease";
 }
+  const DIGIT_PATH = "digits"; // 手寫數字圖片資料夾
+  const MAX_PER_DIGIT = 200;   // 每個數字有幾種圖片
+
+  // 隨機取得某個數字的圖片
+  function getRandomDigitImage(digit) {
+    const randomIndex = Math.floor(Math.random() * MAX_PER_DIGIT);
+    return `${DIGIT_PATH}/${digit}/${randomIndex}.png`;
+  }
+
+  // 把數字轉成圖片並渲染到 span 裡
+function renderScore(newScore, spanId) {
+  const span = document.getElementById(spanId);
+  span.dataset.value = newScore.toString();
+  span.innerHTML = "";
+
+  newScore.toString().split("").forEach(ch => {
+    const img = document.createElement("img");
+    img.className = "digit-img";  // 套用正確 class
+    img.src = getRandomDigitImage(ch);
+    img.onload = () => {
+      img.style.opacity = 1; // 淡入
+    };
+    span.appendChild(img);
+  });
+}
+
+
 
 function updateBoardOffset(flippedPositions) {
-  const black = parseInt(document.getElementById("blackCount").textContent);
-  const white = parseInt(document.getElementById("whiteCount").textContent);
+  // const black = parseInt(document.getElementById("blackScore").textContent);
+  // const white = parseInt(document.getElementById("whiteScore").textContent);
+
+const black = parseInt(document.getElementById("blackScore").dataset.value || "0");
+const white = parseInt(document.getElementById("whiteScore").dataset.value || "0");
+
+  renderScore(black, "blackScore");
+  renderScore(white, "whiteScore");
 
   const boardWrapper = document.getElementById("game-wrapper");
   const countsEl = document.getElementById("counts");

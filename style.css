@@ -118,6 +118,16 @@ h1 {
   vertical-align: middle;
 }
 
+.digit-img {
+  width: 24px;
+  height: auto;
+  vertical-align: middle;
+  opacity: 0;
+  transition: opacity 1s ease; /* 淡入淡出動畫 */
+  filter: brightness(0) saturate(100%); /* 塗黑圖片 */
+}
+
+
 #score {
   position: absolute;
   top: 10px;
@@ -355,6 +365,33 @@ svg {
   border: 1px solid rgba(255, 255, 255, 0.7);
   transition: transform 0.2s, background-color 0.2s;
 }
+
+.cell.special {
+  transform: scale(1.5);
+    border: none; 
+}
+
+.cell.special::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: calc(100% );
+  height: calc(100% );
+  /* border: 5px solid purple; */
+   border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+  transform: rotate(45deg) ;
+  z-index: 2; /* 壓過 ::after */
+  pointer-events: none;
+  animation: spin 1.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: scale(1) rotate(0deg); }
+  to   { transform: scale(1) rotate(360deg); }
+}
+
 
 .cell.highlight {
   transform: scale(1.2);

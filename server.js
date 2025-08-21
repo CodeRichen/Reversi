@@ -80,14 +80,16 @@ let roomId;
     const x = idx % 8;
     const y = Math.floor(idx / 8);
     const flipped = getFlippable(room.board, x, y, color);
-
+    //TODO 改變樣式
+    
     if (room.board[y][x] || flipped.length === 0) {
       socket.emit("invalidMove");
       return;
     }
     room.players.forEach(p => {
-       p.emit("place");
+       p.emit("place",idx);
     });
+    
       setTimeout(() => {
     // 落子並翻轉棋子
     room.board[y][x] = color;
