@@ -76,7 +76,7 @@ let roomId;
 
   socket.on("move", idx => {
     if (room.turn !== color) return;
-
+    
     const x = idx % 8;
     const y = Math.floor(idx / 8);
     const flipped = getFlippable(room.board, x, y, color);
@@ -87,9 +87,9 @@ let roomId;
       return;
     }
     room.players.forEach(p => {
-       p.emit("place",idx);
+       p.emit("place");
     });
-    
+
       setTimeout(() => {
     // 落子並翻轉棋子
     room.board[y][x] = color;
@@ -114,6 +114,8 @@ let roomId;
     player: color,
     scores: room.scores
   }));
+      // 只發給對手，不發給自己，要在moveResult之後
+    socket.to(roomId).emit("placeidx", idx);
      if (room.ai) {
       // AI 自動下棋
       // console.log(`AI ${room.aiColor} 的回合`);
@@ -189,6 +191,7 @@ function aiMoveLogic(room) {
     room.players.forEach(p => {
        p.emit("place");
     });
+    
   // 廣播這次 AI 的動作給 client（
   room.players.forEach(s => s.emit("moveResult", {
     flippedCount: aiFlipped.length,
@@ -196,6 +199,7 @@ function aiMoveLogic(room) {
     player: aiColor,
     scores: room.scores
   }));
+  room.players.forEach(s => s.emit("placeidx", ay*8+ax));
 
       if (checkGameOver(room.board)) {
         endGame(room);

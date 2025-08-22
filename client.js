@@ -237,12 +237,14 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
 socket.on("invalidMove", () => {
   showMessage("這不是合法的落子位置");
 });
-socket.on("place", idx => {
+socket.on("place", () => {
     audio_place.play();
-    const targetIndex = idx; 
-const specialCell = boardEl.querySelector(`[data-index="${targetIndex}"]`);
-// specialCell.classList.add("special"); TODO
+});
+socket.on("placeidx", idx => {
 
+      const targetIndex = idx; 
+const specialCell = boardEl.querySelector(`[data-index="${targetIndex}"]`);
+  specialCell.classList.add("special"); 
 });
 // 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => {
@@ -263,6 +265,7 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => 
     disk.classList.remove('swing');
   });
   document.querySelectorAll('.note').forEach(note => note.remove());
+    document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('special'));
   flippedPositions.forEach(([x, y]) => animateFlip(x, y));
   updateScore();
 });
@@ -728,22 +731,41 @@ function initializeMask() {
     return `${DIGIT_PATH}/${digit}/${randomIndex}.png`;
   }
 
-  // 把數字轉成圖片並渲染到 span 裡
-function renderScore(newScore, spanId) {
+  function renderScore(newScore, spanId) {
   const span = document.getElementById(spanId);
-  span.dataset.value = newScore.toString();
-  span.innerHTML = "";
+  const digits = newScore.toString().split("");
 
-  newScore.toString().split("").forEach(ch => {
-    const img = document.createElement("img");
-    img.className = "digit-img";  // 套用正確 class
-    img.src = getRandomDigitImage(ch);
-    img.onload = () => {
-      img.style.opacity = 1; // 淡入
+  // 確保 digit-wrapper 數量和 digits 一致
+  while (span.children.length < digits.length) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "digit-wrapper";
+    span.appendChild(wrapper);
+  }
+  while (span.children.length > digits.length) {
+    span.removeChild(span.lastChild);
+  }
+
+  digits.forEach((ch, i) => {
+    const wrapper = span.children[i];
+    const oldImg = wrapper.querySelector("img");
+
+    const newImg = document.createElement("img");
+    newImg.className = "digit-img";
+    newImg.src = getRandomDigitImage(ch);
+
+    wrapper.appendChild(newImg);
+
+    newImg.onload = () => {
+      newImg.style.opacity = 1; // 新的淡入
+      if (oldImg) {
+        oldImg.style.opacity = 0; // 舊的淡出
+        setTimeout(() => oldImg.remove(), 500); // 動畫結束後移除
+      }
     };
-    span.appendChild(img);
   });
 }
+
+
 
 
 
@@ -800,6 +822,7 @@ if (!(countsEl.getBoundingClientRect().top + verticalOffset < 0) ) {
   /* ---------- maskRect 同步 2D 偏移 ---------- */
   maskRect.style.transform = `translate(${horizontalOffset}px, ${verticalOffset}px)`;
   maskRect.style.transition = "transform 0.5s ease";
+  console.log('遮罩位置更新：', horizontalOffset, verticalOffset,'棋盤位置：', boardWrapper.style.left, boardWrapper.style.top);
 }
 
 

@@ -118,14 +118,28 @@ h1 {
   vertical-align: middle;
 }
 
-.digit-img {
-  width: 24px;
-  height: auto;
-  vertical-align: middle;
-  opacity: 0;
-  transition: opacity 1s ease; /* 淡入淡出動畫 */
-  filter: brightness(0) saturate(100%); /* 塗黑圖片 */
+.digit-wrapper {
+  display: inline-block;   /* 讓每個數字並排 */
+  position: relative;      /* 當作圖片的定位基準 */
+  width: 24px;             /* 固定寬度，避免跳動 */
+  height: 32px;            /* 固定高度 (依圖片大小調整) */
+  vertical-align: middle;  /* 對齊文字中線 */
+    align-items: center; 
 }
+
+.digit-img {
+  position: absolute;      /* 疊在 wrapper 裡 */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  filter: brightness(0) saturate(100%);
+   margin: 0;
+  transform: translateY(3px); 
+}
+
 
 
 #score {
@@ -367,24 +381,25 @@ svg {
 }
 
 .cell.special {
-  transform: scale(1.5);
+  transform: scale(1);
     border: none; 
 }
 
 .cell.special::before {
   content: '';
   position: absolute;
-  top: -2px;
-  left: -2px;
+  top: 0px;
+  left: 0px;
   width: calc(100% );
   height: calc(100% );
-  /* border: 5px solid purple; */
-   border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid purple;
+    box-shadow: inset 0 0 12px  purple;
+   /* border: 1px solid rgba(255, 255, 255, 0.7); */
   border-radius: 6px;
-  transform: rotate(45deg) ;
+  /* transform: rotate(45deg) ; */
   z-index: 2; /* 壓過 ::after */
   pointer-events: none;
-  animation: spin 1.8s linear infinite;
+  /* animation: spin 3s linear infinite; */
 }
 
 @keyframes spin {
@@ -481,15 +496,15 @@ svg {
 
 
 @keyframes swing {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(5deg); }
-  50% { transform: rotate(0deg); }
-  75% { transform: rotate(-5deg); }
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(15deg); }
+  50%  { transform: rotate(-15deg); }
+  75%  { transform: rotate(15deg); }
   100% { transform: rotate(0deg); }
 }
 
 .disk.swing {
-  animation: swing 1s infinite ease-in-out;
+    animation: swing 1.5s infinite alternate ease-in-out;
 }
 
 .disk.black {
