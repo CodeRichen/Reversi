@@ -102,12 +102,7 @@ let roomId;
   room.scores[color] += flipped.length + bonus;
 
   // 廣播結果給所有該房間玩家
-  io.to(room.id).emit("moveResult", {
-    flippedCount: flipped.length,
-    flippedPositions: flipped,
-    player: color,
-    scores: room.scores // 把黑白分數一起傳回 client
-  });
+
     room.players.forEach(s => s.emit("moveResult", {
     flippedCount: flipped.length,
     flippedPositions: flipped,

@@ -178,7 +178,7 @@ if (aiBtn) {
 }
   updateStatus();                // 更新畫面狀態
   // updateBoard(data.board);       // 更新棋盤內容
-   initializeMask(); // 初始化遮罩位置
+   setTimeout(() => {  initializeMask()},50)  // TODO
    renderScore(2, "blackScore");
   renderScore(2, "whiteScore");
 
@@ -193,12 +193,20 @@ socket.on("updateBoard", data => {
   // console.log(`當前回合: ${currentTurn}, 我的顏色: ${myColor}`);
   // 假設是依據目前輪到誰
   const boardFrame = document.getElementById('board-frame');
+      const inners = document.querySelectorAll(".edge-horizontal .inner, .edge-vertical .inner");
+
   if (currentTurn === myColor) {
     boardFrame.classList.add('glowing');  
     // playBorderAnimationOnTurn(); TODO
+  document.querySelectorAll(".inner").forEach(inner => {
+    inner.classList.remove("paused");
+  });
   }
   else{
     // resetBorderVideos();
+      document.querySelectorAll(".inner").forEach(inner => {
+    inner.classList.add("paused");
+  });
     boardFrame.classList.remove('glowing');
   }
   if (currentTurn === "black" || currentTurn === "white") {

@@ -3,7 +3,6 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <!-- <title>雙人黑白棋</title> -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,98 +11,88 @@
   <video id="bgVideo" autoplay muted loop></video>
 </div>
 
+<div id="status">正在連線...</div>
+<button id="aiButton">與電腦對戰</button>
+<div id="pass-message" style="text-align: center; font-weight: bold; color: red; margin-bottom: 10px;"></div>
+<div id="messageBox" style="margin-top:10px; font-weight:bold; color:red;"></div>
 
-  <!-- <h1>雙人黑白棋</h1> -->
-  <div id="status">正在連線...</div>
-  <button id="aiButton">與電腦對戰</button>
-  <div id="pass-message" style="text-align: center; font-weight: bold; color: red; margin-bottom: 10px;"></div>
-  <div id="messageBox" style="margin-top:10px; font-weight:bold; color:red;"></div>
-
-  <!-- <div id="role">您是：等待分配角色...</div> -->
- <div id="counts">
-<div class="count-item" id="blackCounter" data-score="0">
-  <img src="chess2.png" class="count-icon"> <span id="blackScore"></span>
-</div>
-<div class="count-item" id="whiteCounter" data-score="0">
-  <img src="chess1.png" class="count-icon"> <span id="whiteScore"></span>
+<div id="counts">
+  <div class="count-item" id="blackCounter" data-score="0">
+    <img src="chess2.png" class="count-icon"> <span id="blackScore"></span>
+  </div>
+  <div class="count-item" id="whiteCounter" data-score="0">
+    <img src="chess1.png" class="count-icon"> <span id="whiteScore"></span>
+  </div>
 </div>
 
-</div>
-
-<video
-  id="video-template"
-  style="display: none;"
-></video>
-
-  <!-- <div id="score">分數 - 你: 0 | 對手: 0</div> -->
 <div class="board-container">
   <div id="game-wrapper">
     <div id="board-frame">
 
-      <!-- 上邊框影片 -->
-      <div class="frame-videos top-frame">
+      <!-- 上邊框 -->
+      <div class="edge-horizontal top">
+        <div class="inner"></div>
       </div>
 
       <div style="display: flex;">
-        <!-- 左邊框影片 -->
-        <div class="side-container">
-          <div class="frame-videos left-frame">
-          </div>
+        <!-- 左邊框 -->
+        <div class="edge-vertical left">
+          <div class="inner"></div>
           <div id="col-labels">
-            <div>8</div><div>7</div><div>6</div><div>5</div><div>4</div><div>3</div><div>2</div><div>1</div>
+            <div>8</div><div>7</div><div>6</div><div>5</div>
+            <div>4</div><div>3</div><div>2</div><div>1</div>
           </div>
         </div>
 
         <div>
           <div id="row-labels">
-            <div>A</div><div>B</div><div>C</div><div>D</div><div>E</div><div>F</div><div>G</div><div>H</div>
+            <div>A</div><div>B</div><div>C</div><div>D</div>
+            <div>E</div><div>F</div><div>G</div><div>H</div>
           </div>
-
-          <div id="board">
-           
-          </div>
+          <div id="board"></div>
         </div>
 
-        <!-- 右邊框影片 -->
-        <div class="frame-videos right-frame">
+        <!-- 右邊框 -->
+        <div class="edge-vertical right">
+          <div class="inner"></div>
         </div>
       </div>
 
-      <!-- 下邊框影片 -->
-      <div class="frame-videos bottom-frame">
+      <!-- 下邊框 -->
+      <div class="edge-horizontal bottom">
+        <div class="inner"></div>
       </div>
-
     </div>
+
     <img id="cat_bw" src="cat_b.png" alt="Overlay" />
   </div>
 </div>
 
 <div id="image-layer">
- <img id="board-image" >
+  <img id="board-image">
 </div>
+
 <div id="video-layer">
-              <video id="board-video" autoplay muted loop playsinline>
-              <source id="board-video-source"  type="video/mp4">
-            </video>
+  <video id="board-video" autoplay muted loop playsinline>
+    <source id="board-video-source" type="video/mp4">
+  </video>
 </div>
-<!-- 定義 SVG mask -->
+
 <svg width="100%" height="100%">
   <defs>
     <mask id="myMask">
-      <!-- 先把整個畫面塗黑(不透明度0)，完全遮住 -->
       <rect width="100%" height="100%" fill="black"/>
-      <!-- 白色區塊代表可見，稍後用 JS 改變位置 -->
       <rect id="maskRect" x="100" y="100" width="400" height="380" rx="10" ry="10" fill="white"/>
     </mask>
   </defs>
 </svg>
 
-  <div id="message"></div>
+<div id="message"></div>
 
-  <img id="floating-img" src="hand1.png" >
-  <img id="floating-img2" src="hand2.png" >
-  
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="client.js"></script>
+<img id="floating-img" src="hand1.png">
+<img id="floating-img2" src="hand2.png">
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="client.js"></script>
 </body>
 </html>
