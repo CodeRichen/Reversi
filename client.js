@@ -201,6 +201,18 @@ socket.on("updateBoard", data => {
   document.querySelectorAll(".inner").forEach(inner => {
     inner.classList.remove("paused");
   });
+const inners = document.querySelectorAll(".inner");
+
+function loop() {
+  inners.forEach(inner => inner.classList.remove("paused2"));
+  setTimeout(() => {
+    inners.forEach(inner => inner.classList.add("paused2"));
+    setTimeout(loop, 3000); 
+  }, 750);
+}
+// 開始
+loop();
+
   }
   else{
     // resetBorderVideos();
