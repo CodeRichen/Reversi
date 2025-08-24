@@ -196,7 +196,6 @@ function triggerClickWithCoords(element) {
 
   element.dispatchEvent(customEvent);
 }
-
 const cells = document.querySelectorAll(".cell"); 
 cells.forEach(cell => cell.classList.remove("highlight-row", "special"));
 
@@ -206,12 +205,9 @@ let currentCol = null;    // 當前選到的 col (左右模式)
 let inCellMode = false;   // 是否進入「單點模式」
 
 function highlightRow(row) {
-  // 清除所有 highlight
   cells.forEach(cell => cell.classList.remove("highlight-row", "special"));
-  // 記錄行號
   currentRow = row;
   inCellMode = false;
-  // 這一行全部亮
   const start = (row - 1) * 8;
   for (let i = 0; i < 8; i++) {
     cells[start + i].classList.add("highlight-row");
@@ -219,13 +215,10 @@ function highlightRow(row) {
 }
 
 function highlightCell(row, col) {
-  // 清除所有 highlight
   cells.forEach(cell => cell.classList.remove("highlight-row", "special"));
-  // 記錄
   currentRow = row;
   currentCol = col;
   inCellMode = true;
-  // 亮單一格
   const index = (row - 1) * 8 + (col - 1);
   const cell = document.querySelector(`.cell[data-index="${index}"]`);
   if (cell) cell.classList.add("special");
@@ -259,12 +252,12 @@ document.addEventListener("keydown", (event) => {
     const digit = parseInt(event.key, 10);
 
     if (firstDigit === null) {
-      // 第一次：選 row
+      // 第一次數字 → 鎖定 row
       highlightRow(digit);
       firstDigit = digit;
     } else {
-      // 第二次：選 col → 直接下棋
-      const row = firstDigit;
+      // 第二次數字 → 在目前 row 下棋
+      const row = currentRow; // 注意這裡是 currentRow (可能已經被上下鍵移動過)
       const col = digit;
       highlightCell(row, col);
       triggerCellClick(row, col);
@@ -278,39 +271,37 @@ document.addEventListener("keydown", (event) => {
   }
 
   if (firstDigit !== null) {
-    // 上下移動 row
+    // 上下移動 row (支援循環)
     if (event.key === "ArrowUp") {
-      if (currentRow > 1) {
-        if (inCellMode) highlightCell(currentRow - 1, currentCol);
-        else highlightRow(currentRow - 1);
-      }
+      const newRow = currentRow > 1 ? currentRow - 1 : 8; // 從 1 再往上 → 跳到 8
+      if (inCellMode) highlightCell(newRow, currentCol);
+      else highlightRow(newRow);
     }
     if (event.key === "ArrowDown") {
-      if (currentRow < 8) {
-        if (inCellMode) highlightCell(currentRow + 1, currentCol);
-        else highlightRow(currentRow + 1);
-      }
+      const newRow = currentRow < 8 ? currentRow + 1 : 1; // 從 8 再往下 → 跳到 1
+      if (inCellMode) highlightCell(newRow, currentCol);
+      else highlightRow(newRow);
     }
 
     // 左右移動 col (支援環繞)
     if (event.key === "ArrowLeft") {
       if (!inCellMode) {
-        highlightCell(currentRow, 1); // 進入單點模式，從最左開始
+        highlightCell(currentRow, 1); //TODO 數字之後再按右健能夠位在從左邊數來第一個可下位置
       } else {
-        const newCol = currentCol > 1 ? currentCol - 1 : 8; // 左邊界 → 跳到最右
+        const newCol = currentCol > 1 ? currentCol - 1 : 8;
         highlightCell(currentRow, newCol);
       }
     }
     if (event.key === "ArrowRight") {
       if (!inCellMode) {
-        highlightCell(currentRow, 1); // 進入單點模式，從最左開始
+        highlightCell(currentRow, 1);
       } else {
-        const newCol = currentCol < 8 ? currentCol + 1 : 1; // 右邊界 → 跳到最左
+        const newCol = currentCol < 8 ? currentCol + 1 : 1;
         highlightCell(currentRow, newCol);
       }
     }
 
-    // Enter 下棋 (在單點模式才有用)
+    // Enter 下棋 (單點模式用)
     if (event.key === "Enter" && inCellMode) {
       triggerCellClick(currentRow, currentCol);
 
@@ -321,6 +312,7 @@ document.addEventListener("keydown", (event) => {
     }
   }
 });
+
 
 
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
