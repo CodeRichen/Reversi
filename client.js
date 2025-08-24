@@ -196,7 +196,7 @@ socket.on("updateBoard", data => {
       const inners = document.querySelectorAll(".edge-horizontal .inner, .edge-vertical .inner");
 
   if (currentTurn === myColor) {
-    boardFrame.classList.add('glowing');  
+    // boardFrame.classList.add('glowing');  
     // playBorderAnimationOnTurn(); TODO
   document.querySelectorAll(".inner").forEach(inner => {
     inner.classList.remove("paused");
@@ -207,8 +207,8 @@ function loop() {
   inners.forEach(inner => inner.classList.remove("paused2"));
   setTimeout(() => {
     inners.forEach(inner => inner.classList.add("paused2"));
-    setTimeout(loop, 3000); 
-  }, 750);
+    setTimeout(loop, 5000); 
+  }, 500);
 }
 // 開始
 loop();
@@ -219,7 +219,7 @@ loop();
       document.querySelectorAll(".inner").forEach(inner => {
     inner.classList.add("paused");
   });
-    boardFrame.classList.remove('glowing');
+    // boardFrame.classList.remove('glowing');
   }
   if (currentTurn === "black" || currentTurn === "white") {
     overlayImg.style.display = "block"; // 顯示圖片
@@ -710,8 +710,8 @@ function showcat_real(x, y, imageUrl) {
 }
 
 // let Mask_x = 0;
-let verticalOffset = -2; // Y 偏移量
-let horizontalOffset = -2; // X 偏移量
+let verticalOffset = 0; // Y 偏移量
+let horizontalOffset = 0; // X 偏移量
 initializeMask(); // 初始化遮罩位置
 window.addEventListener('resize', () => {
   initializeMask(); // 每次視窗大小變化就重新定位遮罩
@@ -831,7 +831,7 @@ const white = parseInt(document.getElementById("whiteScore").dataset.value || "0
 
   /* ---------- counts 偏移 & 防出界處理 ---------- */
   countsEl.style.transition = "left 0.5s ease, top 0.5s ease";
-  
+  console.log(countsEl.getBoundingClientRect().top + verticalOffset);
 if (!(countsEl.getBoundingClientRect().top + verticalOffset < 0) ) {
     countsEl.style.top = `${verticalOffset}px`;
   }
@@ -842,7 +842,7 @@ if (!(countsEl.getBoundingClientRect().top + verticalOffset < 0) ) {
   /* ---------- maskRect 同步 2D 偏移 ---------- */
   maskRect.style.transform = `translate(${horizontalOffset}px, ${verticalOffset}px)`;
   maskRect.style.transition = "transform 0.5s ease";
-  console.log('遮罩位置更新：', horizontalOffset, verticalOffset,'棋盤位置：', boardWrapper.style.left, boardWrapper.style.top);
+  // console.log('遮罩位置更新：', horizontalOffset, verticalOffset,'棋盤位置：', boardWrapper.style.left, boardWrapper.style.top);
 }
 
 

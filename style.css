@@ -290,9 +290,9 @@ h1 {
 
 
 #board-frame {
-  border: 6px solid #9a2424;
-  padding: 10px;
-  background-color: #999;
+  /* border: 6px solid #9a2424; */
+  /* padding: 10px; */
+  /* background-color: #999; */
   border-radius: 12px;
   display: inline-block;
   
@@ -345,7 +345,7 @@ svg {
   gap: 2px;
   border-radius: 6px;
   position: relative;  /* 關鍵：讓內部絕對定位生效 */
-  border: 2px solid #444;
+  /* border: 2px solid #444; */
   overflow: hidden;    /* 確保影片不溢出邊界 */
 }
 
@@ -376,10 +376,14 @@ svg {
   position: relative;
   cursor: pointer;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  /* border: 1px solid rgba(255, 255, 255, 0.7); */
+   border: 1px solid transparent; /* 預設透明 */
   transition: transform 0.2s, background-color 0.2s;
 }
 
+.cell:hover {
+  border-color: rgba(255, 255, 255, 0.7); /* 滑鼠懸停顯示邊框 */
+}
 .cell.special {
   transform: scale(1);
     border: none; 
@@ -769,7 +773,7 @@ background-size: 50% auto;   /* 寬度縮小一半，高度自動等比例 */
   content: "";
   flex: 1;
   background-image: url("men/men1.png");
-   background-size: 50%;
+   background-size: 40%;
   background-repeat: repeat-x;
   background-position: center bottom;
 }
@@ -801,7 +805,7 @@ background-size: 50% auto;   /* 寬度縮小一半，高度自動等比例 */
   content: "";
   flex: 1;
   background-image: url("men/men2.png");
-  background-size: 50%;
+  background-size: 65%;
   background-repeat: repeat-x;
   background-position: center bottom;
 }
@@ -824,7 +828,7 @@ background-size: 50% auto;   /* 寬度縮小一半，高度自動等比例 */
     content: "";
     flex: 1;
     background: url("men/men3.png");
-    background-size: 50%;
+    background-size: 60%;
     background-repeat: repeat-y;
   background-position: center right;
   }
@@ -850,7 +854,7 @@ background-size: 50% auto;   /* 寬度縮小一半，高度自動等比例 */
     flex: 1;
     background: url("men/men4.png") right ;
     background-repeat: repeat-y;
-    background-size: 50%;
+    background-size: 55%;
   }
 
 
