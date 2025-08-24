@@ -197,40 +197,132 @@ function triggerClickWithCoords(element) {
   element.dispatchEvent(customEvent);
 }
 
-  let firstDigit = null; // 記錄第一個數字
+const cells = document.querySelectorAll(".cell"); 
+cells.forEach(cell => cell.classList.remove("highlight-row", "special"));
+
+let firstDigit = null;    // 紀錄目前選到哪一行
+let currentRow = null;    // 當前選到的 row
+let currentCol = null;    // 當前選到的 col (左右模式)
+let inCellMode = false;   // 是否進入「單點模式」
+
+function highlightRow(row) {
+  // 清除所有 highlight
+  cells.forEach(cell => cell.classList.remove("highlight-row", "special"));
+  // 記錄行號
+  currentRow = row;
+  inCellMode = false;
+  // 這一行全部亮
+  const start = (row - 1) * 8;
+  for (let i = 0; i < 8; i++) {
+    cells[start + i].classList.add("highlight-row");
+  }
+}
+
+function highlightCell(row, col) {
+  // 清除所有 highlight
+  cells.forEach(cell => cell.classList.remove("highlight-row", "special"));
+  // 記錄
+  currentRow = row;
+  currentCol = col;
+  inCellMode = true;
+  // 亮單一格
+  const index = (row - 1) * 8 + (col - 1);
+  const cell = document.querySelector(`.cell[data-index="${index}"]`);
+  if (cell) cell.classList.add("special");
+}
+
+function triggerCellClick(row, col) {
+  const index = (row - 1) * 8 + (col - 1);
+  const cell = document.querySelector(`.cell[data-index="${index}"]`);
+  if (cell) {
+    const rect = cell.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const customEvent = new MouseEvent("click", {
+      clientX: centerX,
+      clientY: centerY,
+      bubbles: true
+    });
+    cell.dispatchEvent(customEvent);
+  }
+}
+
+// 鍵盤監聽
 document.addEventListener("keydown", (event) => {
+  // C 鍵快捷
   if (event.key === "c" || event.key === "C") {
     triggerClickWithCoords(aiButton);
   }
-  if (event.key >= "0" && event.key <= "7") {
-    if (firstDigit === null) {
-      // 第一個數字
-      firstDigit = parseInt(event.key, 10);
-    } else {
-      // 第二個數字
-      const secondDigit = parseInt(event.key, 10);
-      const index = ((firstDigit-1) * 8 + secondDigit)-1;
-      // 找到對應的格子
-      const cell = document.querySelector(`.cell[data-index="${index}"]`);
-          if (cell) {
-        // 取得 cell 的中心點座標
-        const rect = cell.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
 
-        // 自己觸發一個帶座標的事件
-        const customEvent = new MouseEvent("click", {
-          clientX: centerX,
-          clientY: centerY,
-          bubbles: true
-        });
-        cell.dispatchEvent(customEvent);
-      }
-      // 重置，準備下一次輸入
+  // 數字鍵 (1~8)
+  if (event.key >= "1" && event.key <= "8") {
+    const digit = parseInt(event.key, 10);
+
+    if (firstDigit === null) {
+      // 第一次：選 row
+      highlightRow(digit);
+      firstDigit = digit;
+    } else {
+      // 第二次：選 col → 直接下棋
+      const row = firstDigit;
+      const col = digit;
+      highlightCell(row, col);
+      triggerCellClick(row, col);
+
+      // 重置
       firstDigit = null;
+      inCellMode = false;
+      cells.forEach(cell => cell.classList.remove("highlight-row", "special"));
+    }
+    return;
+  }
+
+  if (firstDigit !== null) {
+    // 上下移動 row
+    if (event.key === "ArrowUp") {
+      if (currentRow > 1) {
+        if (inCellMode) highlightCell(currentRow - 1, currentCol);
+        else highlightRow(currentRow - 1);
+      }
+    }
+    if (event.key === "ArrowDown") {
+      if (currentRow < 8) {
+        if (inCellMode) highlightCell(currentRow + 1, currentCol);
+        else highlightRow(currentRow + 1);
+      }
+    }
+
+    // 左右移動 col (支援環繞)
+    if (event.key === "ArrowLeft") {
+      if (!inCellMode) {
+        highlightCell(currentRow, 1); // 進入單點模式，從最左開始
+      } else {
+        const newCol = currentCol > 1 ? currentCol - 1 : 8; // 左邊界 → 跳到最右
+        highlightCell(currentRow, newCol);
+      }
+    }
+    if (event.key === "ArrowRight") {
+      if (!inCellMode) {
+        highlightCell(currentRow, 1); // 進入單點模式，從最左開始
+      } else {
+        const newCol = currentCol < 8 ? currentCol + 1 : 1; // 右邊界 → 跳到最左
+        highlightCell(currentRow, newCol);
+      }
+    }
+
+    // Enter 下棋 (在單點模式才有用)
+    if (event.key === "Enter" && inCellMode) {
+      triggerCellClick(currentRow, currentCol);
+
+      // 重置
+      firstDigit = null;
+      inCellMode = false;
+      cells.forEach(cell => cell.classList.remove("highlight-row", "special"));
     }
   }
-})
+});
+
+
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
 socket.on("updateBoard", data => {
   updateBoard(data.board);
@@ -254,10 +346,9 @@ function loop() {
   inners.forEach(inner => inner.classList.remove("paused2"));
   setTimeout(() => {
     inners.forEach(inner => inner.classList.add("paused2"));
-    setTimeout(loop, 5000); 
+    setTimeout(loop, 7000); //TODO 小人休息時間
   }, 500);
 }
-// 開始
 loop();
 
   }

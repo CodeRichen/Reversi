@@ -367,6 +367,9 @@ svg {
   position: relative;
   z-index: 1;
 }
+.cell.highlight-row {
+  background-color: rgba(246, 49, 246, 0.3); 
+}
 
 
 .cell {
