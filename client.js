@@ -183,7 +183,54 @@ if (aiBtn) {
   renderScore(2, "whiteScore");
 
 });
+function triggerClickWithCoords(element) {
+  const rect = element.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
 
+  const customEvent = new MouseEvent("click", {
+    clientX: centerX,
+    clientY: centerY,
+    bubbles: true
+  });
+
+  element.dispatchEvent(customEvent);
+}
+
+  let firstDigit = null; // 記錄第一個數字
+document.addEventListener("keydown", (event) => {
+  if (event.key === "c" || event.key === "C") {
+    triggerClickWithCoords(aiButton);
+  }
+  if (event.key >= "0" && event.key <= "7") {
+    if (firstDigit === null) {
+      // 第一個數字
+      firstDigit = parseInt(event.key, 10);
+    } else {
+      // 第二個數字
+      const secondDigit = parseInt(event.key, 10);
+      const index = ((firstDigit-1) * 8 + secondDigit)-1;
+      // 找到對應的格子
+      const cell = document.querySelector(`.cell[data-index="${index}"]`);
+          if (cell) {
+        // 取得 cell 的中心點座標
+        const rect = cell.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        // 自己觸發一個帶座標的事件
+        const customEvent = new MouseEvent("click", {
+          clientX: centerX,
+          clientY: centerY,
+          bubbles: true
+        });
+        cell.dispatchEvent(customEvent);
+      }
+      // 重置，準備下一次輸入
+      firstDigit = null;
+    }
+  }
+})
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
 socket.on("updateBoard", data => {
   updateBoard(data.board);
