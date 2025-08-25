@@ -178,7 +178,7 @@ if (aiBtn) {
 }
   updateStatus();                // 更新畫面狀態
   // updateBoard(data.board);       // 更新棋盤內容
-   setTimeout(() => {  initializeMask()},50)  // TODO
+   initializeMask();
    renderScore(2, "blackScore");
   renderScore(2, "whiteScore");
 
@@ -426,7 +426,7 @@ socket.on("gameOver", ({ black, white, winner}) => {
   // let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
   // msg += winner === "draw" ? " 平手！" : winner === myColor ? " 你贏了！" : " 你輸了！";
   // statusEl.textContent = msg;
-    setTimeout(() => initializeMask(), 550); //TODO
+    initializeMask();
     
   showGameOver(winner);
 });
@@ -843,35 +843,92 @@ function showcat_real(x, y, imageUrl) {
 let verticalOffset = 0; // Y 偏移量
 let horizontalOffset = 0; // X 偏移量
 initializeMask(); // 初始化遮罩位置
+
 window.addEventListener('resize', () => {
   initializeMask(); // 每次視窗大小變化就重新定位遮罩
 });
 
+// 創建一個更可靠的初始化函數
 function initializeMask() {
+  // 確保所有元素都存在
   const maskRect = document.getElementById('maskRect');
   const board = document.getElementById("board");
-  const rect = board.getBoundingClientRect();  // 取得棋盤在視窗的實際位置
-  const svg = maskRect.getBoundingClientRect(); // 取得 SVG 的位置
-  // 計算棋盤相對於 SVG 的位置
-  const x = rect.left - svg.left-horizontalOffset; // 減去偏移量
-  const y = rect.top - svg.top-verticalOffset;
+  const boardWrapper = document.getElementById("game-wrapper");
+  const countsEl = document.getElementById("counts");
+  
+  if (!maskRect || !board || !boardWrapper || !countsEl) {
+    console.log('元素尚未載入完成，延遲重試...');
+    setTimeout(() => initializeMask(), 100);
+    return;
+  }
+
+  // 先清除所有 transition，避免干擾計算
+  const originalTransitions = {
+    boardWrapper: boardWrapper.style.transition,
+    maskRect: maskRect.style.transition
+  };
+  
+  boardWrapper.style.transition = 'none';
+  maskRect.style.transition = 'none';
+
+  // 強制重新計算佈局
+  board.offsetHeight;
+  document.body.offsetHeight;
+
+  // 取得位置
+  const boardRect = board.getBoundingClientRect();
+  const svgRect = maskRect.ownerSVGElement?.getBoundingClientRect() || 
+                  document.querySelector('svg')?.getBoundingClientRect();
+  
+  if (!svgRect) {
+    console.error('找不到 SVG 元素');
+    return;
+  }
+
+  const x = boardRect.left - svgRect.left;
+  const y = boardRect.top - svgRect.top;
+  
+  console.log(`棋盤位置: ${boardRect.left}, ${boardRect.top}`);
+  console.log(`SVG位置: ${svgRect.left}, ${svgRect.top}`);
+  console.log(`計算出的遮罩位置: x=${x}, y=${y}`);
 
   // 設定遮罩位置
   maskRect.setAttribute("x", x);
   maskRect.setAttribute("y", y);
-  // Mask_x = x; // 儲存初始位置
-  // console.log(`遮罩位置初始化：x=${x}, y=${y}`);
-  const boardWrapper = document.getElementById("game-wrapper");
-  const countsEl = document.getElementById("counts");
-    // 先設定好 transition，確保第一次動作同步
+  maskRect.setAttribute("width", boardRect.width);
+  maskRect.setAttribute("height", boardRect.height);
+
+  // 重置元素位置
   boardWrapper.style.left = "0px";
   boardWrapper.style.top = "0px";
   countsEl.style.left = "0px";
   countsEl.style.top = "0px";
   maskRect.style.transform = "translate(0px, 0px)";
-  boardWrapper.style.transition = "left 0.5s ease, top 0.5s ease";
-  maskRect.style.transition = "transform 0.5s ease";
+
+  // 恢復 transition
+  setTimeout(() => {
+    boardWrapper.style.transition = "left 0.5s ease, top 0.5s ease";
+    maskRect.style.transition = "transform 0.5s ease";
+  }, 10);
 }
+
+// 使用 ResizeObserver 監聽
+const resizeObserver = new ResizeObserver((entries) => {
+  // 延遲一點確保所有佈局完成
+  setTimeout(() => {
+    initializeMask();
+  }, 50);
+});
+
+// 監聽 body 或主要容器的大小變化
+resizeObserver.observe(document.body);
+
+// 頁面載入完成後初始化
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    initializeMask();
+  }, 200);
+});
   const DIGIT_PATH = "digits"; // 手寫數字圖片資料夾
   const MAX_PER_DIGIT = 200;   // 每個數字有幾種圖片
 
@@ -1100,7 +1157,7 @@ vid.src = videoUrl + "?t=" + Date.now();
 }
 
 
-setupBorderVideos(); // 初始化邊框影片
+// setupBorderVideos(); // 初始化邊框影片
 
 
 
