@@ -570,6 +570,7 @@ svg {
 
     /* 加上 .fly 就會分飛 */
     .fly .half-top {
+
       transform: translateY(-100%) rotate(-10deg);
       opacity: 0;
     }

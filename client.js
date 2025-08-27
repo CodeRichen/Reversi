@@ -707,20 +707,24 @@ function attachNotes(cell) {
 }
 function animateFlip(x, y) {
   const idx = y * 8 + x;
-  const cell = document.querySelector(`.cell[data-index='${idx}']`);
+  const cell = document.querySelectorAll(".cell")[idx];
   if (cell && cell.firstChild) {
     const disk = cell.firstChild;
-    // 取得背景圖片網址
     const bg = disk.style.backgroundImage;
-    const src = bg.slice(5, -2); // 去掉 url("...") 外層字串
-disk.innerHTML = `
-  <div class="half half-top" style="background-image: url('${src}'); background-size: 100% 200%; background-position: top;"></div>
-  <div class="half half-bottom" style="background-image: url('${src}'); background-size: 100% 200%; background-position: bottom;"></div>
-`;
-    disk.classList.add("fly");
+    
+    if (bg) {
+      const src = bg.slice(5, -2);
+      disk.innerHTML = `
+        <div class="half half-top" style="background-image: url('${src}'); background-size: 100% 200%; background-position: top;"></div>
+        <div class="half half-bottom" style="background-image: url('${src}'); background-size: 100% 200%; background-position: bottom;"></div>
+      `;
+      
+      setTimeout(() => {
+        disk.classList.add("fly");
+      }, 50);
+    }
   }
 }
-
 function animateafterFlip(x, y) {
   const idx = y * 8 + x;
   const cell = document.querySelector(`.cell[data-index='${idx}']`);
