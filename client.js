@@ -319,7 +319,7 @@ socket.on("updateBoard", data => {
   
   setTimeout(()=>{
   updateBoard(data.board);
-  },1000)
+  },1000)  // 時間同步 2A
   currentTurn = data.turn;
   updateStatus();
   const overlayImg = document.getElementById("cat_bw");
@@ -430,12 +430,17 @@ const sortedFlipped = flippedPositions
     return { fx, fy, dist };
   })
   .sort((a, b) => a.dist - b.dist);
-
+  
+   sortedFlipped.forEach(({ fx, fy }, i) => {
+     setTimeout(() => animateFlip(fx, fy), i * 100); // 每顆延遲一點時間
+   });
 // 依序翻轉
-sortedFlipped.forEach(({ fx, fy }, i) => {
-  setTimeout(() => animateFlip(fx, fy), i * 100); // 每顆延遲一點時間
-});
-  updateScore();
+ setTimeout(() => {
+   sortedFlipped.forEach(({ fx, fy }, i) => {
+     setTimeout(() => animateafterFlip(fx, fy), i * 100); // 每顆延遲一點時間
+   });
+   updateScore();
+ }, 1000); // 時間同步 1A
 });
 
 
@@ -700,23 +705,29 @@ function attachNotes(cell) {
     createNote(i);
   }
 }
-
 function animateFlip(x, y) {
   const idx = y * 8 + x;
   const cell = document.querySelector(`.cell[data-index='${idx}']`);
   if (cell && cell.firstChild) {
     const disk = cell.firstChild;
-    // disk.classList.add('flip');
-    // disk.classList.add('pop');
     // 取得背景圖片網址
     const bg = disk.style.backgroundImage;
     const src = bg.slice(5, -2); // 去掉 url("...") 外層字串
-    disk.innerHTML = `
-      <img src="${src}" class="half half-top">
-      <img src="${src}" class="half half-bottom">
-    `;
-
+disk.innerHTML = `
+  <div class="half half-top" style="background-image: url('${src}'); background-size: 100% 200%; background-position: top;"></div>
+  <div class="half half-bottom" style="background-image: url('${src}'); background-size: 100% 200%; background-position: bottom;"></div>
+`;
     disk.classList.add("fly");
+  }
+}
+
+function animateafterFlip(x, y) {
+  const idx = y * 8 + x;
+  const cell = document.querySelector(`.cell[data-index='${idx}']`);
+  if (cell && cell.firstChild) {
+    const disk = cell.firstChild;
+    disk.classList.add('flip');
+    disk.classList.add('pop');
     disk.classList.add("swing");
     attachNotes(disk);
 
@@ -741,12 +752,12 @@ function animateFlip(x, y) {
     setTimeout(() => shockwave.remove(), 1500);
 
     // 移除 flip 動畫
-    // setTimeout(() => {
-    //   disk.classList.remove('flip');
-    // }, 400);
-    // setTimeout(() => {
-    //   disk.classList.remove('pop');
-    // }, 400);
+    setTimeout(() => {
+      disk.classList.remove('flip');
+    }, 400);
+    setTimeout(() => {
+      disk.classList.remove('pop');
+    }, 400);
   }
 }
 
