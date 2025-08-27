@@ -319,7 +319,7 @@ socket.on("updateBoard", data => {
   
   setTimeout(()=>{
   updateBoard(data.board);
-  },1000)  // 時間同步 2A
+
   currentTurn = data.turn;
   updateStatus();
   const overlayImg = document.getElementById("cat_bw");
@@ -382,7 +382,7 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
   }
 
 });
-
+  },1000)  // 時間同步 2A
 });
 
 // 若玩家點了非法位置（例如不能落子處），顯示錯誤訊息
@@ -403,7 +403,6 @@ const specialCell = boardEl.querySelector(`[data-index="${targetIndex}"]`);
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx }) => {
     const x = idx % 8;
     const y = Math.floor(idx / 8);
-  updateBoardOffset(flippedPositions);
   // console.log(`玩家 ${player} 翻轉了 ${flippedCount} 顆棋子`);
     if (flippedCount > 0) {
     audio_meow.play();
@@ -440,6 +439,7 @@ const sortedFlipped = flippedPositions
      setTimeout(() => animateafterFlip(fx, fy), i * 100); // 每顆延遲一點時間
    });
    updateScore();
+  updateBoardOffset(flippedPositions);
  }, 1000); // 時間同步 1A
 });
 
