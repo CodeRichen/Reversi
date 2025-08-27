@@ -86,9 +86,6 @@ let roomId;
       socket.emit("invalidMove");
       return;
     }
-    room.players.forEach(p => {
-       p.emit("place");
-    });
 
       setTimeout(() => {
     // 落子並翻轉棋子
@@ -107,7 +104,8 @@ let roomId;
     flippedCount: flipped.length,
     flippedPositions: flipped,
     player: color,
-    scores: room.scores
+    scores: room.scores,
+    idx:idx
   }));
       // 只發給對手，不發給自己，要在moveResult之後
     socket.to(roomId).emit("placeidx", idx);
@@ -120,6 +118,9 @@ let roomId;
       // console.log(`玩家 ${color} 的回合`);
       nextTurnLoop(room);
     }
+        room.players.forEach(p => {
+       p.emit("place",{i:idx,board:room.board});
+    });
       }, 300);
   });
 
@@ -167,7 +168,7 @@ function aiMoveLogic(room) {
   const playerColor = room.playerColor;
 
   const aiMove = getRandomValidMove(room.board, aiColor);
-
+  
   if (aiMove) {
     const [ax, ay] = aiMove;
     const aiFlipped = getFlippable(room.board, ax, ay, aiColor);
@@ -175,8 +176,7 @@ function aiMoveLogic(room) {
     setTimeout(() => {
       room.board[ay][ax] = aiColor;
       aiFlipped.forEach(([fx, fy]) => room.board[fy][fx] = aiColor);
-
-
+    const idx=ay*8+ax;
 
   if (!room.scores) room.scores = { black: 0, white: 0 };
   const bonus = aiFlipped.length >= 10 ? 5 : aiFlipped.length >= 5 ? 2 : 1;
@@ -184,7 +184,7 @@ function aiMoveLogic(room) {
 
   emitUpdateBoard(room);
     room.players.forEach(p => {
-       p.emit("place");
+        p.emit("place",{i:idx,board:room.board});
     });
     
   // 廣播這次 AI 的動作給 client（
@@ -192,7 +192,8 @@ function aiMoveLogic(room) {
     flippedCount: aiFlipped.length,
     flippedPositions: aiFlipped,
     player: aiColor,
-    scores: room.scores
+    scores: room.scores,
+    idx:idx
   }));
   room.players.forEach(s => s.emit("placeidx", ay*8+ax));
 
@@ -227,8 +228,9 @@ function nextTurnLoop(room) {
     if (hasValidMove(room.board, currentColor)) {
       // 目前玩家能下棋，等待玩家行動
       // console.log(`玩家 ${currentColor} 可以下棋`);
+      
       setTimeout(() => {
-          room.players.forEach(s => s.emit("updateBoard", {
+    room.players.forEach(s => s.emit("updateBoard", {
     board: room.board,
     turn: room.turn,
     changeWhiteImage : true

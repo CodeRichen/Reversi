@@ -38,13 +38,12 @@ for (let i = 0; i < 64; i++) {
   boardEl.appendChild(cell);
 }
 
-// 點擊棋盤時發送 move 事件給伺服器，延遲 300ms 讓動畫可以先跑
+// 點擊棋盤時發送 move 事件給伺服器
 boardEl.addEventListener("click", e => {
 
     const idx = e.target.closest(".cell")?.dataset.index;
     if (!idx || currentTurn !== myColor) return; // 不是自己回合就不能動
     socket.emit("move", parseInt(idx)); // 傳送落子位置
-
 });
 
 // 滑鼠移到某格時，要求伺服器檢查該格是否合法、並同步滑鼠位置
@@ -317,7 +316,10 @@ document.addEventListener("keydown", (event) => {
 
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
 socket.on("updateBoard", data => {
+  
+  setTimeout(()=>{
   updateBoard(data.board);
+  },1000)
   currentTurn = data.turn;
   updateStatus();
   const overlayImg = document.getElementById("cat_bw");
@@ -387,8 +389,9 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
 socket.on("invalidMove", () => {
   showMessage("這不是合法的落子位置");
 });
-socket.on("place", () => {
+socket.on("place", ({i,board}) => {
     audio_place.play();
+    updatechess(i,board)
 });
 socket.on("placeidx", idx => {
 
@@ -397,7 +400,9 @@ const specialCell = boardEl.querySelector(`[data-index="${targetIndex}"]`);
   specialCell.classList.add("special"); 
 });
 // 當伺服器回傳落子結果時，更新分數與動畫
-socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => {
+socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx }) => {
+    const x = idx % 8;
+    const y = Math.floor(idx / 8);
   updateBoardOffset(flippedPositions);
   // console.log(`玩家 ${player} 翻轉了 ${flippedCount} 顆棋子`);
     if (flippedCount > 0) {
@@ -416,7 +421,20 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores }) => 
   });
   document.querySelectorAll('.note').forEach(note => note.remove());
     document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('special'));
-  flippedPositions.forEach(([x, y]) => animateFlip(x, y));
+  // 排序：依照與下棋點的距離
+const sortedFlipped = flippedPositions
+  .map(([fx, fy]) => {
+    const dx = fx - x;
+    const dy = fy - y;
+    const dist = dx * dx + dy * dy; // 平方距離，不用開根號比較快
+    return { fx, fy, dist };
+  })
+  .sort((a, b) => a.dist - b.dist);
+
+// 依序翻轉
+sortedFlipped.forEach(({ fx, fy }, i) => {
+  setTimeout(() => animateFlip(fx, fy), i * 100); // 每顆延遲一點時間
+});
   updateScore();
 });
 
@@ -511,7 +529,53 @@ function hasValidMove(board, color) {
   }
   return false;
 }
-function updateBoard(board, changeImage = false) {
+
+function updatechess(idx,board){
+  document.querySelectorAll(".cell").forEach((cell, i) => {
+    if(i===idx){
+    const x = i % 8;
+    const y = Math.floor(i / 8);
+    const value = board[y][x];
+    const oldDisk = cell.querySelector(".disk");
+    if (oldDisk) oldDisk.remove();
+    if (value) {
+      const disk = document.createElement("div");
+      disk.className = `disk ${value}`;
+      disk.id='disk';
+        if (value === "white") {
+        let imgName;
+        if (!cell.dataset.whiteImage) {
+          const rand = Math.floor(Math.random() * 6) + 1;
+          imgName = rand === 1 ? 'chess1.png' : `chess/chess1_${rand}.png`;
+          cell.dataset.whiteImage = imgName;
+        } else {
+          imgName = cell.dataset.whiteImage;
+        }
+
+        disk.style.backgroundImage = `url('${imgName}')`;
+      } else if (value === "black") {
+        let imgName;
+
+        if (!cell.dataset.blackImage) {
+          const rand = Math.floor(Math.random() * 6) + 1;
+          imgName = rand === 1 ? 'chess2.png' : `chess/chess2_${rand}.png`;
+          cell.dataset.blackImage = imgName;
+        } else {
+          imgName = cell.dataset.blackImage;
+        }
+
+        disk.style.backgroundImage = `url('${imgName}')`;
+      }
+      cell.appendChild(disk);
+    } else {
+      delete cell.dataset.whiteImage;
+      delete cell.dataset.blackImage;
+    }
+  }
+  });
+
+}
+function updateBoard(board) {
   let black = 0, white = 0;
 
   document.querySelectorAll(".cell").forEach((cell, i) => {
@@ -527,12 +591,13 @@ function updateBoard(board, changeImage = false) {
     if (value) {
       const disk = document.createElement("div");
       disk.className = `disk ${value}`;
+      disk.id='disk';
       if (hadSwing) disk.classList.add("swing");
       if (hadNotes) attachNotes(disk);
-      if (value === "white") {
+        if (value === "white") {
         let imgName;
 
-        if (changeImage || !cell.dataset.whiteImage) {
+        if (!cell.dataset.whiteImage) {
           const rand = Math.floor(Math.random() * 6) + 1;
           imgName = rand === 1 ? 'chess1.png' : `chess/chess1_${rand}.png`;
           cell.dataset.whiteImage = imgName;
@@ -545,7 +610,7 @@ function updateBoard(board, changeImage = false) {
       } else if (value === "black") {
         let imgName;
 
-        if (changeImage || !cell.dataset.blackImage) {
+        if (!cell.dataset.blackImage) {
           const rand = Math.floor(Math.random() * 6) + 1;
           imgName = rand === 1 ? 'chess2.png' : `chess/chess2_${rand}.png`;
           cell.dataset.blackImage = imgName;
@@ -556,7 +621,6 @@ function updateBoard(board, changeImage = false) {
         disk.style.backgroundImage = `url('${imgName}')`;
         black++;
       }
-
       cell.appendChild(disk);
     } else {
       delete cell.dataset.whiteImage;
@@ -569,10 +633,8 @@ function updateBoard(board, changeImage = false) {
 
   // document.getElementById("blackScore").textContent = black; 
   // document.getElementById("whiteScore").textContent = white;
-        if(!changeImage) {
+
         updateCounts(black, white);
-        
-      }
 }
 
 function updateStatus() {
@@ -644,7 +706,17 @@ function animateFlip(x, y) {
   const cell = document.querySelector(`.cell[data-index='${idx}']`);
   if (cell && cell.firstChild) {
     const disk = cell.firstChild;
-    disk.classList.add('flip');
+    // disk.classList.add('flip');
+    // disk.classList.add('pop');
+    // 取得背景圖片網址
+    const bg = disk.style.backgroundImage;
+    const src = bg.slice(5, -2); // 去掉 url("...") 外層字串
+    disk.innerHTML = `
+      <img src="${src}" class="half half-top">
+      <img src="${src}" class="half half-bottom">
+    `;
+
+    disk.classList.add("fly");
     disk.classList.add("swing");
     attachNotes(disk);
 
@@ -669,10 +741,12 @@ function animateFlip(x, y) {
     setTimeout(() => shockwave.remove(), 1500);
 
     // 移除 flip 動畫
-    setTimeout(() => {
-      disk.classList.remove('flip');
-    }, 400);
-
+    // setTimeout(() => {
+    //   disk.classList.remove('flip');
+    // }, 400);
+    // setTimeout(() => {
+    //   disk.classList.remove('pop');
+    // }, 400);
   }
 }
 
@@ -888,9 +962,9 @@ function initializeMask() {
   const x = boardRect.left - svgRect.left;
   const y = boardRect.top - svgRect.top;
   
-  console.log(`棋盤位置: ${boardRect.left}, ${boardRect.top}`);
-  console.log(`SVG位置: ${svgRect.left}, ${svgRect.top}`);
-  console.log(`計算出的遮罩位置: x=${x}, y=${y}`);
+  // console.log(`棋盤位置: ${boardRect.left}, ${boardRect.top}`);
+  // console.log(`SVG位置: ${svgRect.left}, ${svgRect.top}`);
+  // console.log(`計算出的遮罩位置: x=${x}, y=${y}`);
 
   // 設定遮罩位置
   maskRect.setAttribute("x", x);
@@ -1018,7 +1092,7 @@ const white = parseInt(document.getElementById("whiteScore").dataset.value || "0
 
   /* ---------- counts 偏移 & 防出界處理 ---------- */
   countsEl.style.transition = "left 0.5s ease, top 0.5s ease";
-  console.log(countsEl.getBoundingClientRect().top + verticalOffset);
+  // console.log(countsEl.getBoundingClientRect().top + verticalOffset);
 if (!(countsEl.getBoundingClientRect().top + verticalOffset < 0) ) {
     countsEl.style.top = `${verticalOffset}px`;
   }
