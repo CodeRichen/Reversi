@@ -205,7 +205,7 @@ function aiMoveLogic(room) {
       // 換回玩家回合
       room.turn = playerColor;
       nextTurnLoop(room);
-    }, 1000);
+    }, 1500); //TODO AI思考
   } else {
     console.log(`AI ${aiColor} 跳過回合，因為無法下子`);
     room.players.forEach(s => s.emit("pass", {

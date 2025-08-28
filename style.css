@@ -382,6 +382,7 @@ svg {
   /* border: 1px solid rgba(255, 255, 255, 0.7); */
    border: 1px solid transparent; /* 預設透明 */
   transition: transform 0.2s, background-color 0.2s;
+ isolation: isolate; 
 }
 
 .cell:hover {
@@ -456,7 +457,6 @@ svg {
   border: none;
   position: relative;
   z-index: 2;
-  
 }
 
 .note {
@@ -546,38 +546,50 @@ svg {
   animation: pop-scale 0.4s ease-out;
   transform-origin: center center; /* 以中心點縮放 */
 }
+.half {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  transition: transform 1s ease, opacity 1s ease;
+  background-repeat: no-repeat;
+  background-size: 100% 200%; /* 圖片高度是容器的兩倍 */
+  z-index: 20;
+}
 
-  .half {
-      position: absolute;
-      left: 0;
-      width: 100%;
-      height: 50%;
-      object-fit: cover;
-      transition: transform 1s ease, opacity 1s ease;
-    }
+/* 上半 */
+.half-top {
+  top: 0;
+  background-position: center top; /* 顯示圖片的上半部分 */
+}
 
-    /* 上半 */
-    .half-top {
-      top: 0;
-      clip-path: inset(0 0 50% 0);
-    }
+/* 下半 */
+.half-bottom {
+  bottom: 0;
+  background-position: center bottom; /* 顯示圖片的下半部分 */
+}
 
-    /* 下半 */
-    .half-bottom {
-      bottom: 0;
-      clip-path: inset(50% 0 0 0);
-    }
+/* 加上 .fly 就會分飛 */
+.fly .half-top {
+  transform: translateY(-100%) rotate(-10deg);
+  opacity: 0;
+}
 
-    /* 加上 .fly 就會分飛 */
-    .fly .half-top {
+.fly .half-bottom {
+  transform: translateY(100%) rotate(10deg);
+  opacity: 0;
+}
 
-      transform: translateY(-100%) rotate(-10deg);
-      opacity: 0;
-    }
-    .fly .half-bottom {
-      transform: translateY(100%) rotate(10deg);
-      opacity: 0;
-    }
+.flying-chess {
+  position: fixed;
+  width: 50px;
+  height: 50px;
+  background-size: cover;
+  border-radius: 50%;
+  transition: transform 0.4s ease-in-out;
+  pointer-events: none;
+  z-index: 20;
+}
 
 .shockwave { /* 爆炸效果 */
   position: absolute;

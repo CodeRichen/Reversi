@@ -176,7 +176,6 @@ if (aiBtn) {
   console.warn("找不到 aiButton，可能尚未載入 DOM！");
 }
   updateStatus();                // 更新畫面狀態
-  // updateBoard(data.board);       // 更新棋盤內容
    initializeMask();
    renderScore(2, "blackScore");
   renderScore(2, "whiteScore");
@@ -578,8 +577,8 @@ function updatechess(idx,board){
     }
   }
   });
-
 }
+
 function updateBoard(board) {
   let black = 0, white = 0;
 
@@ -705,6 +704,7 @@ function attachNotes(cell) {
     createNote(i);
   }
 }
+
 function animateFlip(x, y) {
   const idx = y * 8 + x;
   const cell = document.querySelectorAll(".cell")[idx];
@@ -712,26 +712,90 @@ function animateFlip(x, y) {
     const disk = cell.firstChild;
     const bg = disk.style.backgroundImage;
     
-    if (bg) {
-      const src = bg.slice(5, -2);
-      disk.innerHTML = `
-        <div class="half half-top" style="background-image: url('${src}'); background-size: 100% 200%; background-position: top;"></div>
-        <div class="half half-bottom" style="background-image: url('${src}'); background-size: 100% 200%; background-position: bottom;"></div>
-      `;
-      
-      setTimeout(() => {
-        disk.classList.add("fly");
-      }, 50);
-    }
+    if (!bg) return;
+    const src = bg.slice(5, -2);
+    let newImg = "";
+
+    if (src.includes("chess2")) { 
+      // black -> white
+      if (!cell.dataset.whiteImage) {
+        const rand = Math.floor(Math.random() * 6) + 1;
+        newImg = rand === 1 ? "chess1.png" : `chess/chess1_${rand}.png`;
+        cell.dataset.whiteImage = newImg;
+      } else newImg = cell.dataset.whiteImage;
+    } else if (src.includes("chess1")) {
+      // white -> black
+      if (!cell.dataset.blackImage) {
+        const rand = Math.floor(Math.random() * 6) + 1;
+        newImg = rand === 1 ? "chess2.png" : `chess/chess2_${rand}.png`;
+        cell.dataset.blackImage = newImg;
+      } else newImg = cell.dataset.blackImage;
+    } else return;
+
+    // 建立 flying 動畫
+    const flying = document.createElement("div");
+    flying.className = "flying-chess";
+    flying.style.backgroundImage = `url('${newImg}')`;
+    document.body.appendChild(flying);
+
+    const rect = cell.getBoundingClientRect();
+    const targetX = rect.left + rect.width / 2;
+    const targetY = rect.top + rect.height / 2;
+
+    flying.style.left = window.innerWidth + "px";
+    flying.style.top = window.innerHeight + "px";
+
+    requestAnimationFrame(() => {
+      flying.style.transform = `translate(${targetX - window.innerWidth}px, ${targetY - window.innerHeight}px) scale(1)`;
+    });
+
+    // ✅ 建立翻轉動畫用的獨立元素
+    const flipAnim = document.createElement("div");
+    flipAnim.className = "flip-anim";
+    flipAnim.style.position = "absolute";
+    flipAnim.style.left = rect.left + "px";
+    flipAnim.style.top = rect.top + "px";
+    flipAnim.style.width = rect.width + "px";
+    flipAnim.style.height = rect.height + "px";
+    flipAnim.innerHTML = `
+      <div class="half half-top" style="background-image: url('${src}'); background-size: 100% 200%; background-position: center top;"></div>
+      <div class="half half-bottom" style="background-image: url('${src}'); background-size: 100% 200%; background-position: center bottom;"></div>
+    `;
+    document.body.appendChild(flipAnim);
+
+    // 啟動翻轉動畫
+    setTimeout(() => flipAnim.classList.add("fly"), 300);
+
+    // 動畫結束後自動移除 flipAnim
+    flipAnim.addEventListener("animationend", () => {
+      flipAnim.remove();
+    }, { once: true });
+
+    // ✅ 這裡直接換掉 cell，不影響 flipAnim
+    flying.addEventListener("transitionend", () => {
+      cell.innerHTML = `<div class="disk" style="background-image:url('${newImg}')"></div>`;
+      flying.remove();
+    });
   }
 }
+
+
+      // disk.classList.add('flip');
+    // disk.classList.add('pop');
+        // 移除 flip 動畫
+    // setTimeout(() => {
+    //   disk.classList.remove('flip');
+    // }, 400);
+    // setTimeout(() => {
+    //   disk.classList.remove('pop');
+    // }, 400);
+
 function animateafterFlip(x, y) {
   const idx = y * 8 + x;
   const cell = document.querySelector(`.cell[data-index='${idx}']`);
   if (cell && cell.firstChild) {
     const disk = cell.firstChild;
-    disk.classList.add('flip');
-    disk.classList.add('pop');
+
     disk.classList.add("swing");
     attachNotes(disk);
 
@@ -755,13 +819,7 @@ function animateafterFlip(x, y) {
     disk.appendChild(shockwave);
     setTimeout(() => shockwave.remove(), 1500);
 
-    // 移除 flip 動畫
-    setTimeout(() => {
-      disk.classList.remove('flip');
-    }, 400);
-    setTimeout(() => {
-      disk.classList.remove('pop');
-    }, 400);
+
   }
 }
 
