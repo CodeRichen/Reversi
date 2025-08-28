@@ -546,30 +546,39 @@ svg {
   animation: pop-scale 0.4s ease-out;
   transform-origin: center center; /* 以中心點縮放 */
 }
+
+.flip-anim {
+  position: fixed;      /* 配合你的動態定位 */
+  z-index: 20;        /* 確保在最上層 */
+  
+}
+
 .half {
   position: absolute;
-  left: 0;
-  width: 100%;
-  height: 50%;
+  left: 0;              /* 相對於 flip-anim 容器定位 */
+  width: 100%;          /* 填滿 flip-anim 容器 */
+  height: 50%;          /* 各佔一半高度 */
   transition: transform 1s ease, opacity 1s ease;
   background-repeat: no-repeat;
-  background-size: 100% 200%; /* 圖片高度是容器的兩倍 */
+  /* 移除這裡的 background-size 和 background-position，讓內聯樣式生效 */
   z-index: 20;
+  /* 使用 clip-path 來裁切成橢圓形 */
+  clip-path: ellipse(50% 100% at 50% 50%);
 }
 
 /* 上半 */
 .half-top {
-  top: 0;
-  background-position: center top; /* 顯示圖片的上半部分 */
+  top: 0;               /* 從容器頂部開始 */
+  /* background-position 由內聯樣式控制 */
 }
 
 /* 下半 */
 .half-bottom {
-  bottom: 0;
-  background-position: center bottom; /* 顯示圖片的下半部分 */
+  top: 50%;             /* 從容器中間開始 */
+  /* background-position 由內聯樣式控制 */
 }
 
-/* 加上 .fly 就會分飛 */
+/* 只有在加上 .fly 之後才分飛 */
 .fly .half-top {
   transform: translateY(-100%) rotate(-10deg);
   opacity: 0;

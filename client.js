@@ -748,15 +748,15 @@ function animateFlip(x, y) {
     requestAnimationFrame(() => {
       flying.style.transform = `translate(${targetX - window.innerWidth}px, ${targetY - window.innerHeight}px) scale(1)`;
     });
-
+  disk.style.backgroundImage = 'none';
     // ✅ 建立翻轉動畫用的獨立元素
     const flipAnim = document.createElement("div");
     flipAnim.className = "flip-anim";
     flipAnim.style.position = "absolute";
     flipAnim.style.left = rect.left + "px";
     flipAnim.style.top = rect.top + "px";
-    flipAnim.style.width = rect.width + "px";
-    flipAnim.style.height = rect.height + "px";
+    flipAnim.style.width = rect.width + "px";     
+flipAnim.style.height = rect.height  + "px";         
     flipAnim.innerHTML = `
       <div class="half half-top" style="background-image: url('${src}'); background-size: 100% 200%; background-position: center top;"></div>
       <div class="half half-bottom" style="background-image: url('${src}'); background-size: 100% 200%; background-position: center bottom;"></div>
