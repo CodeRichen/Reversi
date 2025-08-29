@@ -716,7 +716,7 @@ function animateFlip(x, y) {
     const src = bg.slice(5, -2);
     let newImg = "";
 
-    if (src.includes("chess2")) { 
+    if (src.includes("chess2")) {
       // black -> white
       if (!cell.dataset.whiteImage) {
         const rand = Math.floor(Math.random() * 6) + 1;
@@ -748,30 +748,48 @@ function animateFlip(x, y) {
     requestAnimationFrame(() => {
       flying.style.transform = `translate(${targetX - window.innerWidth}px, ${targetY - window.innerHeight}px) scale(1)`;
     });
-  disk.style.backgroundImage = 'none';
-    // ✅ 建立翻轉動畫用的獨立元素
+
+    disk.style.backgroundImage = 'none';
+
+    // ✅ 建立翻轉動畫用的獨立元素（外層容器）
     const flipAnim = document.createElement("div");
     flipAnim.className = "flip-anim";
     flipAnim.style.position = "absolute";
     flipAnim.style.left = rect.left + "px";
     flipAnim.style.top = rect.top + "px";
-    flipAnim.style.width = rect.width + "px";     
-flipAnim.style.height = rect.height  + "px";         
-    flipAnim.innerHTML = `
-      <div class="half half-top" style="background-image: url('${src}'); background-size: 100% 200%; background-position: center top;"></div>
-      <div class="half half-bottom" style="background-image: url('${src}'); background-size: 100% 200%; background-position: center bottom;"></div>
-    `;
+    flipAnim.style.width = rect.width + "px";
+    flipAnim.style.height = rect.height + "px";
+    
+    // ✅ 建立內層容器（80%大小）
+    const flipInner = document.createElement("div");
+    flipInner.className = "flip-inner";
+    
+
+    flipInner.innerHTML = `
+  <div class="half half-top" style="background-image: url('${src}'); background-size: 100% 200%; background-position: center top;">
+    <img class="sweat-drop" src="./other/sweat.png" style="position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; z-index: 10;">
+  </div>
+  <div class="half half-bottom" style="background-image: url('${src}'); background-size: 100% 200%; background-position: center bottom;"></div>
+`;
+    flipAnim.appendChild(flipInner);
     document.body.appendChild(flipAnim);
 
     // 啟動翻轉動畫
-    setTimeout(() => flipAnim.classList.add("fly"), 300);
+    setTimeout(() => 
+      {flipAnim.classList.add("fly")
+        // 動畫開始時，把 sweat icon 刪掉
+  const sweat = flipInner.querySelector(".sweat-icon");
+  if (sweat) sweat.remove();
+    }, 300);
 
-    // 動畫結束後自動移除 flipAnim
-    flipAnim.addEventListener("animationend", () => {
-      flipAnim.remove();
-    }, { once: true });
+    // ✅ 動畫結束後真正移除 flipAnim 元素
+    setTimeout(() => {
+      if (flipAnim.parentNode) {
+        flipAnim.remove();
+      }
+    }, 1300); // 1s動畫 + 300ms延遲
 
-    // ✅ 這裡直接換掉 cell，不影響 flipAnim
+    // ✅ 飛進來的棋子動畫結束後更換內容
     flying.addEventListener("transitionend", () => {
       cell.innerHTML = `<div class="disk" style="background-image:url('${newImg}')"></div>`;
       flying.remove();

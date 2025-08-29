@@ -550,7 +550,7 @@ svg {
 .flip-anim {
   position: fixed;      /* 配合你的動態定位 */
   z-index: 20;        /* 確保在最上層 */
-  
+  scale:0.8;
 }
 
 .half {
@@ -562,8 +562,7 @@ svg {
   background-repeat: no-repeat;
   /* 移除這裡的 background-size 和 background-position，讓內聯樣式生效 */
   z-index: 20;
-  /* 使用 clip-path 來裁切成橢圓形 */
-  clip-path: ellipse(50% 100% at 50% 50%);
+  background-size: 100% 200%; /*TODO 扁棋 */
 }
 
 /* 上半 */
@@ -574,7 +573,7 @@ svg {
 
 /* 下半 */
 .half-bottom {
-  top: 50%;             /* 從容器中間開始 */
+   bottom: 0;             /* 從容器中間開始 */
   /* background-position 由內聯樣式控制 */
 }
 
@@ -595,9 +594,10 @@ svg {
   height: 50px;
   background-size: cover;
   border-radius: 50%;
-  transition: transform 0.4s ease-in-out;
+  transition: transform 1.4s ease-in-out;
   pointer-events: none;
   z-index: 20;
+  
 }
 
 .shockwave { /* 爆炸效果 */
