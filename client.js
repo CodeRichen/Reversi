@@ -398,6 +398,9 @@ socket.on("placeidx", idx => {
 const specialCell = boardEl.querySelector(`[data-index="${targetIndex}"]`);
   specialCell.classList.add("special"); 
 });
+
+let gun = null;
+let sniper = null;
 // 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx }) => {
     const x = idx % 8;
@@ -428,14 +431,69 @@ const sortedFlipped = flippedPositions
     return { fx, fy, dist };
   })
   .sort((a, b) => a.dist - b.dist);
-  
+  const container = document.getElementById("container");
+  const cols = 20, rows = 13;
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  // 建立 tile
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+
+      const layer1 = document.createElement("div");
+      layer1.className = "layer1";
+      layer1.style.backgroundPosition = `-${(width/cols)*c}px -${(height/rows)*r}px`;
+
+      const layer2 = document.createElement("div");
+      layer2.className = "layer2";
+      layer2.style.backgroundPosition = `-${(width/cols)*c}px -${(height/rows)*r}px`;
+
+      tile.appendChild(layer1);
+      tile.appendChild(layer2);
+      container.appendChild(tile);
+    }
+  }
+// 顯示順序：先偶數行再奇數行
+  const order = [];
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r += 2) order.push({r, c});
+    for (let r = 1; r < rows; r += 2) order.push({r, c});
+  }
+
+  let acc = 5;
+  order.forEach((pos, i) => {
+    const index = pos.r * cols + pos.c;
+    const tile = container.children[index];
+    setTimeout(() => {
+      tile.style.opacity = "1";
+    }, i * acc);
+    acc -= 0.015;
+  });
+  container.classList.add("move-left");
+  const totalDelay = 400; 
+  setTimeout(() => {
+    container.innerHTML = ""; // 清空所有 tile
+
+    // 加完整圖
+     sniper = document.createElement("div");
+    sniper.id = "full-sniper";
+     gun = document.createElement("div");
+    gun.id = "full-gun";  
+
+    container.appendChild(sniper);
+    container.appendChild(gun);
+    
+  }, totalDelay);
+
    sortedFlipped.forEach(({ fx, fy }, i) => {
-     setTimeout(() => animateFlip(fx, fy), i * 100); // 每顆延遲一點時間
+     setTimeout(() => animateFlip(fx, fy), i * 500); // 每顆延遲一點時間
    });
 // 依序翻轉
  setTimeout(() => {
    sortedFlipped.forEach(({ fx, fy }, i) => {
-     setTimeout(() => animateafterFlip(fx, fy), i * 100); // 每顆延遲一點時間
+     setTimeout(() => animateafterFlip(fx, fy), i * 500); // 每顆延遲一點時間
    });
    updateScore();
   updateBoardOffset(flippedPositions);
@@ -705,53 +763,197 @@ function attachNotes(cell) {
   }
 }
 
+// --- 修正版本：確保圖片載入完成後再進行座標計算 ---
+const container = document.getElementById("container");
+
+const smoke = document.createElement("div");
+smoke.id = "smoke";
+smoke.style.width = "400px";
+smoke.style.height = "260px";
+smoke.style.backgroundSize = "contain";
+smoke.style.backgroundRepeat = "no-repeat";
+smoke.style.opacity = "1";
+smoke.style.transition = "opacity 0.5s ease";
+smoke.style.transformOrigin = "20% 50%";
+container.appendChild(smoke);
+
+// 確保圖片完全載入
+let img3 = new Image();
+let imageLoaded = false;
+
+img3.onload = function() {
+    imageLoaded = true;
+    console.log("smoky.png loaded successfully, width=", img3.width, "height=", img3.height);
+    // 設定背景圖片
+    smoke.style.backgroundImage = `url('${img3.src}')`;
+};
+
+img3.onerror = function() {
+    console.error("Failed to load smoky.png");
+};
+
+img3.src = "gun/smoky.png";
+
 function animateFlip(x, y) {
-  const idx = y * 8 + x;
-  const cell = document.querySelectorAll(".cell")[idx];
-  if (cell && cell.firstChild) {
-    const disk = cell.firstChild;
-    const bg = disk.style.backgroundImage;
-    
-    if (!bg) return;
-    const src = bg.slice(5, -2);
-    let newImg = "";
+    // 檢查圖片是否已載入
+    if (!imageLoaded || img3.width === 0 || img3.height === 0) {
+        console.warn("圖片尚未載入完成，座標可能不正確");
+        return;
+    }
 
-    if (src.includes("chess2")) {
-      // black -> white
-      if (!cell.dataset.whiteImage) {
-        const rand = Math.floor(Math.random() * 6) + 1;
-        newImg = rand === 1 ? "chess1.png" : `chess/chess1_${rand}.png`;
-        cell.dataset.whiteImage = newImg;
-      } else newImg = cell.dataset.whiteImage;
-    } else if (src.includes("chess1")) {
-      // white -> black
-      if (!cell.dataset.blackImage) {
-        const rand = Math.floor(Math.random() * 6) + 1;
-        newImg = rand === 1 ? "chess2.png" : `chess/chess2_${rand}.png`;
-        cell.dataset.blackImage = newImg;
-      } else newImg = cell.dataset.blackImage;
-    } else return;
+    smoke.style.opacity = "1";
+    setTimeout(() => {
+        smoke.style.opacity = "0";
+    }, 150);
 
-    // 建立 flying 動畫
-    const flying = document.createElement("div");
-    flying.className = "flying-chess";
-    flying.style.backgroundImage = `url('${newImg}')`;
-    document.body.appendChild(flying);
+    const idx = y * 8 + x;
+    const cell = document.querySelectorAll(".cell")[idx];
+    if (cell && cell.firstChild) {
+        const disk = cell.firstChild;
+        const bg = disk.style.backgroundImage;
+        
+        if (!bg) return;
+        const src = bg.slice(5, -2);
+        let newImg = "";
 
-    const rect = cell.getBoundingClientRect();
-    const targetX = rect.left + rect.width / 2;
-    const targetY = rect.top + rect.height / 2;
+        if (src.includes("chess2")) {
+            if (!cell.dataset.whiteImage) {
+                const rand = Math.floor(Math.random() * 6) + 1;
+                newImg = rand === 1 ? "chess1.png" : `chess/chess1_${rand}.png`;
+                cell.dataset.whiteImage = newImg;
+            } else newImg = cell.dataset.whiteImage;
+        } else if (src.includes("chess1")) {
+            if (!cell.dataset.blackImage) {
+                const rand = Math.floor(Math.random() * 6) + 1;
+                newImg = rand === 1 ? "chess2.png" : `chess/chess2_${rand}.png`;
+                cell.dataset.blackImage = newImg;
+            } else newImg = cell.dataset.blackImage;
+        } else return;
 
-    flying.style.left = window.innerWidth + "px";
-    flying.style.top = window.innerHeight + "px";
+        const flying = document.createElement("div");
+        flying.className = "flying-chess";
+        flying.style.backgroundImage = `url('${newImg}')`;
+        document.body.appendChild(flying);
 
+        // 取得目標位置
+        const rect = cell.getBoundingClientRect();
+        const targetX = rect.left + rect.width / 2;
+        const targetY = rect.top + rect.height / 2;
+
+        // 取得容器中心點
+        const rect1 = container.getBoundingClientRect();
+        const cx = rect1.left + rect1.width / 2;
+        const cy = rect1.top + rect1.height / 2;
+
+        // 計算槍的角度
+        const gunAngle = Math.atan2(targetY - cy, targetX - cx) * 180 / Math.PI;
+        const gun = document.getElementById("full-gun");
+        if (gun) {
+            gun.style.transform = `rotate(${gunAngle}deg)`;
+        }
+        smoke.style.transform = `rotate(${gunAngle}deg)`;
+
+        // 儲存固定的 smoke 尺寸，避免 opacity/transform 影響計算
+        let smokeWidth = 400;  // 固定寬度
+        let smokeHeight = 260; // 固定高度
+        
+        // 延遲計算座標，但使用固定尺寸
+        setTimeout(() => {
+            // 獲取容器位置（相對穩定）
+            const containerRect = container.getBoundingClientRect();
+            
+            // 使用實際的圖片尺寸
+            const imageWidth = img3.width;
+            const imageHeight = img3.height;
+            
+            console.log("實際圖片尺寸:", imageWidth, imageHeight);
+            console.log("Smoke 固定尺寸:", smokeWidth, smokeHeight);
+            
+            // 計算縮放比例（使用固定尺寸）
+            const scaleX = smokeWidth / imageWidth;
+            const scaleY = smokeHeight / imageHeight;
+            
+            console.log("縮放比例:", scaleX, scaleY);
+            
+            // 圖片中的座標點
+            const xInImage = imageWidth * 0.8;  // 圖片右側80%位置
+            const yInImage = imageHeight * 0.3;  // 圖片上方30%位置
+            
+            // 計算 smoke 元素的實際位置（考慮旋轉前的位置）
+            // 假設 smoke 位於容器內部，根據 transform-origin 計算
+            const smokeLeft = containerRect.left + (containerRect.width - smokeWidth) / 2;
+            const smokeTop = containerRect.top + (containerRect.height - smokeHeight) / 2;
+            
+            // 轉換成螢幕座標（不考慮旋轉影響）
+            let screenX = smokeLeft + xInImage * scaleX;
+            let screenY = smokeTop + yInImage * scaleY;
+            
+            // 如果有旋轉，需要調整座標
+            const gunAngleRad = gunAngle * Math.PI / 180;
+            const centerX = smokeLeft + smokeWidth * 0.2; // transform-origin 20%
+            const centerY = smokeTop + smokeHeight * 0.5; // transform-origin 50%
+            
+            // 相對於旋轉中心的座標
+            const relX = screenX - centerX;
+            const relY = screenY - centerY;
+            
+            // 套用旋轉
+            screenX = centerX + relX * Math.cos(gunAngleRad) - relY * Math.sin(gunAngleRad);
+            screenY = centerY + relX * Math.sin(gunAngleRad) + relY * Math.cos(gunAngleRad);
+            
+            console.log("計算出的螢幕座標:", screenX, screenY);
+            
+            // 確保座標合理
+            if (isNaN(screenX) || isNaN(screenY) || (screenX === 0 && screenY === 0)) {
+                console.error("座標計算錯誤！使用容器中心作為備用");
+                screenX = containerRect.left + containerRect.width / 2;
+                screenY = containerRect.top + containerRect.height / 2;
+                console.log("使用備用座標:", screenX, screenY);
+            }
+            
+            setupFlyingAnimation(flying, screenX, screenY, targetX, targetY);
+            
+        }, 100); // 減少延遲時間
+
+        // 移除原本的棋子外觀
+        disk.style.backgroundImage = 'none';
+        
+        // 創建翻轉動畫
+        createFlipAnimation(cell, rect, src, newImg);
+    }
+}
+
+// 分離飛行動畫設定
+function setupFlyingAnimation(flying, startX, startY, targetX, targetY) {
+    const dx = targetX - startX;
+    const dy = targetY - startY;
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+    // 初始位置
+    flying.style.left = startX + "px";
+    flying.style.top = startY + "px";
+
+    // 設定方向與變形
+    flying.style.transform = `rotate(${angle}deg) scale(1.3, 0.6)`;
+    flying.style.transformOrigin = "center center";
+
+    // 啟動動畫
     requestAnimationFrame(() => {
-      flying.style.transform = `translate(${targetX - window.innerWidth}px, ${targetY - window.innerHeight}px) scale(1)`;
+        flying.style.transition = "transform 0.3s ease-in-out, left 0.3s ease-in-out, top 0.3s ease-in-out";
+        flying.style.left = targetX + "px";
+        flying.style.top = targetY + "px";
     });
 
-    disk.style.backgroundImage = 'none';
+    // 動畫結束後的處理
+    flying.addEventListener("transitionend", () => {
+        // 在這裡處理棋子到達目標的邏輯
+        console.log("飛行動畫完成");
+        flying.remove();
+    });
+}
 
-    // ✅ 建立翻轉動畫用的獨立元素（外層容器）
+// 分離翻轉動畫創建
+function createFlipAnimation(cell, rect, oldSrc, newSrc) {
     const flipAnim = document.createElement("div");
     flipAnim.className = "flip-anim";
     flipAnim.style.position = "absolute";
@@ -760,41 +962,48 @@ function animateFlip(x, y) {
     flipAnim.style.width = rect.width + "px";
     flipAnim.style.height = rect.height + "px";
     
-    // ✅ 建立內層容器（80%大小）
     const flipInner = document.createElement("div");
     flipInner.className = "flip-inner";
     
-
     flipInner.innerHTML = `
-  <div class="half half-top" style="background-image: url('${src}'); background-size: 100% 200%; background-position: center top;">
-    <img class="sweat-drop" src="./other/sweat.png" style="position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; z-index: 10;">
-  </div>
-  <div class="half half-bottom" style="background-image: url('${src}'); background-size: 100% 200%; background-position: center bottom;"></div>
-`;
+        <div class="half half-top" style="background-image: url('${oldSrc}'); background-size: 100% 200%; background-position: center top;">
+            <img class="sweat-drop" src="./other/sweat.png" style="position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; z-index: 10;">
+        </div>
+        <div class="half half-bottom" style="background-image: url('${oldSrc}'); background-size: 100% 200%; background-position: center bottom;"></div>
+    `;
+    
     flipAnim.appendChild(flipInner);
     document.body.appendChild(flipAnim);
 
-    // 啟動翻轉動畫
-    setTimeout(() => 
-      {flipAnim.classList.add("fly")
-        // 動畫開始時，把 sweat icon 刪掉
-  const sweat = flipInner.querySelector(".sweat-icon");
-  if (sweat) sweat.remove();
+    setTimeout(() => {
+        flipAnim.classList.add("fly");
+        const sweat = flipInner.querySelector(".sweat-drop");
+        if (sweat) sweat.remove();
     }, 300);
 
-    // ✅ 動畫結束後真正移除 flipAnim 元素
     setTimeout(() => {
-      if (flipAnim.parentNode) {
-        flipAnim.remove();
-      }
-    }, 1300); // 1s動畫 + 300ms延遲
+        if (flipAnim.parentNode) {
+            flipAnim.remove();
+        }
+        // 更新棋子圖片
+        cell.innerHTML = `<div class="disk" style="background-image:url('${newSrc}')"></div>`;
+    }, 1300);
+}
 
-    // ✅ 飛進來的棋子動畫結束後更換內容
-    flying.addEventListener("transitionend", () => {
-      cell.innerHTML = `<div class="disk" style="background-image:url('${newImg}')"></div>`;
-      flying.remove();
+// 除錯用函數
+function debugSmokePosition() {
+    console.log("=== Smoke 位置除錯 ===");
+    console.log("圖片載入狀態:", imageLoaded);
+    console.log("圖片尺寸:", img3.width, img3.height);
+    
+    const smokeRect = smoke.getBoundingClientRect();
+    console.log("Smoke 元素位置:", smokeRect);
+    console.log("Smoke 樣式:", {
+        width: smoke.style.width,
+        height: smoke.style.height,
+        backgroundImage: smoke.style.backgroundImage,
+        transform: smoke.style.transform
     });
-  }
 }
 
 
