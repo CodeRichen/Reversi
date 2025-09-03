@@ -375,13 +375,10 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
   if (data.board[y][x]) {
     // 有棋子 → 加上 fogged 效果
     cell.classList.add("fogged");
-  } else {
-    // 無棋子 → 清空內容
-    // cell.innerHTML = "";
   }
 
 });
-  },1000)  // 時間同步 2A
+  },2000)  // 時間同步 2A
 });
 
 // 若玩家點了非法位置（例如不能落子處），顯示錯誤訊息
@@ -401,6 +398,8 @@ const specialCell = boardEl.querySelector(`[data-index="${targetIndex}"]`);
 
 let gun = null;
 let sniper = null;
+let smoke = null;
+const container = document.getElementById("container");
 // 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx }) => {
     const x = idx % 8;
@@ -431,7 +430,7 @@ const sortedFlipped = flippedPositions
     return { fx, fy, dist };
   })
   .sort((a, b) => a.dist - b.dist);
-  const container = document.getElementById("container");
+  
   const cols = 20, rows = 13;
   const width = container.clientWidth;
   const height = container.clientHeight;
@@ -474,20 +473,29 @@ const sortedFlipped = flippedPositions
   container.classList.add("move-left");
   const totalDelay = 400; 
   setTimeout(() => {
-    container.innerHTML = ""; // 清空所有 tile
+ container.innerHTML = ""; // 清空所有 tile
 
     // 加完整圖
-     sniper = document.createElement("div");
+    sniper = document.createElement("div");
     sniper.id = "full-sniper";
-     gun = document.createElement("div");
+    gun = document.createElement("div");
     gun.id = "full-gun";  
-
+    smoke = document.createElement("div");
+    smoke.id = "smoke";
+    smoke.style.width = "400px";
+    smoke.style.height = "260px";
+    smoke.style.backgroundSize = "contain";
+    smoke.style.backgroundRepeat = "no-repeat";
+    smoke.style.opacity = "1";
+    smoke.style.transition = "opacity 0.5s ease";
+    smoke.style.transformOrigin = "20% 50%";
+    const img = new Image();
+    img.src = "gun/smoky.png";
+    smoke.style.backgroundImage = `url('${img.src}')`;
+    container.appendChild(smoke);
     container.appendChild(sniper);
     container.appendChild(gun);
-    
-  }, totalDelay);
-
-   sortedFlipped.forEach(({ fx, fy }, i) => {
+    sortedFlipped.forEach(({ fx, fy }, i) => {
      setTimeout(() => animateFlip(fx, fy), i * 500); // 每顆延遲一點時間
    });
 // 依序翻轉
@@ -497,7 +505,12 @@ const sortedFlipped = flippedPositions
    });
    updateScore();
   updateBoardOffset(flippedPositions);
- }, 1000); // 時間同步 1A
+  setTimeout(() => {
+       container.innerHTML = ""; // 清空所有 tile
+  },totalDelay+3000);
+  }, totalDelay);
+ }, 2000); // 時間同步 1A
+ 
 });
 
 
@@ -763,48 +776,8 @@ function attachNotes(cell) {
   }
 }
 
-// --- 修正版本：確保圖片載入完成後再進行座標計算 ---
-const container = document.getElementById("container");
-
-const smoke = document.createElement("div");
-smoke.id = "smoke";
-smoke.style.width = "400px";
-smoke.style.height = "260px";
-smoke.style.backgroundSize = "contain";
-smoke.style.backgroundRepeat = "no-repeat";
-smoke.style.opacity = "1";
-smoke.style.transition = "opacity 0.5s ease";
-smoke.style.transformOrigin = "20% 50%";
-container.appendChild(smoke);
-
-// 確保圖片完全載入
-let img3 = new Image();
-let imageLoaded = false;
-
-img3.onload = function() {
-    imageLoaded = true;
-    console.log("smoky.png loaded successfully, width=", img3.width, "height=", img3.height);
-    // 設定背景圖片
-    smoke.style.backgroundImage = `url('${img3.src}')`;
-};
-
-img3.onerror = function() {
-    console.error("Failed to load smoky.png");
-};
-
-img3.src = "gun/smoky.png";
 
 function animateFlip(x, y) {
-    // 檢查圖片是否已載入
-    if (!imageLoaded || img3.width === 0 || img3.height === 0) {
-        console.warn("圖片尚未載入完成，座標可能不正確");
-        return;
-    }
-
-    smoke.style.opacity = "1";
-    setTimeout(() => {
-        smoke.style.opacity = "0";
-    }, 150);
 
     const idx = y * 8 + x;
     const cell = document.querySelectorAll(".cell")[idx];
@@ -843,7 +816,7 @@ function animateFlip(x, y) {
         // 取得容器中心點
         const rect1 = container.getBoundingClientRect();
         const cx = rect1.left + rect1.width / 2;
-        const cy = rect1.top + rect1.height / 2;
+        const cy = rect1.top - rect1.height / 7;
 
         // 計算槍的角度
         const gunAngle = Math.atan2(targetY - cy, targetX - cx) * 180 / Math.PI;
@@ -853,65 +826,19 @@ function animateFlip(x, y) {
         }
         smoke.style.transform = `rotate(${gunAngle}deg)`;
 
-        // 儲存固定的 smoke 尺寸，避免 opacity/transform 影響計算
-        let smokeWidth = 400;  // 固定寬度
-        let smokeHeight = 260; // 固定高度
-        
+    
         // 延遲計算座標，但使用固定尺寸
         setTimeout(() => {
-            // 獲取容器位置（相對穩定）
-            const containerRect = container.getBoundingClientRect();
+
+            // 左下角座標
+            const startX = 0;
+            const startY = window.innerHeight;
+
+            const launchX = startX +  container.clientWidth/10;
+            const launchY = startY -   container.clientHeight*6/10;
+          
             
-            // 使用實際的圖片尺寸
-            const imageWidth = img3.width;
-            const imageHeight = img3.height;
-            
-            console.log("實際圖片尺寸:", imageWidth, imageHeight);
-            console.log("Smoke 固定尺寸:", smokeWidth, smokeHeight);
-            
-            // 計算縮放比例（使用固定尺寸）
-            const scaleX = smokeWidth / imageWidth;
-            const scaleY = smokeHeight / imageHeight;
-            
-            console.log("縮放比例:", scaleX, scaleY);
-            
-            // 圖片中的座標點
-            const xInImage = imageWidth * 0.8;  // 圖片右側80%位置
-            const yInImage = imageHeight * 0.3;  // 圖片上方30%位置
-            
-            // 計算 smoke 元素的實際位置（考慮旋轉前的位置）
-            // 假設 smoke 位於容器內部，根據 transform-origin 計算
-            const smokeLeft = containerRect.left + (containerRect.width - smokeWidth) / 2;
-            const smokeTop = containerRect.top + (containerRect.height - smokeHeight) / 2;
-            
-            // 轉換成螢幕座標（不考慮旋轉影響）
-            let screenX = smokeLeft + xInImage * scaleX;
-            let screenY = smokeTop + yInImage * scaleY;
-            
-            // 如果有旋轉，需要調整座標
-            const gunAngleRad = gunAngle * Math.PI / 180;
-            const centerX = smokeLeft + smokeWidth * 0.2; // transform-origin 20%
-            const centerY = smokeTop + smokeHeight * 0.5; // transform-origin 50%
-            
-            // 相對於旋轉中心的座標
-            const relX = screenX - centerX;
-            const relY = screenY - centerY;
-            
-            // 套用旋轉
-            screenX = centerX + relX * Math.cos(gunAngleRad) - relY * Math.sin(gunAngleRad);
-            screenY = centerY + relX * Math.sin(gunAngleRad) + relY * Math.cos(gunAngleRad);
-            
-            console.log("計算出的螢幕座標:", screenX, screenY);
-            
-            // 確保座標合理
-            if (isNaN(screenX) || isNaN(screenY) || (screenX === 0 && screenY === 0)) {
-                console.error("座標計算錯誤！使用容器中心作為備用");
-                screenX = containerRect.left + containerRect.width / 2;
-                screenY = containerRect.top + containerRect.height / 2;
-                console.log("使用備用座標:", screenX, screenY);
-            }
-            
-            setupFlyingAnimation(flying, screenX, screenY, targetX, targetY);
+            setupFlyingAnimation(flying, launchX, launchY, targetX, targetY);
             
         }, 100); // 減少延遲時間
 
@@ -936,7 +863,10 @@ function setupFlyingAnimation(flying, startX, startY, targetX, targetY) {
     // 設定方向與變形
     flying.style.transform = `rotate(${angle}deg) scale(1.3, 0.6)`;
     flying.style.transformOrigin = "center center";
-
+    smoke.style.opacity = "1";
+    setTimeout(() => {
+        smoke.style.opacity = "0";
+    }, 150);
     // 啟動動畫
     requestAnimationFrame(() => {
         flying.style.transition = "transform 0.3s ease-in-out, left 0.3s ease-in-out, top 0.3s ease-in-out";
@@ -990,21 +920,6 @@ function createFlipAnimation(cell, rect, oldSrc, newSrc) {
     }, 1300);
 }
 
-// 除錯用函數
-function debugSmokePosition() {
-    console.log("=== Smoke 位置除錯 ===");
-    console.log("圖片載入狀態:", imageLoaded);
-    console.log("圖片尺寸:", img3.width, img3.height);
-    
-    const smokeRect = smoke.getBoundingClientRect();
-    console.log("Smoke 元素位置:", smokeRect);
-    console.log("Smoke 樣式:", {
-        width: smoke.style.width,
-        height: smoke.style.height,
-        backgroundImage: smoke.style.backgroundImage,
-        transform: smoke.style.transform
-    });
-}
 
 
       // disk.classList.add('flip');
