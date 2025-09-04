@@ -378,7 +378,7 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
   }
 
 });
-  },2000)  // 時間同步 2A
+  },3000)  // 時間同步 2A
 });
 
 // 若玩家點了非法位置（例如不能落子處），顯示錯誤訊息
@@ -387,7 +387,8 @@ socket.on("invalidMove", () => {
 });
 socket.on("place", ({i,board}) => {
     audio_place.play();
-    updatechess(i,board)
+   updatechess(i,board)
+   
 });
 socket.on("placeidx", idx => {
 
@@ -509,7 +510,7 @@ const sortedFlipped = flippedPositions
        container.innerHTML = ""; // 清空所有 tile
   },totalDelay+3000);
   }, totalDelay);
- }, 2000); // 時間同步 1A
+ }, 1000); // 時間同步 1A
  
 });
 
@@ -802,14 +803,16 @@ function animateFlip(x, y) {
                 cell.dataset.blackImage = newImg;
             } else newImg = cell.dataset.blackImage;
         } else return;
-
+        // 延遲計算座標，但使用固定尺寸
+        const rect = cell.getBoundingClientRect();
+        setTimeout(() => {
         const flying = document.createElement("div");
         flying.className = "flying-chess";
         flying.style.backgroundImage = `url('${newImg}')`;
         document.body.appendChild(flying);
 
         // 取得目標位置
-        const rect = cell.getBoundingClientRect();
+        
         const targetX = rect.left + rect.width / 2;
         const targetY = rect.top + rect.height / 2;
 
@@ -827,8 +830,7 @@ function animateFlip(x, y) {
         smoke.style.transform = `rotate(${gunAngle}deg)`;
 
     
-        // 延遲計算座標，但使用固定尺寸
-        setTimeout(() => {
+
 
             // 左下角座標
             const startX = 0;
