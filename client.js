@@ -400,6 +400,8 @@ const specialCell = boardEl.querySelector(`[data-index="${targetIndex}"]`);
 let gun = null;
 let sniper = null;
 let smoke = null;
+let gunon = false;
+let flipon = false;
 const container = document.getElementById("container");
 // 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx }) => {
@@ -409,6 +411,15 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
     if (flippedCount > 0) {
     audio_meow.play();
   }
+  if (flippedCount == 1  ){
+    flipon=true;
+    gunon=false;
+  }
+  if (flippedCount > 2 ){
+    gunon=true;
+    flipon=false;
+  }
+  
     if (flippedCount >= 5) {
     const board = document.getElementById("board-frame");
     board.classList.add("shake");
@@ -422,8 +433,7 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
   });
   document.querySelectorAll('.note').forEach(note => note.remove());
     document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('special'));
-  // 排序：依照與下棋點的距離
-const sortedFlipped = flippedPositions
+    const sortedFlipped = flippedPositions
   .map(([fx, fy]) => {
     const dx = fx - x;
     const dy = fy - y;
@@ -431,6 +441,22 @@ const sortedFlipped = flippedPositions
     return { fx, fy, dist };
   })
   .sort((a, b) => a.dist - b.dist);
+
+  if (gunon==true){
+    gunani(sortedFlipped);
+  }
+  if (flipon==true){
+    sortedFlipped.forEach(({ fx, fy }, i) => {
+     setTimeout(() => flipani(fx, fy), i * 100); // 每顆延遲一點時間
+   });
+    sortedFlipped.forEach(({ fx, fy }, i) => {
+     setTimeout(() => animateafterFlip(fx, fy), i * 500); // 每顆延遲一點時間
+   });
+  }
+});
+
+function gunani(sortedFlipped){
+  // 排序：依照與下棋點的距離
   
   const cols = 20, rows = 13;
   const width = container.clientWidth;
@@ -511,10 +537,7 @@ const sortedFlipped = flippedPositions
   },totalDelay+3000);
   }, totalDelay);
  }, 1000); // 時間同步 1A
- 
-});
-
-
+}
 
 socket.on("gameOver", ({ black, white, winner}) => {
   // let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
@@ -776,7 +799,21 @@ function attachNotes(cell) {
     createNote(i);
   }
 }
+function flipani(x,y){
+    const idx = y * 8 + x;
+    const cell = document.querySelectorAll(".cell")[idx];
 
+    const disk = cell.firstChild;
+    
+    disk.classList.add('flip');
+    disk.classList.add('pop');
+    setTimeout(() => {
+      disk.classList.remove('flip');
+    }, 400);
+    setTimeout(() => {
+      disk.classList.remove('pop');
+    }, 400);
+}
 
 function animateFlip(x, y) {
 
@@ -828,9 +865,6 @@ function animateFlip(x, y) {
             gun.style.transform = `rotate(${gunAngle}deg)`;
         }
         smoke.style.transform = `rotate(${gunAngle}deg)`;
-
-    
-
 
             // 左下角座標
             const startX = 0;
@@ -922,17 +956,6 @@ function createFlipAnimation(cell, rect, oldSrc, newSrc) {
     }, 1300);
 }
 
-
-
-      // disk.classList.add('flip');
-    // disk.classList.add('pop');
-        // 移除 flip 動畫
-    // setTimeout(() => {
-    //   disk.classList.remove('flip');
-    // }, 400);
-    // setTimeout(() => {
-    //   disk.classList.remove('pop');
-    // }, 400);
 
 function animateafterFlip(x, y) {
   const idx = y * 8 + x;
