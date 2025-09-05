@@ -10,6 +10,13 @@ let currentTurn = null;
 // 雙方的得分
 let myScore = 0, opponentScore = 0;
 
+let gun = null;
+let sniper = null;
+let smoke = null;
+let gunon = false;
+let flipon = false;
+let popon = false;
+
 // 獲取 DOM 元素：棋盤、狀態欄、訊息欄、分數欄
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
@@ -315,7 +322,14 @@ document.addEventListener("keydown", (event) => {
 
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
 socket.on("updateBoard", data => {
-  
+  console.log(gunon,popon);
+  let time_2A = 0;
+  if (gunon ==true){
+    time_2A = 3000;
+  }
+  else{
+    time_2A = 0;
+  }
   setTimeout(()=>{
   updateBoard(data.board);
 
@@ -378,7 +392,7 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
   }
 
 });
-  },3000)  // 時間同步 2A
+  },time_2A)  // 時間同步 2A
 });
 
 // 若玩家點了非法位置（例如不能落子處），顯示錯誤訊息
@@ -387,7 +401,16 @@ socket.on("invalidMove", () => {
 });
 socket.on("place", ({i,board}) => {
     audio_place.play();
-   updatechess(i,board)
+     console.log(gunon,popon);
+  let time_3A = 0;
+  if (gunon == true){
+    time_3A = 3000;
+  }
+  else{
+    time_3A = 0;
+  }
+   
+    setTimeout(() => updatechess(i,board) , time_3A);
    
 });
 socket.on("placeidx", idx => {
@@ -397,11 +420,7 @@ const specialCell = boardEl.querySelector(`[data-index="${targetIndex}"]`);
   specialCell.classList.add("special"); 
 });
 
-let gun = null;
-let sniper = null;
-let smoke = null;
-let gunon = false;
-let flipon = false;
+
 const container = document.getElementById("container");
 // 當伺服器回傳落子結果時，更新分數與動畫
 socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx }) => {
@@ -412,12 +431,19 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
     audio_meow.play();
   }
   if (flippedCount == 1  ){
+    flipon=false;
+    gunon=false;
+    popon=true;
+  }
+    if (flippedCount == 2  ){
     flipon=true;
     gunon=false;
+    popon=false;
   }
-  if (flippedCount > 2 ){
+  if (flippedCount >= 3 ){
     gunon=true;
     flipon=false;
+    popon=false;
   }
   
     if (flippedCount >= 5) {
@@ -433,6 +459,7 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
   });
   document.querySelectorAll('.note').forEach(note => note.remove());
     document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('special'));
+    
     const sortedFlipped = flippedPositions
   .map(([fx, fy]) => {
     const dx = fx - x;
@@ -441,21 +468,22 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
     return { fx, fy, dist };
   })
   .sort((a, b) => a.dist - b.dist);
-
   if (gunon==true){
-    gunani(sortedFlipped);
+    gunani(flippedPositions,sortedFlipped,flippedCount);
   }
-  if (flipon==true){
+  if (flipon==true || popon==true){
     sortedFlipped.forEach(({ fx, fy }, i) => {
      setTimeout(() => flipani(fx, fy), i * 100); // 每顆延遲一點時間
    });
     sortedFlipped.forEach(({ fx, fy }, i) => {
      setTimeout(() => animateafterFlip(fx, fy), i * 500); // 每顆延遲一點時間
    });
+   updateBoardOffset(flippedPositions);
   }
+  
 });
 
-function gunani(sortedFlipped){
+function gunani(flippedPositions,sortedFlipped,flippedCount){
   // 排序：依照與下棋點的距離
   
   const cols = 20, rows = 13;
@@ -529,12 +557,12 @@ function gunani(sortedFlipped){
  setTimeout(() => {
    sortedFlipped.forEach(({ fx, fy }, i) => {
      setTimeout(() => animateafterFlip(fx, fy), i * 500); // 每顆延遲一點時間
-   });
-   updateScore();
+   })
+
   updateBoardOffset(flippedPositions);
   setTimeout(() => {
        container.innerHTML = ""; // 清空所有 tile
-  },totalDelay+3000);
+  },totalDelay + flippedCount * 500);
   }, totalDelay);
  }, 1000); // 時間同步 1A
 }
@@ -742,9 +770,7 @@ function updateStatus() {
   statusEl.textContent="";
 }
 
-function updateScore() {
-  // scoreEl.textContent = `分數 - 你: ${myScore} | 對手: ${opponentScore}`;
-}
+
 
 function showMessage(text) {
   messageEl.textContent = text;
@@ -802,17 +828,20 @@ function attachNotes(cell) {
 function flipani(x,y){
     const idx = y * 8 + x;
     const cell = document.querySelectorAll(".cell")[idx];
-
     const disk = cell.firstChild;
     
+    if (flipon==true){
     disk.classList.add('flip');
-    disk.classList.add('pop');
     setTimeout(() => {
       disk.classList.remove('flip');
     }, 400);
-    setTimeout(() => {
+    }
+    if(popon==true){
+    disk.classList.add('pop');
+        setTimeout(() => {
       disk.classList.remove('pop');
     }, 400);
+  }
 }
 
 function animateFlip(x, y) {
@@ -1313,6 +1342,7 @@ const white = parseInt(document.getElementById("whiteScore").dataset.value || "0
   /* ---------- 垂直偏移計算（翻轉位置分佈） ---------- */
   const middleY = 4; // 棋盤上半部/下半部分界
   let topCount = 0, bottomCount = 0;
+  
   flippedPositions.forEach(([x, y]) => {
     if (y < middleY) topCount++;
     else bottomCount++;
@@ -1354,7 +1384,7 @@ function updateCounts(blackScore, whiteScore) {
   const blackDiv = document.getElementById("blackCounter");
   const whiteDiv = document.getElementById("whiteCounter");
 
-  console.log(`黑棋: ${blackScore}, 白棋: ${whiteScore}`);
+  // console.log(`黑棋: ${blackScore}, 白棋: ${whiteScore}`);
   // getComputedStyle(document.getElementById('image-layer')).maskImage
   // console.log("遮罩圖片：", getComputedStyle(document.getElementById('image-layer')).maskImage);
   // 決定這次狀態
