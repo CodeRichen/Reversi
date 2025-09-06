@@ -15,7 +15,7 @@ let sniper = null;
 let smoke = null;
 let gunon = false;
 let flipon = false;
-let popon = false;
+let popon = true;
 
 // 獲取 DOM 元素：棋盤、狀態欄、訊息欄、分數欄
 const boardEl = document.getElementById("board");
@@ -399,18 +399,9 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
 socket.on("invalidMove", () => {
   showMessage("這不是合法的落子位置");
 });
-socket.on("place", ({i,board}) => {
+socket.on("place", ({i,board,turn}) => {
     audio_place.play();
-     console.log(gunon,popon);
-  let time_3A = 0;
-  if (gunon == true){
-    time_3A = 3000;
-  }
-  else{
-    time_3A = 0;
-  }
-   
-    setTimeout(() => updatechess(i,board) , time_3A);
+    setTimeout(() => updatechess(i,board,turn));
    
 });
 socket.on("placeidx", idx => {
@@ -558,11 +549,10 @@ function gunani(flippedPositions,sortedFlipped,flippedCount){
    sortedFlipped.forEach(({ fx, fy }, i) => {
      setTimeout(() => animateafterFlip(fx, fy), i * 500); // 每顆延遲一點時間
    })
-
-  updateBoardOffset(flippedPositions);
   setTimeout(() => {
+    updateBoardOffset(flippedPositions);
        container.innerHTML = ""; // 清空所有 tile
-  },totalDelay + flippedCount * 500);
+  },totalDelay + flippedCount * 700); // TODO 調整結束時間
   }, totalDelay);
  }, 1000); // 時間同步 1A
 }
@@ -657,15 +647,15 @@ function hasValidMove(board, color) {
   return false;
 }
 
-function updatechess(idx,board){
+function updatechess(idx,board,turn){
   document.querySelectorAll(".cell").forEach((cell, i) => {
+    
     if(i===idx){
     const x = i % 8;
     const y = Math.floor(i / 8);
-    const value = board[y][x];
+    const value = turn; 
     const oldDisk = cell.querySelector(".disk");
     if (oldDisk) oldDisk.remove();
-    if (value) {
       const disk = document.createElement("div");
       disk.className = `disk ${value}`;
       disk.id='disk';
@@ -693,11 +683,9 @@ function updatechess(idx,board){
 
         disk.style.backgroundImage = `url('${imgName}')`;
       }
+      console.log("append:", i, value, disk.style.backgroundImage);
       cell.appendChild(disk);
-    } else {
-      delete cell.dataset.whiteImage;
-      delete cell.dataset.blackImage;
-    }
+
   }
   });
 }
@@ -1010,10 +998,10 @@ function animateafterFlip(x, y) {
     }
 
     // 衝擊波 💥
-    const shockwave = document.createElement('div');
-    shockwave.classList.add('shockwave');
-    disk.appendChild(shockwave);
-    setTimeout(() => shockwave.remove(), 1500);
+    // const shockwave = document.createElement('div');
+    // shockwave.classList.add('shockwave');
+    // disk.appendChild(shockwave);
+    // setTimeout(() => shockwave.remove(), 1500);
 
 
   }

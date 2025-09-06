@@ -86,6 +86,9 @@ let roomId;
       socket.emit("invalidMove");
       return;
     }
+      room.players.forEach(p => {
+       p.emit("place",{i:idx,board:room.board,turn:room.turn});
+    });
     room.players.forEach(s => s.emit("moveResult", {
     flippedCount: flipped.length,
     flippedPositions: flipped,
@@ -93,6 +96,7 @@ let roomId;
     scores: room.scores,
     idx:idx
   }));
+ 
       setTimeout(() => {
     // 落子並翻轉棋子
     room.board[y][x] = color;
@@ -105,9 +109,7 @@ let roomId;
   room.scores[color] += flipped.length + bonus;
 
   // 廣播結果給所有該房間玩家
-
-
-      // 只發給對手，不發給自己，要在moveResult之後
+      // 只發給對手，不發給自己，要在 moveResult 之後
     socket.to(roomId).emit("placeidx", idx);
      if (room.ai) {
       // AI 自動下棋
@@ -118,10 +120,8 @@ let roomId;
       // console.log(`玩家 ${color} 的回合`);
       nextTurnLoop(room);
     }
-        room.players.forEach(p => {
-       p.emit("place",{i:idx,board:room.board});
-    });
-      }, 300);
+ 
+      }, 300); // 翻轉動畫的持續時間
   });
 
   socket.on("checkMove", idx => {
@@ -173,8 +173,11 @@ function aiMoveLogic(room) {
     const [ax, ay] = aiMove;
     const idx=ay*8+ax;
     const aiFlipped = getFlippable(room.board, ax, ay, aiColor);
-
+    
     setTimeout(() => {
+           room.players.forEach(p => {
+        p.emit("place",{i:idx,board:room.board,turn:room.turn});
+    });
         room.players.forEach(s => s.emit("moveResult", {
     flippedCount: aiFlipped.length,
     flippedPositions: aiFlipped,
@@ -182,22 +185,20 @@ function aiMoveLogic(room) {
     scores: room.scores,
     idx:idx
   }));
+ 
+    
       room.board[ay][ax] = aiColor;
       aiFlipped.forEach(([fx, fy]) => room.board[fy][fx] = aiColor);
     
 
-  if (!room.scores) room.scores = { black: 0, white: 0 };
-  const bonus = aiFlipped.length >= 10 ? 5 : aiFlipped.length >= 5 ? 2 : 1;
-  room.scores[aiColor] += aiFlipped.length + bonus;
+    if (!room.scores) room.scores = { black: 0, white: 0 };
+    const bonus = aiFlipped.length >= 10 ? 5 : aiFlipped.length >= 5 ? 2 : 1;
+    room.scores[aiColor] += aiFlipped.length + bonus;
+    setTimeout(() => {
+    room.players.forEach(s => s.emit("placeidx", ay*8+ax));
+    emitUpdateBoard(room);
 
-  emitUpdateBoard(room);
-    room.players.forEach(p => {
-        p.emit("place",{i:idx,board:room.board});
-    });
-    
-  // 廣播這次 AI 的動作給 client（
-
-  room.players.forEach(s => s.emit("placeidx", ay*8+ax));
+  // 廣播這次 AI 的動作給 client
 
       if (checkGameOver(room.board)) {
         endGame(room);
@@ -207,7 +208,8 @@ function aiMoveLogic(room) {
       // 換回玩家回合
       room.turn = playerColor;
       nextTurnLoop(room);
-    }, 1500); //TODO AI思考
+       },300);
+    }, 2000); //TODO AI思考
   } else {
     console.log(`AI ${aiColor} 跳過回合，因為無法下子`);
     room.players.forEach(s => s.emit("pass", {
@@ -218,6 +220,7 @@ function aiMoveLogic(room) {
     room.turn = playerColor;
     nextTurnLoop(room);
   }
+ 
 }
 
 function nextTurnLoop(room) {
