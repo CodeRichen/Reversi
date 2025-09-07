@@ -16,6 +16,7 @@ let smoke = null;
 let gunon = false;
 let flipon = false;
 let popon = true;
+let time_2A = 0;
 
 // 獲取 DOM 元素：棋盤、狀態欄、訊息欄、分數欄
 const boardEl = document.getElementById("board");
@@ -322,17 +323,13 @@ document.addEventListener("keydown", (event) => {
 
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
 socket.on("updateBoard", data => {
-  console.log(gunon,popon);
-  let time_2A = 0;
-  if (gunon ==true){
-    time_2A = 3000;
+  if (gunon==true){
+    setTimeout(()=>{updateBoard(data.board)},time_2A)
   }
-  else{
-    time_2A = 0;
+  if (flipon==true || popon==true){
+updateBoard(data.board);
   }
   setTimeout(()=>{
-  updateBoard(data.board);
-
   currentTurn = data.turn;
   updateStatus();
   const overlayImg = document.getElementById("cat_bw");
@@ -392,7 +389,7 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
   }
 
 });
-  },time_2A)  // 時間同步 2A
+  },time_2A+1000)  // +gun動畫消失時間
 });
 
 // 若玩家點了非法位置（例如不能落子處），顯示錯誤訊息
@@ -443,8 +440,8 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
     setTimeout(() => board.classList.remove("shake"), 800);
   }
   // 不用自己算分數，直接使用 server 傳來的
-  myScore = scores[myColor];
-  opponentScore = scores[myColor === "black" ? "white" : "black"];
+  // myScore = scores[myColor];
+  // opponentScore = scores[myColor === "black" ? "white" : "black"];
     document.querySelectorAll('.disk.swing').forEach(disk => {
     disk.classList.remove('swing');
   });
@@ -461,15 +458,19 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
   .sort((a, b) => a.dist - b.dist);
   if (gunon==true){
     gunani(flippedPositions,sortedFlipped,flippedCount);
+    time_2A = 400 + flippedCount * 700
   }
   if (flipon==true || popon==true){
+    time_2A=0
     sortedFlipped.forEach(({ fx, fy }, i) => {
      setTimeout(() => flipani(fx, fy), i * 100); // 每顆延遲一點時間
    });
     sortedFlipped.forEach(({ fx, fy }, i) => {
      setTimeout(() => animateafterFlip(fx, fy), i * 500); // 每顆延遲一點時間
    });
-   updateBoardOffset(flippedPositions);
+     setTimeout(() => {
+    updateBoardOffset(flippedPositions);
+  },time_2A+500); //距離延遲時間
   }
   
 });
@@ -542,7 +543,7 @@ function gunani(flippedPositions,sortedFlipped,flippedCount){
     container.appendChild(sniper);
     container.appendChild(gun);
     sortedFlipped.forEach(({ fx, fy }, i) => {
-     setTimeout(() => animateFlip(fx, fy), i * 500); // 每顆延遲一點時間
+     setTimeout(() => gunFlip(fx, fy), i * 500); // 每顆延遲一點時間
    });
 // 依序翻轉
  setTimeout(() => {
@@ -551,12 +552,63 @@ function gunani(flippedPositions,sortedFlipped,flippedCount){
    })
   setTimeout(() => {
     updateBoardOffset(flippedPositions);
-       container.innerHTML = ""; // 清空所有 tile
-  },totalDelay + flippedCount * 700); // TODO 調整結束時間
+      exitAnimation();
+  },time_2A); // TODO 調整結束時間
   }, totalDelay);
- }, 1000); // 時間同步 1A
+ }, 500); // gun出現動畫時間
 }
 
+function exitAnimation() {
+  const cols = 20, rows = 13;
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  // 清掉原本完整圖
+  container.innerHTML = "";
+
+  // 建立退場用 tile
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.style.opacity = "1"; // 一開始是滿的
+
+      const layer1 = document.createElement("div");
+      layer1.className = "layer1";
+      layer1.style.backgroundPosition = `-${(width/cols)*c}px -${(height/rows)*r}px`;
+
+      const layer2 = document.createElement("div");
+      layer2.className = "layer2";
+      layer2.style.backgroundPosition = `-${(width/cols)*c}px -${(height/rows)*r}px`;
+
+      tile.appendChild(layer1);
+      tile.appendChild(layer2);
+      container.appendChild(tile);
+    }
+  }
+
+  // 🔹 退場順序：整列整列從右到左
+  const order = [];
+  for (let c = cols - 1; c >= 0; c--) {
+    for (let r = 0; r < rows; r++) {
+      order.push({r, c});
+    }
+  }
+
+  let acc = 2; // 每個 tile 間隔
+  order.forEach((pos, i) => {
+    const index = pos.r * cols + pos.c;
+    const tile = container.children[index];
+    setTimeout(() => {
+      tile.style.opacity = "0"; // 消失
+    }, i * acc);
+  });
+
+  // 動畫結束後清空
+  setTimeout(() => {
+    container.innerHTML = "";
+  }, order.length * acc + 500);
+}
 socket.on("gameOver", ({ black, white, winner}) => {
   // let msg = `遊戲結束！黑棋: ${black}, 白棋: ${white}。`;
   // msg += winner === "draw" ? " 平手！" : winner === myColor ? " 你贏了！" : " 你輸了！";
@@ -683,7 +735,6 @@ function updatechess(idx,board,turn){
 
         disk.style.backgroundImage = `url('${imgName}')`;
       }
-      console.log("append:", i, value, disk.style.backgroundImage);
       cell.appendChild(disk);
 
   }
@@ -832,7 +883,7 @@ function flipani(x,y){
   }
 }
 
-function animateFlip(x, y) {
+function gunFlip(x, y) {
 
     const idx = y * 8 + x;
     const cell = document.querySelectorAll(".cell")[idx];
@@ -873,16 +924,22 @@ function animateFlip(x, y) {
         // 取得容器中心點
         const rect1 = container.getBoundingClientRect();
         const cx = rect1.left + rect1.width / 2;
-        const cy = rect1.top - rect1.height / 7;
+        const cy = rect1.top ;
+        const cy2 = rect1.top - rect1.height / 8;
 
         // 計算槍的角度
         const gunAngle = Math.atan2(targetY - cy, targetX - cx) * 180 / Math.PI;
+        const gunAngle2 = Math.atan2(targetY - cy2, targetX - cx) * 180 / Math.PI; 
         const gun = document.getElementById("full-gun");
-        if (gun) {
-            gun.style.transform = `rotate(${gunAngle}deg)`;
+        console.log(gunAngle,gunAngle2);
+        if(gunAngle < -25){ //上
+        gun.style.transform = `rotate(${gunAngle2}deg)`;
+        smoke.style.transform = `rotate(${gunAngle2}deg)`;
         }
+        else{ //下
+        gun.style.transform = `rotate(${gunAngle}deg)`;
         smoke.style.transform = `rotate(${gunAngle}deg)`;
-
+        }
             // 左下角座標
             const startX = 0;
             const startY = window.innerHeight;

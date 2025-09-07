@@ -288,7 +288,18 @@ function createInitialBoard() {
   // board[7][3] = 'black';
   // board[7][4] = 'black';
   // board[7][5] = 'black';
-  
+
+  //     for (let y = 1; y < 6; y++) {
+  //   for (let x = 0; x < 8; x++) {
+  //    board[y][x] = 'black'; 
+  //   }
+  // }
+  // board[6][0] = 'white'; 
+  // board[6][1] = 'white'; 
+  // board[6][2] = 'white'; 
+  // board[6][3] = 'white'; 
+  // board[1][2] = 'white'; 
+  // board[1][3] = 'white'; 
   return board;
 }
 
