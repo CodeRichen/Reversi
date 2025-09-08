@@ -103,8 +103,9 @@ let roomId;
     scores: room.scores,
     idx:idx
   }));
-   room.turn = color === "black" ? "white" : "black";
+
       setTimeout(() => {
+        room.turn = color === "black" ? "white" : "black";
     // 落子並翻轉棋子
     room.board[y][x] = color;
     flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
@@ -127,7 +128,7 @@ let roomId;
       nextTurnLoop(room);
     }
  
-      }, 300); // 翻轉動畫的持續時間
+      }, 300 + time_2A); // 翻轉動畫的持續時間
   });
 
   socket.on("checkMove", idx => {
@@ -209,10 +210,12 @@ function aiMoveLogic(room) {
         endGame(room);
         return;
       }
-
+   console.log(time_2A);
+    setTimeout(() => {
       // 換回玩家回合
       room.turn = playerColor;
       nextTurnLoop(room);
+       },time_2A); 
       // console.log(time_2A);
     },time_2A); // GUN AI思考 
   } else {
@@ -239,13 +242,13 @@ function nextTurnLoop(room) {
       // 目前玩家能下棋，等待玩家行動
       // console.log(`玩家 ${currentColor} 可以下棋`);
       
-      setTimeout(() => {
+
     room.players.forEach(s => s.emit("updateBoard", {
     board: room.board,
     turn: room.turn,
     changeWhiteImage : true
   }));
-      }, 1000); // TODO: 因應每個動畫也不同可以改這邊的持續時間
+
       break;
     } else if (hasValidMove(room.board, opponentColor)) {
       // 目前玩家不能下，但對手能下，跳過回合換對手下

@@ -374,7 +374,7 @@ updateBoard(data.board);
     // 如果不符合條件就隱藏
     overlayImg.style.display = "none";
   }
-  setTimeout(()=>{
+  
 document.querySelectorAll(".cell").forEach((cell, i) => {
   const y = Math.floor(i / 8);
   const x = i % 8;
@@ -390,7 +390,7 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
   }
 
 });
-  },time_2A)  // +gun動畫消失時間
+ 
 });
 
 // 若玩家點了非法位置（例如不能落子處），顯示錯誤訊息
@@ -424,17 +424,19 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
     gunon=false;
     popon=true;
   }
-    if (flippedCount == 2  ){
+    if (flippedCount >= 2  ){
     flipon=true;
     gunon=false;
     popon=false;
   }
-  if (flippedCount >= 3 ){
+  if (horizontalOffset >= 50 && flippedCount >= 3  && flippedCount <= 6){
     gunon=true;
     flipon=false;
     popon=false;
   }
-  
+     gunon=true;
+    flipon=false;
+    popon=false;
     if (flippedCount >= 5) {
     const board = document.getElementById("board-frame");
     board.classList.add("shake");
@@ -525,8 +527,7 @@ function gunani(flippedPositions,sortedFlipped,flippedCount){
   container.classList.add("move-left");
   const totalDelay = 400; 
   setTimeout(() => {
- container.innerHTML = ""; // 清空所有 tile
-
+  container.innerHTML = ""; // 清空所有 tile
     // 加完整圖
     sniper = document.createElement("div");
     sniper.id = "full-sniper";
@@ -612,6 +613,7 @@ function exitAnimation() {
   // 動畫結束後清空
   setTimeout(() => {
     container.innerHTML = "";
+      container.classList.remove("move-left"); 
   }, order.length * acc + 500);
 }
 socket.on("gameOver", ({ black, white, winner}) => {
@@ -965,7 +967,7 @@ function gunFlip(x, y) {
     }
 }
 
-// 分離飛行動畫設定
+// 飛行動畫設定
 function setupFlyingAnimation(flying, startX, startY, targetX, targetY) {
     const dx = targetX - startX;
     const dy = targetY - startY;
@@ -978,6 +980,7 @@ function setupFlyingAnimation(flying, startX, startY, targetX, targetY) {
     // 設定方向與變形
     flying.style.transform = `rotate(${angle}deg) scale(1.3, 0.6)`;
     flying.style.transformOrigin = "center center";
+    flying.style.opacity = "0";
     smoke.style.opacity = "1";
     setTimeout(() => {
         smoke.style.opacity = "0";
@@ -988,7 +991,9 @@ function setupFlyingAnimation(flying, startX, startY, targetX, targetY) {
         flying.style.left = targetX + "px";
         flying.style.top = targetY + "px";
     });
-
+   setTimeout(() => {
+        flying.style.opacity = "1";
+    }, 140);
     // 動畫結束後的處理
     flying.addEventListener("transitionend", () => {
         // 在這裡處理棋子到達目標的邏輯
@@ -1402,7 +1407,7 @@ const white = parseInt(document.getElementById("whiteScore").dataset.value || "0
   const maxVerticalOffset = window.innerHeight / 2;
   verticalOffset = (bottomCount - topCount) * pixelPerFlip;
   verticalOffset = Math.max(-maxVerticalOffset, Math.min(maxVerticalOffset, verticalOffset,110),-110);
-  // console.log(`水平偏移: ${horizontalOffset}, 垂直偏移: ${verticalOffset}，最高偏移y: ${window.innerHeight/2}，最高偏移x: ${window.innerWidth/2}`);
+  console.log(`水平偏移: ${horizontalOffset}, 垂直偏移: ${verticalOffset}，最高偏移y: ${window.innerHeight/2}，最高偏移x: ${window.innerWidth/2}`);
   /* ---------- 棋盤本體偏移 ---------- */
   boardWrapper.style.position = "relative";
   boardWrapper.style.left = `${horizontalOffset}px`;
