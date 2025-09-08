@@ -16,6 +16,7 @@ let smoke = null;
 let gunon = false;
 let flipon = false;
 let popon = true;
+let time_1A = 0;
 let time_2A = 0;
 
 // 獲取 DOM 元素：棋盤、狀態欄、訊息欄、分數欄
@@ -319,17 +320,26 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+const meninner = document.querySelectorAll(".inner");
 
+function loop() {
+  meninner.forEach(inner => inner.classList.remove("paused2"));
+  setTimeout(() => {
+    meninner.forEach(inner => inner.classList.add("paused2"));
+    setTimeout(loop, 6000); //TODO 小人休息時間
+  }, 100);
+}
+loop();
 
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
 socket.on("updateBoard", data => {
   if (gunon==true){
-    setTimeout(()=>{updateBoard(data.board)},time_2A)
+    setTimeout(()=>{updateBoard(data.board)},time_1A)
   }
   if (flipon==true || popon==true){
 updateBoard(data.board);
   }
-  setTimeout(()=>{
+  
   currentTurn = data.turn;
   updateStatus();
   const overlayImg = document.getElementById("cat_bw");
@@ -344,16 +354,6 @@ updateBoard(data.board);
   document.querySelectorAll(".inner").forEach(inner => {
     inner.classList.remove("paused");
   });
-const inners = document.querySelectorAll(".inner");
-
-function loop() {
-  inners.forEach(inner => inner.classList.remove("paused2"));
-  setTimeout(() => {
-    inners.forEach(inner => inner.classList.add("paused2"));
-    setTimeout(loop, 7000); //TODO 小人休息時間
-  }, 500);
-}
-loop();
 
   }
   else{
@@ -374,6 +374,7 @@ loop();
     // 如果不符合條件就隱藏
     overlayImg.style.display = "none";
   }
+  setTimeout(()=>{
 document.querySelectorAll(".cell").forEach((cell, i) => {
   const y = Math.floor(i / 8);
   const x = i % 8;
@@ -389,7 +390,7 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
   }
 
 });
-  },time_2A+1000)  // +gun動畫消失時間
+  },time_2A)  // +gun動畫消失時間
 });
 
 // 若玩家點了非法位置（例如不能落子處），顯示錯誤訊息
@@ -458,10 +459,13 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
   .sort((a, b) => a.dist - b.dist);
   if (gunon==true){
     gunani(flippedPositions,sortedFlipped,flippedCount);
-    time_2A = 400 + flippedCount * 700
+    time_1A = 400 + flippedCount * 600; //700->600
+    time_2A = time_1A + 1000; 
+    
   }
   if (flipon==true || popon==true){
-    time_2A=0
+    time_1A=0;
+    time_2A=0;
     sortedFlipped.forEach(({ fx, fy }, i) => {
      setTimeout(() => flipani(fx, fy), i * 100); // 每顆延遲一點時間
    });
@@ -470,9 +474,10 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
    });
      setTimeout(() => {
     updateBoardOffset(flippedPositions);
-  },time_2A+500); //距離延遲時間
+  },time_1A+500); //距離延遲時間
   }
-  
+  // console.log(time_1A);
+  socket.emit("sendtime_2A", time_2A );
 });
 
 function gunani(flippedPositions,sortedFlipped,flippedCount){
@@ -553,7 +558,7 @@ function gunani(flippedPositions,sortedFlipped,flippedCount){
   setTimeout(() => {
     updateBoardOffset(flippedPositions);
       exitAnimation();
-  },time_2A); // TODO 調整結束時間
+  },time_1A); // TODO 調整結束時間
   }, totalDelay);
  }, 500); // gun出現動畫時間
 }
@@ -751,7 +756,7 @@ function updateBoard(board) {
 
     const hadSwing = cell.firstChild?.classList.contains("swing");
     const hadNotes = cell.querySelector(".note") !== null;
-  // cell.innerHTML = ""; // 砍掉
+
     const oldDisk = cell.querySelector(".disk");
     if (oldDisk) oldDisk.remove();
     if (value) {
@@ -931,7 +936,7 @@ function gunFlip(x, y) {
         const gunAngle = Math.atan2(targetY - cy, targetX - cx) * 180 / Math.PI;
         const gunAngle2 = Math.atan2(targetY - cy2, targetX - cx) * 180 / Math.PI; 
         const gun = document.getElementById("full-gun");
-        console.log(gunAngle,gunAngle2);
+        // console.log(gunAngle,gunAngle2);
         if(gunAngle < -25){ //上
         gun.style.transform = `rotate(${gunAngle2}deg)`;
         smoke.style.transform = `rotate(${gunAngle2}deg)`;
@@ -987,7 +992,7 @@ function setupFlyingAnimation(flying, startX, startY, targetX, targetY) {
     // 動畫結束後的處理
     flying.addEventListener("transitionend", () => {
         // 在這裡處理棋子到達目標的邏輯
-        console.log("飛行動畫完成");
+        // console.log("飛行動畫完成");
         flying.remove();
     });
 }

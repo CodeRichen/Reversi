@@ -9,8 +9,15 @@ const io = new Server(server);
 app.use(express.static(__dirname));
 
 let rooms = {};
+let time_2A=0;
+
 
 io.on('connection', socket => {
+  
+  socket.on("sendtime_2A", (num) => {
+    time_2A=num
+  });
+
   let room = findAvailableRoom();
   let color;
 let roomId;
@@ -96,12 +103,11 @@ let roomId;
     scores: room.scores,
     idx:idx
   }));
- 
+   room.turn = color === "black" ? "white" : "black";
       setTimeout(() => {
     // 落子並翻轉棋子
     room.board[y][x] = color;
     flipped.forEach(([fx, fy]) => room.board[fy][fx] = color);
-      room.turn = color === "black" ? "white" : "black";
       emitUpdateBoard(room);
 
       if (!room.scores) room.scores = { black: 0, white: 0 };
@@ -168,7 +174,7 @@ function aiMoveLogic(room) {
   const playerColor = room.playerColor;
 
   const aiMove = getRandomValidMove(room.board, aiColor);
-  
+   setTimeout(() => {
   if (aiMove) {
     const [ax, ay] = aiMove;
     const idx=ay*8+ax;
@@ -194,7 +200,6 @@ function aiMoveLogic(room) {
     if (!room.scores) room.scores = { black: 0, white: 0 };
     const bonus = aiFlipped.length >= 10 ? 5 : aiFlipped.length >= 5 ? 2 : 1;
     room.scores[aiColor] += aiFlipped.length + bonus;
-    setTimeout(() => {
     room.players.forEach(s => s.emit("placeidx", ay*8+ax));
     emitUpdateBoard(room);
 
@@ -208,8 +213,8 @@ function aiMoveLogic(room) {
       // 換回玩家回合
       room.turn = playerColor;
       nextTurnLoop(room);
-       },300);
-    }, 2000); //TODO AI思考
+      // console.log(time_2A);
+    },time_2A); // GUN AI思考 
   } else {
     console.log(`AI ${aiColor} 跳過回合，因為無法下子`);
     room.players.forEach(s => s.emit("pass", {
@@ -220,7 +225,7 @@ function aiMoveLogic(room) {
     room.turn = playerColor;
     nextTurnLoop(room);
   }
- 
+ },1000); //EMIT延遲+AI思考
 }
 
 function nextTurnLoop(room) {
