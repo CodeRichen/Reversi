@@ -103,7 +103,10 @@ let roomId;
     scores: room.scores,
     idx:idx
   }));
-
+  room.turn = "none";
+      room.players.forEach(p => {
+        p.emit("updategreens",room.turn);
+    });
       setTimeout(() => {
         room.turn = color === "black" ? "white" : "black";
     // 落子並翻轉棋子
@@ -192,7 +195,7 @@ function aiMoveLogic(room) {
     scores: room.scores,
     idx:idx
   }));
- 
+
     
       room.board[ay][ax] = aiColor;
       aiFlipped.forEach(([fx, fy]) => room.board[fy][fx] = aiColor);
@@ -202,6 +205,10 @@ function aiMoveLogic(room) {
     const bonus = aiFlipped.length >= 10 ? 5 : aiFlipped.length >= 5 ? 2 : 1;
     room.scores[aiColor] += aiFlipped.length + bonus;
     room.players.forEach(s => s.emit("placeidx", ay*8+ax));
+           room.turn = "none";
+   
+    setTimeout(() => {
+    room.turn = playerColor;
     emitUpdateBoard(room);
 
   // 廣播這次 AI 的動作給 client
@@ -210,12 +217,11 @@ function aiMoveLogic(room) {
         endGame(room);
         return;
       }
-   console.log(time_2A);
-    setTimeout(() => {
+
       // 換回玩家回合
-      room.turn = playerColor;
+      
       nextTurnLoop(room);
-       },time_2A); 
+       },time_2A+300); 
       // console.log(time_2A);
     },time_2A); // GUN AI思考 
   } else {

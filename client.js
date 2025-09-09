@@ -343,26 +343,9 @@ updateBoard(data.board);
   currentTurn = data.turn;
   updateStatus();
   const overlayImg = document.getElementById("cat_bw");
-  // console.log(`當前回合: ${currentTurn}, 我的顏色: ${myColor}`);
-  // 假設是依據目前輪到誰
-  const boardFrame = document.getElementById('board-frame');
-      const inners = document.querySelectorAll(".edge-horizontal .inner, .edge-vertical .inner");
 
-  if (currentTurn === myColor) {
-    // boardFrame.classList.add('glowing');  
-    // playBorderAnimationOnTurn(); TODO
-  document.querySelectorAll(".inner").forEach(inner => {
-    inner.classList.remove("paused");
-  });
-
-  }
-  else{
-    // resetBorderVideos();
-      document.querySelectorAll(".inner").forEach(inner => {
-    inner.classList.add("paused");
-  });
-    // boardFrame.classList.remove('glowing');
-  }
+  updategreen(currentTurn);
+  
   if (currentTurn === "black" || currentTurn === "white") {
     overlayImg.style.display = "block"; // 顯示圖片
   if (currentTurn === "black") {
@@ -390,9 +373,23 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
   }
 
 });
- 
 });
+socket.on("updategreens", turn => {
+ updategreen(turn);
+});
+function updategreen(currentTurn){
+    if (currentTurn === myColor) {
+  document.querySelectorAll(".inner").forEach(inner => {
+    inner.classList.remove("paused");
+  });
 
+  }
+  else{
+      document.querySelectorAll(".inner").forEach(inner => {
+    inner.classList.add("paused");
+  });
+}
+}
 // 若玩家點了非法位置（例如不能落子處），顯示錯誤訊息
 socket.on("invalidMove", () => {
   showMessage("這不是合法的落子位置");
