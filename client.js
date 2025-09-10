@@ -49,7 +49,7 @@ for (let i = 0; i < 64; i++) {
 
 // 點擊棋盤時發送 move 事件給伺服器
 boardEl.addEventListener("click", e => {
-
+    console.log(currentTurn);
     const idx = e.target.closest(".cell")?.dataset.index;
     if (!idx || currentTurn !== myColor) return; // 不是自己回合就不能動
     socket.emit("move", parseInt(idx)); // 傳送落子位置
@@ -108,18 +108,20 @@ socket.on("playerColor", color => {
   const bcat =  ["cat_b1.jpg","cat_b2.jpg","cat_b3.jpg","cat_b5.jpg","cat_b1.mp4","cat_b2.mp4" ];
   const wcat = ["cat_w1.jpg","cat_w1.mp4","cat_w2.mp4","cat_w3.mp4"];
   const wbcat = ["cat_wb1.jpg"];
-
+  
   // 根據玩家顏色組出可用的背景列表
   let availableBackgrounds = [];
   if (color === "black") {
     availableBackgrounds = [...bcat, ...wbcat];
+    
   } else {
     availableBackgrounds = [...wcat, ...wbcat];
   }
 
   const randomCat = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
-  catSource.src = `picture/${randomCat}`;
+  randomCat = ``; //TODO 學校用
 
+  catSource.src = `picture/${randomCat}`;  
   const mediaPath = `picture/${randomCat}`;
     const isVideo = randomCat.endsWith(".mp4");
     if (isVideo) {
@@ -157,6 +159,8 @@ if (color === "black") {
 
 // 隨機選一個
 const randomBg = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
+randomBg = ``; //TODO 學校用
+
  const mediaPath2 = `picture/${randomBg}`;
  const isVideo2 = randomBg.endsWith(".mp4");
 
@@ -431,9 +435,10 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
     flipon=false;
     popon=false;
   }
-     gunon=true;
-    flipon=false;
-    popon=false;
+    // gunon=true;
+    // flipon=false;
+    // popon=false; //TODO test gun
+
     if (flippedCount >= 5) {
     const board = document.getElementById("board-frame");
     board.classList.add("shake");
