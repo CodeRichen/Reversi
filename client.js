@@ -49,6 +49,12 @@ for (let i = 0; i < 64; i++) {
 
 // 點擊棋盤時發送 move 事件給伺服器
 boardEl.addEventListener("click", e => {
+
+        // 重置 triggerClickWithCoords
+      firstDigit = null;
+      inCellMode = false;
+      cells.forEach(cell => cell.classList.remove("highlight-row", "special"));
+
     console.log(currentTurn);
     const idx = e.target.closest(".cell")?.dataset.index;
     if (!idx || currentTurn !== myColor) return; // 不是自己回合就不能動
@@ -316,7 +322,7 @@ document.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && inCellMode) {
       triggerCellClick(currentRow, currentCol);
 
-      // 重置
+      // 重置 triggerClickWithCoords
       firstDigit = null;
       inCellMode = false;
       cells.forEach(cell => cell.classList.remove("highlight-row", "special"));
@@ -1098,6 +1104,10 @@ const img2 = document.getElementById("floating-img2");
 let mouseX = 0;
 let isJumping = false; // 控制是否正在跳躍動畫中
 
+const cursor = document.querySelector(".cursor");
+let lastX = window.innerWidth / 2;
+let lastY = window.innerHeight / 2;
+let lastTime = Date.now();
 // 滑鼠移動時圖片左右跟著動（上下不動）
 document.addEventListener("mousemove", (e) => {
   mouseX = e.clientX;
@@ -1106,6 +1116,47 @@ document.addEventListener("mousemove", (e) => {
     img.style.left = `${mouseX}px`;
   }
   socket.emit("opponentMove", { x: e.clientX });
+
+      const nowX = e.clientX;
+      const nowY = e.clientY;
+      const nowTime = Date.now();
+
+      // 游標圖片跟隨
+      cursor.style.left = nowX + "px";
+      cursor.style.top = nowY + "px";
+
+      // 計算移動速度
+      const dx = nowX - lastX;
+      const dy = nowY - lastY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const dt = nowTime - lastTime;
+      const speed = dist / (dt || 1); // px/ms
+
+      // 根據速度決定線的長度
+      const length = Math.min(speed * 20, 200); // 最長200px
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+      // 建立拖尾線
+      const trail = document.createElement("div");
+      trail.className = "trail";
+      trail.style.width = length + "px";
+      trail.style.left = nowX + "px";
+      trail.style.top = nowY + "px";
+      trail.style.transform = `translate(-100%, -50%) rotate(${angle}deg)`;
+
+      document.body.appendChild(trail);
+
+      // 線條淡出後移除
+      setTimeout(() => {
+        trail.style.transition = "opacity 0.3s";
+        trail.style.opacity = "0";
+        setTimeout(() => trail.remove(), 300);
+      }, 10);
+
+      // 更新上次位置
+      lastX = nowX;
+      lastY = nowY;
+      lastTime = nowTime;
 });
 
 document.addEventListener("click", (e) => {
@@ -1409,7 +1460,7 @@ const white = parseInt(document.getElementById("whiteScore").dataset.value || "0
   const maxVerticalOffset = window.innerHeight / 2;
   verticalOffset = (bottomCount - topCount) * pixelPerFlip;
   verticalOffset = Math.max(-maxVerticalOffset, Math.min(maxVerticalOffset, verticalOffset,110),-110);
-  console.log(`水平偏移: ${horizontalOffset}, 垂直偏移: ${verticalOffset}，最高偏移y: ${window.innerHeight/2}，最高偏移x: ${window.innerWidth/2}`);
+  // console.log(`水平偏移: ${horizontalOffset}, 垂直偏移: ${verticalOffset}，最高偏移y: ${window.innerHeight/2}，最高偏移x: ${window.innerWidth/2}`);
   /* ---------- 棋盤本體偏移 ---------- */
   boardWrapper.style.position = "relative";
   boardWrapper.style.left = `${horizontalOffset}px`;
@@ -1573,3 +1624,24 @@ function resetBorderVideos() {
 }
 
 
+const timg1 = document.getElementById("corner-image1");
+const timg2 = document.getElementById("corner-image2");
+let toggle = true;
+
+function getRandomImage() {
+  const num = Math.floor(Math.random() * (14 - 2 + 1)) + 2;
+  return `w_cat/C${num}.png`;
+}
+
+setInterval(() => {
+  if (toggle) {
+    timg2.src = getRandomImage();
+    timg2.style.opacity = "1";
+    timg1.style.opacity = "0";
+  } else {
+    timg1.src = getRandomImage();
+    timg1.style.opacity = "1";
+    timg2.style.opacity = "0";
+  }
+  toggle = !toggle;
+}, 3000);

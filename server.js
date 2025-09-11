@@ -107,7 +107,7 @@ let roomId;
       room.players.forEach(p => {
         p.emit("updategreens",room.turn);
     });
-    console.log("turn1",room.turn,time_2A);
+    // console.log("turn1",room.turn,time_2A);
     setTimeout(() => {
       setTimeout(() => {
         room.turn = color === "black" ? "white" : "black";

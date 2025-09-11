@@ -1035,3 +1035,46 @@ svg {
   top: 0;
   left: 0;
 }
+
+#corner-image1, #corner-image2 {
+  position: fixed;
+  bottom: -10px;
+  right: -10px;
+  width: 250px;
+  height: auto;
+  transition: opacity 1.5s ease;
+}
+#corner-image2 {
+  opacity: 0;
+}
+
+    .cursor {
+      position: fixed;
+      width: 32px;
+      height: 32px;
+      /* background: url("cursor.png") no-repeat center/contain; */
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+    }
+
+    /* 拖曳尾巴 */
+    .trail {
+      position: fixed;
+      height: 2px;
+      background: rgba(0, 200, 255, 0.7);
+      pointer-events: none;
+      z-index: 500;
+    }
+
+/* 全域隱藏游標 */
+body, 
+#board, 
+#game-wrapper, 
+#board-frame, 
+.board-container, 
+.cell,
+#aiButton,
+#container {
+  cursor: none !important;
+}
