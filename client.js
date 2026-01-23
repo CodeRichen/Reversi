@@ -124,8 +124,7 @@ socket.on("playerColor", color => {
     availableBackgrounds = [...wcat, ...wbcat];
   }
 
-  const randomCat = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
-  randomCat = ``; //TODO 學校用
+  let randomCat = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
 
   catSource.src = `picture/${randomCat}`;  
   const mediaPath = `picture/${randomCat}`;
@@ -164,8 +163,7 @@ if (color === "black") {
 }
 
 // 隨機選一個
-const randomBg = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
-randomBg = ``; //TODO 學校用
+let randomBg = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
 
  const mediaPath2 = `picture/${randomBg}`;
  const isVideo2 = randomBg.endsWith(".mp4");
@@ -470,7 +468,7 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
   if (gunon==true){
     gunani(flippedPositions,sortedFlipped,flippedCount);
     time_1A = 400 + flippedCount * 600; //700->600
-    time_2A = time_1A + 1000; 
+    time_2A = time_1A + 1200; 
     
   }
   if (flipon==true || popon==true){

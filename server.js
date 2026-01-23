@@ -1,3 +1,4 @@
+// cd "d:\2.programm2\WIFI\game"; node "d:\2.programm2\WIFI\game\server.js"
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -135,7 +136,7 @@ let roomId;
     }
  
       }, time_2A); // 翻轉動畫的持續時間
-      }, 500);
+      }, 400);
   });
 
   socket.on("checkMove", idx => {
@@ -210,10 +211,11 @@ function aiMoveLogic(room) {
     room.scores[aiColor] += aiFlipped.length + bonus;
     room.players.forEach(s => s.emit("placeidx", ay*8+ax));
            room.turn = "none";
+     
    setTimeout(() => {
     setTimeout(() => {
     room.turn = playerColor;
-    emitUpdateBoard(room);
+      emitUpdateBoard(room);
 
   // 廣播這次 AI 的動作給 client
 
@@ -226,7 +228,7 @@ function aiMoveLogic(room) {
       
       nextTurnLoop(room);
        },time_2A);
-      },500); 
+      },400); 
       // console.log(time_2A);
     },time_2A); // GUN AI思考 
   } else {
