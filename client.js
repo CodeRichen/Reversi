@@ -499,7 +499,7 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
   if (gunon==true){
     gunani(flippedPositions,sortedFlipped,flippedCount);
     time_1A = 400 + flippedCount * 600; //700->600
-    time_2A = time_1A + 1200; 
+    time_2A = time_1A + 1300; 
     
   }
   if (flipon==true || popon==true){
@@ -569,7 +569,7 @@ function gunani(flippedPositions,sortedFlipped,flippedCount){
     sniper = document.createElement("div");
     sniper.id = "full-sniper";
     gun = document.createElement("div");
-    gun.id = "full-gun";  
+    gun.id = "full-gun";
     smoke = document.createElement("div");
     smoke.id = "smoke";
     smoke.style.width = "400px";
@@ -1700,4 +1700,4 @@ setInterval(() => {
     }
   }
   toggle = !toggle;
-}, 3000);
+}, 6000);

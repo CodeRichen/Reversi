@@ -87,6 +87,20 @@
   </defs>
 </svg>
 
+<!-- 液態玻璃效果的 SVG 濾鏡 -->
+<svg width="0" height="0" style="position:absolute;left:-9999px;top:-9999px">
+  <defs>
+    <filter id="liquid_glass_filter">
+      <!-- 產生碎形雜訊 -->
+      <feTurbulence type="fractalNoise" baseFrequency="0.003" numOctaves="2" seed="7" result="noise"/>
+      <!-- 將雜訊模糊化，讓它更平滑 -->
+      <feGaussianBlur in="noise" stdDeviation="1.2" result="map"/>
+      <!-- 用模糊後的雜訊圖來扭曲我們的元素 -->
+      <feDisplacementMap in="SourceGraphic" in2="map" scale="110" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
 <div id="message"></div>
 
 <img id="floating-img" src="hand1.png">

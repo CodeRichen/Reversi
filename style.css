@@ -91,7 +91,7 @@ h1 {
 
 
 #counts {
-  background-color: rgba(255, 255, 255, 0.6); /* 半透明背景，可依需求調整 */
+  /* background-color: rgba(255, 255, 255, 0.6); 半透明背景，可依需求調整 */
   padding: 5px 10px;
   border-radius: 8px;
   gap: 20px; /* 黑棋與白棋之間的間距 */
@@ -100,12 +100,26 @@ h1 {
   display: inline-block;
   margin-top: 10px;
   font-size: 16px;
-  backdrop-filter: blur(3px); /* 讓背景更有質感 */
+  /* backdrop-filter: blur(3px); 讓背景更有質感 */
   position: relative;
   z-index: 10; /* 確保 counts 在其他元素之上 */
   pointer-events: none;
 }
+/* 液態玻璃效果 */
+#counts {
+  /* 真正的液態關鍵：先模糊背景，再套用 SVG 濾鏡扭曲 */
+  backdrop-filter: blur(2px) url(#liquid_glass_filter);
 
+  /* 用多層次的 box-shadow 營造玻璃的厚度與光暈 */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.15), /* 內上光暈 */
+    inset 0 -1px 0 rgba(255,255,255,0.05), /* 內下陰影 */
+    inset 6px 6px 16px rgba(255,255,255,0.02), /* 內側光暈 */
+    0 10px 28px rgba(0,0,0,0.05); /* 外陰影 */
+
+  /* 半透明的背景色 */
+  background: rgba(255,255,255, 0.05);
+}
 .count-item {
   display: flex;
   align-items: center;
@@ -438,12 +452,19 @@ svg {
   left: 0;
   width: 100%;
   height: 100%;
-  backdrop-filter: blur(1px);
-  background-color: rgba(255, 255, 255, 0.05); /* 半透明白色濾層 */
   pointer-events: none; /* 讓點擊能穿透 */
   z-index: 1;
   border-radius: 4px;
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(2px) url(#liquid_glass_filter);
+  /* 用多層次的 box-shadow 營造玻璃的厚度與光暈 */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.15), /* 內上光暈 */
+    inset 0 -1px 0 rgba(255,255,255,0.05), /* 內下陰影 */
+    inset 6px 6px 16px rgba(255,255,255,0.02), /* 內側光暈 */
+    0 10px 28px rgba(0,0,0,0.05); /* 外陰影 */
+
+  /* 半透明的背景色 */
+  background: rgba(255,255,255, 0.05);
 }
 
 
@@ -1089,3 +1110,5 @@ body,
 #container {
   cursor: none !important;
 }
+
+
