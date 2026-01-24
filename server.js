@@ -46,10 +46,12 @@ let roomId;
   socket.emit("playerColor", color);
 
  if (room.players.length === 2) {
+  
   room.players.forEach(s => {
     s.emit("startGame", {
       board: room.board,
-      turn: room.turn
+      turn: room.turn,
+      isMultiplayer: true
     });
 
     s.emit("updateBoard", {
@@ -78,7 +80,7 @@ let roomId;
     color = 'black';
 
     socket.emit("playerColor", color);
-    socket.emit("startGame", { board: room.board, turn: room.turn });
+    socket.emit("startGame", { board: room.board, turn: room.turn, isMultiplayer: false });
     socket.emit("updateBoard", { board: room.board, turn: room.turn });
   });
 

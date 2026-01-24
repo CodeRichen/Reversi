@@ -1044,6 +1044,17 @@ svg {
   height: auto;
   transition: opacity 1.5s ease;
 }
+#corner-image3, #corner-image4 {
+  position: fixed;
+  bottom: 5px;
+  left: 5px;
+  width: 250px;
+  height: auto;
+  transition: opacity 1.5s ease;
+}
+#corner-image4 {
+  opacity: 0;
+}
 #corner-image2 {
   opacity: 0;
 }

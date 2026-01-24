@@ -29,6 +29,7 @@ const audio_meow = new Audio("meow.mp3");
 // 建立一個用來顯示對手滑鼠位置的虛擬游標
 let opponentCursor = document.createElement('div');
 opponentCursor.className = 'opponent-cursor';
+opponentCursor.style.display = 'none'; // 初始隱藏
 document.body.appendChild(opponentCursor);
 
 // 產生 64 格棋盤（8x8）
@@ -180,6 +181,32 @@ if (isVideo2) {
   bgImage.src = mediaPath2;
 }
 
+// 初始化角落圖片：立即顯示
+const timg1 = document.getElementById("corner-image1");
+const timg2 = document.getElementById("corner-image2");
+const timg3 = document.getElementById("corner-image3");
+const timg4 = document.getElementById("corner-image4");
+
+function getRandomImage() {
+  const numw = Math.floor(Math.random() * (14 - 2 + 1)) + 2;
+  const numb = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
+
+  if (color === 'black') {
+    return `b_cat/C${numb}.png`;
+  }
+  return `w_cat/C${numw}.png`;
+}
+
+if (color === 'black') {
+  timg4.src = getRandomImage();
+  timg4.style.opacity = "1";
+  timg3.style.opacity = "0";
+} else {
+  timg1.src = getRandomImage();
+  timg1.style.opacity = "1";
+  timg2.style.opacity = "0";
+}
+
 });
 
 
@@ -192,6 +219,10 @@ if (aiBtn) {
 } else {
   console.warn("找不到 aiButton，可能尚未載入 DOM！");
 }
+  // 只在雙人對戰模式才顯示對手游標
+  if (data.isMultiplayer === true) {
+    opponentCursor.style.display = 'block';
+  }
   updateStatus();                // 更新畫面狀態
    initializeMask();
    renderScore(2, "blackScore");
@@ -627,7 +658,7 @@ socket.on("gameOver", ({ black, white, winner}) => {
   // msg += winner === "draw" ? " 平手！" : winner === myColor ? " 你贏了！" : " 你輸了！";
   // statusEl.textContent = msg;
     initializeMask();
-    
+    opponentCursor.style.display = 'none'; // 遊戲結束隱藏對手游標
   showGameOver(winner);
 });
 
@@ -700,6 +731,7 @@ function showGameOver(winner) {
 socket.on("opponentLeft", () => {
   statusEl.textContent = "對手已離開房間，遊戲結束。";
    initializeMask();
+   opponentCursor.style.display = 'none'; // 對手離開隱藏游標
 });
 function hasValidMove(board, color) {
   for (let y = 0; y < 8; y++) {
@@ -1085,6 +1117,7 @@ document.getElementById('aiButton').addEventListener('click', () => {
   socket.emit('playAI');
   statusEl.textContent = "與電腦對戰開始！";
   document.getElementById('aiButton').style.display = "none";
+  opponentCursor.style.display = 'none'; // AI 模式隱藏對手游標
 });
 
 socket.on("pass", ({ skippedColor, nextTurn }) => {
@@ -1622,24 +1655,49 @@ function resetBorderVideos() {
 }
 
 
-const timg1 = document.getElementById("corner-image1");
-const timg2 = document.getElementById("corner-image2");
 let toggle = true;
 
-function getRandomImage() {
-  const num = Math.floor(Math.random() * (14 - 2 + 1)) + 2;
-  return `w_cat/C${num}.png`;
+function getRandomImageForUpdate() {
+  const numw = Math.floor(Math.random() * (14 - 2 + 1)) + 2;
+  const numb = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
+
+  if (myColor === 'black') {
+    return `b_cat/C${numb}.png`;
+  }
+  return `w_cat/C${numw}.png`;
 }
 
 setInterval(() => {
   if (toggle) {
-    timg2.src = getRandomImage();
+    if (myColor === 'black'){
+    const timg3 = document.getElementById("corner-image3");
+    const timg4 = document.getElementById("corner-image4");
+    timg3.src = getRandomImageForUpdate();
+    timg3.style.opacity = "1";
+    timg4.style.opacity = "0";
+    }
+    else{
+    const timg1 = document.getElementById("corner-image1");
+    const timg2 = document.getElementById("corner-image2");
+    timg2.src = getRandomImageForUpdate();
     timg2.style.opacity = "1";
     timg1.style.opacity = "0";
+    }
   } else {
-    timg1.src = getRandomImage();
+    if (myColor === 'black'){
+      const timg3 = document.getElementById("corner-image3");
+      const timg4 = document.getElementById("corner-image4");
+      timg4.src = getRandomImageForUpdate();
+      timg4.style.opacity = "1";
+      timg3.style.opacity = "0";
+    }
+    else  {
+    const timg1 = document.getElementById("corner-image1");
+    const timg2 = document.getElementById("corner-image2");
+    timg1.src = getRandomImageForUpdate();
     timg1.style.opacity = "1";
     timg2.style.opacity = "0";
+    }
   }
   toggle = !toggle;
 }, 3000);
