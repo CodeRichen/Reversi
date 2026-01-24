@@ -229,10 +229,10 @@ function aiMoveLogic(room) {
       // 換回玩家回合
       
       nextTurnLoop(room);
-       },time_2A);
+       },0);
       },400); 
       // console.log(time_2A);
-    },time_2A); // GUN AI思考 
+    },time_2A+100); // GUN AI思考 
   } else {
     console.log(`AI ${aiColor} 跳過回合，因為無法下子`);
     room.players.forEach(s => s.emit("pass", {

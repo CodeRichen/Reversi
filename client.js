@@ -409,6 +409,36 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
   if (data.board[y][x]) {
     // 有棋子 → 加上 fogged 效果
     cell.classList.add("fogged");
+    
+    // 為每個 fogged 元素設置隨機參數
+    const randomBlur = 1.5 + Math.random() * 1; // 1.5-2.5px
+    const randomInsetTop = Math.random() * 2; // 0-2px
+    const randomInsetBottom = -1 - Math.random(); // -1至-2px
+    const randomInsetSpread = 5 + Math.random() * 3; // 5-8px
+    const randomOuterSpread = 8 + Math.random() * 6; // 8-14px
+    
+    // 隨機透明度微調
+    const randomAlpha1 = 0.12 + Math.random() * 0.08; // 0.12-0.20
+    const randomAlpha2 = 0.03 + Math.random() * 0.04; // 0.03-0.07
+    const randomAlpha3 = 0.01 + Math.random() * 0.03; // 0.01-0.04
+    const randomAlpha4 = 0.03 + Math.random() * 0.05; // 0.03-0.08
+    
+    // 隨機背景顏色（完全隨機 RGB）
+    const randomR = Math.floor(Math.random() * 256); // 0-255
+    const randomG = Math.floor(Math.random() * 256); // 0-255
+    const randomB = Math.floor(Math.random() * 256); // 0-255
+    const randomBgAlpha = 0.03 + Math.random() * 0.07; // 0.03-0.10
+    
+    cell.style.setProperty('--random-blur', `${randomBlur}px`);
+    cell.style.setProperty('--random-inset-top', `${randomInsetTop}px`);
+    cell.style.setProperty('--random-inset-bottom', `${randomInsetBottom}px`);
+    cell.style.setProperty('--random-inset-spread', `${randomInsetSpread}px`);
+    cell.style.setProperty('--random-outer-spread', `${randomOuterSpread}px`);
+    cell.style.setProperty('--random-alpha1', randomAlpha1);
+    cell.style.setProperty('--random-alpha2', randomAlpha2);
+    cell.style.setProperty('--random-alpha3', randomAlpha3);
+    cell.style.setProperty('--random-alpha4', randomAlpha4);
+    cell.style.setProperty('--random-bg-color', `rgba(${randomR}, ${randomG}, ${randomB}, ${randomBgAlpha})`);
   }
 
 });
@@ -1069,13 +1099,23 @@ function createFlipAnimation(cell, rect, oldSrc, newSrc) {
         if (sweat) sweat.remove();
     }, 300);
 
+    // 飛行動畫完成時立即更新棋子（100ms延遲 + 300ms飛行時間）
     setTimeout(() => {
         if (flipAnim.parentNode) {
             flipAnim.remove();
         }
-        // 更新棋子圖片
-        cell.innerHTML = `<div class="disk" style="background-image:url('${newSrc}')"></div>`;
-    }, 1300);
+        // 更新棋子圖片 - 使用與 updateBoard 一致的邏輯
+        const disk = document.createElement("div");
+        disk.className = "disk";
+        disk.style.backgroundImage = `url('${newSrc}')`;
+        
+        // 清除舊的棋子
+        const oldDisk = cell.querySelector(".disk");
+        if (oldDisk) oldDisk.remove();
+        
+        // 添加新棋子
+        cell.appendChild(disk);
+    }, 650);
 }
 
 
