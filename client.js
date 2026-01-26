@@ -13,7 +13,8 @@ let myScore = 0, opponentScore = 0;
 let gun = null;
 let sniper = null;
 let smoke = null;
-let gunon = false;
+let wgunon = false;
+let bgunon = false;
 let flipon = false;
 let popon = true;
 let time_1A = 0;
@@ -372,7 +373,7 @@ loop();
 
 // 每次落子或對手行動後，伺服器傳回新棋盤與回合
 socket.on("updateBoard", data => {
-  if (gunon==true){
+  if (wgunon==true){
     setTimeout(()=>{updateBoard(data.board)},time_1A)
   }
   if (flipon==true || popon==true){
@@ -439,6 +440,15 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
     cell.style.setProperty('--random-alpha3', randomAlpha3);
     cell.style.setProperty('--random-alpha4', randomAlpha4);
     cell.style.setProperty('--random-bg-color', `rgba(${randomR}, ${randomG}, ${randomB}, ${randomBgAlpha})`);
+
+    // 產生 8 個 30% 到 70% 之間的隨機數
+    const r = () => Math.floor(Math.random() * 41) + 30;
+    
+    // 格式化為： "h1 h2 h3 h4 / v1 v2 v3 v4"
+    const randomValue = `${r()}% ${r()}% ${r()}% ${r()}% / ${r()}% ${r()}% ${r()}% ${r()}%`;
+    
+    // 傳送到 CSS 變數
+    cell.style.setProperty('--random-radius', randomValue);
   }
 
 });
@@ -487,20 +497,20 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
   }
   if (flippedCount == 1  ){
     flipon=false;
-    gunon=false;
+    wgunon=false;
     popon=true;
   }
     if (flippedCount >= 2  ){
     flipon=true;
-    gunon=false;
+    wgunon=false;
     popon=false;
   }
-  if (horizontalOffset >= 50 && flippedCount >= 3  && flippedCount <= 6){
-    gunon=true;
+  if (horizontalOffset >= 50 && flippedCount >= 3  && flippedCount <= 6 && myColor=='white' ){
+    wgunon=true;
     flipon=false;
     popon=false;
   }
-    // gunon=true;
+    // wgunon=true;
     // flipon=false;
     // popon=false; //TODO test gun
 
@@ -526,7 +536,7 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
     return { fx, fy, dist };
   })
   .sort((a, b) => a.dist - b.dist);
-  if (gunon==true){
+  if (wgunon==true){
     gunani(flippedPositions,sortedFlipped,flippedCount);
     time_1A = 400 + flippedCount * 600; //700->600
     time_2A = time_1A + 1300; 
