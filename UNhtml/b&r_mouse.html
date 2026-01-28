@@ -51,18 +51,18 @@
     window.addEventListener('mousemove', () => {
         clearTimeout(stopTimer);
         stopTimer = setTimeout(() => {
-            if (activePoints.length > 0 || permanentSegments.length > 0) {
-                // 將當前的所有路徑打包成一個「淡出段落」
-                const allCurrentPath = [...permanentSegments.flatMap(s => s.points), ...activePoints];
-                if (allCurrentPath.length > 1) {
+       if (permanentSegments.length > 0) {
+                // 我們只把原本就屬於棕色的部分 (permanentSegments) 丟進淡出清單
+                const brownPath = [...permanentSegments.flatMap(s => s.points)];
+                
+                if (brownPath.length > 1) {
                     fadingSegments.push({
-                        points: allCurrentPath,
+                        points: brownPath,
                         opacity: 1
                     });
                 }
-                // 清空當前狀態，準備迎接下一波移動
-                activePoints = [];
-                permanentSegments = [];
+                // 只清空棕色區，不碰 activePoints
+                permanentSegments = []; 
             }
         }, 100); 
     });

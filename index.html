@@ -76,8 +76,9 @@
 </div>
 
 <div id="video-layer">
-  <video id="board-video1" class="fade-video" autoplay muted playsinline></video>
-  <video id="board-video2" class="fade-video" muted playsinline></video>
+  <video id="boardVideo1" class="fade-video" autoplay muted playsinline></video>
+  <video id="boardVideo2" class="fade-video" muted playsinline></video>
+  <img id="board-image" style="display:none;">
 </div>
 
 <svg width="100%" height="100%">
@@ -102,7 +103,7 @@
     </filter>
   </defs>
 </svg>
-
+<canvas id="canvas"></canvas>
 <div id="message"></div>
 
 <img id="floating-img" src="hand1.png">

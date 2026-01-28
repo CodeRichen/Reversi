@@ -109,15 +109,15 @@ socket.on("playerColor", color => {
     
     // --- 1. 定義所有本地檔案總清單 (建議將所有檔案放在這裡即可) ---
     const allBoardFiles = [
-        "cat_b1.jpg", "cat_b2.jpg", "cat_b3.jpg", "cat_b5.jpg", "cat_b1.mp4", "cat_b2.mp4",
+        "cat_b1.jpg", "cat_b2.jpg", "cat_b3.jpg", "cat_b4.jpg", "cat_b1.mp4", "cat_b2.mp4",
         "cat_w1.jpg", "cat_w1.mp4", "cat_w2.mp4", "cat_w3.mp4",
-        "cat_wb1.jpg","cat_wb2.jpg"
+        "cat_wb1.jpg","cat_w2.jpg"
     ];
 
     const allBackgroundFiles = [
         "b-background1.mp4", "b-background2.mp4", "b-background1.jpg", "b-background2.jpg", 
         "b-background3.jpg", "b-background4.jpg", "w-background1.mp4", "w-background1.jpg", 
-         "w-background3.jpg", "wb-background1.mp4", "wb-background1.jpg", "wb-background2.jpg"
+         "w-background2.jpg", "wb-background1.mp4", "wb-background1.jpg", "wb-background2.jpg"
     ];
 
     // --- 2. 封裝通用的「自動分類過濾器」 ---
@@ -1223,6 +1223,18 @@ const cursor = document.querySelector(".cursor");
 let lastX = window.innerWidth / 2;
 let lastY = window.innerHeight / 2;
 let lastTime = Date.now();
+
+   const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    let activePoints = []; // 當前正在畫的黑線點
+    let fadingSegments = []; // 存放正在淡出的棕色路徑段落
+    let permanentSegments = []; // 存放你要求「持續留在螢幕」的棕色路徑
+    
+    let lastMousePos = null;
+    const MAX_POINTS = 10;   
+    const FADE_SPEED = 0.02; // 控制舊線淡出的速度
+
 // 滑鼠移動時圖片左右跟著動（上下不動）
 document.addEventListener("mousemove", (e) => {
   mouseX = e.clientX;
@@ -1230,6 +1242,7 @@ document.addEventListener("mousemove", (e) => {
     img.style.transition = "left 0.1s linear";
     img.style.left = `${mouseX}px`;
   }
+
   socket.emit("opponentMove", { x: e.clientX });
 
       const nowX = e.clientX;
@@ -1239,41 +1252,104 @@ document.addEventListener("mousemove", (e) => {
       // 游標圖片跟隨
       cursor.style.left = nowX + "px";
       cursor.style.top = nowY + "px";
+        const currentPos = { x: e.clientX, y: e.clientY };
 
-      // 計算移動速度
-      const dx = nowX - lastX;
-      const dy = nowY - lastY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const dt = nowTime - lastTime;
-      const speed = dist / (dt || 1); // px/ms
+        activePoints.push(currentPos);
 
-      // 根據速度決定線的長度
-      const length = Math.min(speed * 20, 200); // 最長200px
-      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+        // 當黑點超過 MAX_POINTS，將多出的點轉化為棕色段落
+        if (activePoints.length > MAX_POINTS) {
+            const oldPoint = activePoints.shift();
+            
+            // 這裡實作你的邏輯：
+            // 如果你希望「新出現的棕色持續留在螢幕上」，我們把它加到 permanentSegments
+            // 如果是滑鼠停止後產生的「舊棕色」，則放入 fadingSegments
+            
+            // 為了符合你說的「正在淡出的繼續淡出，新出的留下」，
+            // 我們預設新轉棕色的點直接進入「永久保留區」
+            if (permanentSegments.length > 0) {
+                permanentSegments[permanentSegments.length - 1].points.push(oldPoint);
+            } else {
+                permanentSegments.push({ points: [oldPoint], color: '#8B4513' });
+            }
+        }
+        lastMousePos = currentPos;
 
-      // 建立拖尾線
-      const trail = document.createElement("div");
-      trail.className = "trail";
-      trail.style.width = length + "px";
-      trail.style.left = nowX + "px";
-      trail.style.top = nowY + "px";
-      trail.style.transform = `translate(-100%, -50%) rotate(${angle}deg)`;
-
-      document.body.appendChild(trail);
-
-      // 線條淡出後移除
-      setTimeout(() => {
-        trail.style.transition = "opacity 0.3s";
-        trail.style.opacity = "0";
-        setTimeout(() => trail.remove(), 300);
-      }, 10);
 
       // 更新上次位置
       lastX = nowX;
       lastY = nowY;
       lastTime = nowTime;
 });
+// 監測滑鼠停止，停止時將「當前所有點」轉為「正在淡出」的段落
+    let stopTimer;
+    window.addEventListener('mousemove', () => {
+        clearTimeout(stopTimer);
+        stopTimer = setTimeout(() => {
+       if (permanentSegments.length > 0) {
+                // 我們只把原本就屬於棕色的部分 (permanentSegments) 丟進淡出清單
+                const brownPath = [...permanentSegments.flatMap(s => s.points)];
+                
+                if (brownPath.length > 1) {
+                    fadingSegments.push({
+                        points: brownPath,
+                        opacity: 1
+                    });
+                }
+                // 只清空棕色區，不碰 activePoints
+                permanentSegments = []; 
+            }
+        }, 100); 
+    });
 
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. 繪製並更新「正在淡出」的段落
+        for (let i = fadingSegments.length - 1; i >= 0; i--) {
+            const seg = fadingSegments[i];
+            ctx.save();
+            ctx.globalAlpha = seg.opacity;
+            drawPath(seg.points, '#8B4513');
+            ctx.restore();
+
+            seg.opacity -= FADE_SPEED; // 持續淡出，不被新動作打斷
+            if (seg.opacity <= 0) {
+                fadingSegments.splice(i, 1); // 徹底消失後移除
+            }
+        }
+
+        // 2. 繪製「持續留在螢幕」的棕色段落 (移動中產生的)
+        permanentSegments.forEach(seg => {
+            drawPath(seg.points, '#8B4513');
+        });
+
+        // 3. 繪製當前的黑線
+        if (activePoints.length > 1) {
+            drawPath(activePoints, 'black');
+        }
+
+        requestAnimationFrame(draw);
+    }
+
+    function drawPath(pathPoints, color) {
+        if (pathPoints.length < 2) return;
+        ctx.beginPath();
+        ctx.setLineDash([20, 15]);
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = color;
+
+        ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
+        for (let i = 1; i < pathPoints.length - 1; i++) {
+            const xc = (pathPoints[i].x + pathPoints[i + 1].x) / 2;
+            const yc = (pathPoints[i].y + pathPoints[i + 1].y) / 2;
+            ctx.quadraticCurveTo(pathPoints[i].x, pathPoints[i].y, xc, yc);
+        }
+        ctx.stroke();
+    }
+    
+    requestAnimationFrame(draw);
 document.addEventListener("click", (e) => {
   if (isJumping) return; // 防止在跳躍時多次觸發
   isJumping = true;
@@ -1414,8 +1490,14 @@ window.addEventListener('resize', () => {
   initializeMask(); // 每次視窗大小變化就重新定位遮罩
 });
 
-// 創建一個更可靠的初始化函數
 function initializeMask() {
+
+const canvas = document.getElementById('canvas'); // 取得你的 Canvas
+    if (!canvas) return;
+    if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
   // 確保所有元素都存在
   const maskRect = document.getElementById('maskRect');
   const board = document.getElementById("board");

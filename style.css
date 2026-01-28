@@ -1190,14 +1190,16 @@ will-change: transform, border-radius; /* 提示瀏覽器優化 */
       z-index: 1000;
     }
 
-    /* 拖曳尾巴 */
-    .trail {
-      position: fixed;
-      height: 2px;
-      background: rgba(0, 200, 255, 0.7);
-      pointer-events: none;
-      z-index: 500;
-    }
+#canvas {
+    position: fixed;   /* 固定在視窗，不隨頁面捲動 */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;     /* 確保在最前方 */
+    pointer-events: none; /* 讓點擊穿透 */
+    display: block;
+}
 
 /* 全域隱藏游標 */
 body, 
