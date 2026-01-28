@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Canvas 液態元球網格</title>
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; background: #0f172a; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let points = [];
+        
+        // 設定參數
+
+            const GRID_SIZE = 15;      // 渲染精度
+            const THRESHOLD = 1.2;     // 越高液體越瘦
+            const RADIUS = 20;         // 球的影響半徑
+            const DECAY = 0.035;       // 消失速度
+
+
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        // 監聽滑鼠移動，產生「熱點」
+        window.addEventListener('mousemove', (e) => {
+            points.push({
+                x: e.clientX,
+                y: e.clientY,
+                v: 2.5, // 初始能量
+                r: RADIUS
+            });
+        });
+
+
+
+function drawBackgroundGrid() {
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; // 淡淡的網格線
+    ctx.lineWidth = 0.5;
+    
+    // 畫垂直線
+    for (let x = 0; x < width; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+    }
+    // 畫水平線
+    for (let y = 0; y < height; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+    }
+}
+
+function draw() {
+    ctx.fillStyle = '#0f172a'; // 背景色
+    ctx.fillRect(0, 0, width, height);
+    
+    // 先畫背景網格
+    drawBackgroundGrid();
+    
+    points = points.filter(p => {
+        p.v -= DECAY;
+        return p.v > 0;
+    });
+
+    for (let x = 0; x < width; x += GRID_SIZE) {
+        for (let y = 0; y < height; y += GRID_SIZE) {
+            let totalEnergy = 0;
+            
+            for (let p of points) {
+                const dx = x - p.x;
+                const dy = y - p.y;
+                const distSq = dx * dx + dy * dy;
+                
+                // 元球公式
+                if (distSq < p.r * p.r * 8) { 
+                    totalEnergy += (p.v * p.r * p.r) / distSq;
+                }
+            }
+
+            if (totalEnergy > THRESHOLD) {
+                // 這裡可以決定是要畫「圓形」還是「方塊網格」
+                // 畫方塊會更有數位感：
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(totalEnergy * 0.2, 0.9)})`;
+                ctx.fillRect(x, y, GRID_SIZE - 1, GRID_SIZE - 1); // -1 是為了留出一點點縫隙感
+            }
+        }
+    }
+    requestAnimationFrame(draw);
+}
+
+        draw();
+    </script>
+</body>
+</html>

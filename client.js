@@ -104,111 +104,145 @@ socket.on("opponentMouse", idx => {
 socket.on("waitingForOpponent", () => {
   statusEl.textContent = "等待對手加入...";
 });
-
-// 告知玩家分配到的顏色
 socket.on("playerColor", color => {
-  myColor = color;
-  // 棋盤影片（cat 系列）
-  const catVideo = document.getElementById("board-video");
-  const catSource = document.getElementById("board-video-source");
-  const boardImage = document.getElementById("board-image");
-
-  const bcat =  ["cat_b1.jpg","cat_b2.jpg","cat_b3.jpg","cat_b5.jpg","cat_b1.mp4","cat_b2.mp4" ];
-  const wcat = ["cat_w1.jpg","cat_w1.mp4","cat_w2.mp4","cat_w3.mp4"];
-  const wbcat = ["cat_wb1.jpg"];
-  
-  // 根據玩家顏色組出可用的背景列表
-  let availableBackgrounds = [];
-  if (color === "black") {
-    availableBackgrounds = [...bcat, ...wbcat];
+    myColor = color;
     
-  } else {
-    availableBackgrounds = [...wcat, ...wbcat];
-  }
+    // --- 1. 定義所有本地檔案總清單 (建議將所有檔案放在這裡即可) ---
+    const allBoardFiles = [
+        "cat_b1.jpg", "cat_b2.jpg", "cat_b3.jpg", "cat_b5.jpg", "cat_b1.mp4", "cat_b2.mp4",
+        "cat_w1.jpg", "cat_w1.mp4", "cat_w2.mp4", "cat_w3.mp4",
+        "cat_wb1.jpg","cat_wb2.jpg"
+    ];
 
-  let randomCat = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
+    const allBackgroundFiles = [
+        "b-background1.mp4", "b-background2.mp4", "b-background1.jpg", "b-background2.jpg", 
+        "b-background3.jpg", "b-background4.jpg", "w-background1.mp4", "w-background1.jpg", 
+         "w-background3.jpg", "wb-background1.mp4", "wb-background1.jpg", "wb-background2.jpg"
+    ];
 
-  catSource.src = `picture/${randomCat}`;  
-  const mediaPath = `picture/${randomCat}`;
-    const isVideo = randomCat.endsWith(".mp4");
-    if (isVideo) {
-    // 顯示影片，隱藏圖片
-    boardImage.style.display = "none";
-    catVideo.style.display = "block";
-    catSource.src = mediaPath;
-    catVideo.load();
-    catVideo.play();
-  } else {
-    // 顯示圖片，隱藏影片
-    catVideo.style.display = "none";
-    boardImage.style.display = "block";
+    // --- 2. 封裝通用的「自動分類過濾器」 ---
+    // prefix1: 專屬顏色開頭 (如 'cat_b'), prefix2: 混合顏色開頭 (如 'cat_wb')
+    const filterFiles = (list, prefix1, prefix2) => {
+        return list.filter(name => name.startsWith(prefix1) || name.startsWith(prefix2));
+    };
 
-    boardImage.src = mediaPath;
-  }
+    // --- 3. 處理棋盤影片/圖片 (Cat 系列) ---
+    const prefix = color === "black" ? "cat_b" : "cat_w";
+    const boardList = filterFiles(allBoardFiles, prefix, "cat_wb");
+    const randomCat = boardList[Math.floor(Math.random() * boardList.length)];
+    
+    updateMediaDisplay("board", "board-image", randomCat);
 
- const bgVideo = document.getElementById("bgVideo");
-const bgImage = document.getElementById("bgImage");
+    // --- 4. 處理背景背景檔案 (Background 系列) ---
+    const bgPrefix = color === "black" ? "b-" : "w-";
+    const bgList = filterFiles(allBackgroundFiles, bgPrefix, "wb-");
+    const randomBg = bgList[Math.floor(Math.random() * bgList.length)];
+    
+    updateMediaDisplay("bg", "bgImage", randomBg);
 
-// 背景檔案清單
-const bBackgrounds = ["b-background1.mp4", "b-background2.mp4", "b-background1.jpg", "b-background2.jpg", "b-background3.jpg", "b-background4.jpg"];
-const wBackgrounds = ["w-background1.mp4", "w-background1.jpg", "w-background2.jpg"];
-const wbBackgrounds = ["wb-background1.mp4", "wb-background1.jpg"];
-
-// 假設玩家顏色
-
-// 組出可用背景
- availableBackgrounds = [];
-if (color === "black") {
-  availableBackgrounds = [...bBackgrounds, ...wbBackgrounds];
-} else {
-  availableBackgrounds = [...wBackgrounds, ...wbBackgrounds];
-}
-
-// 隨機選一個
-let randomBg = availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)];
-
- const mediaPath2 = `picture/${randomBg}`;
- const isVideo2 = randomBg.endsWith(".mp4");
-
-if (isVideo2) {
-  bgImage.style.display = "none";
-  bgVideo.style.display = "block";
-  bgVideo.src = mediaPath2;
-  bgVideo.play();
-} else {
-  bgVideo.pause();
-  bgVideo.style.display = "none";
-  bgImage.style.display = "block";
-  bgImage.src = mediaPath2;
-}
-
-// 初始化角落圖片：立即顯示
-const timg1 = document.getElementById("corner-image1");
-const timg2 = document.getElementById("corner-image2");
-const timg3 = document.getElementById("corner-image3");
-const timg4 = document.getElementById("corner-image4");
-
-function getRandomImage() {
-  const numw = Math.floor(Math.random() * (14 - 2 + 1)) + 2;
-  const numb = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
-
-  if (color === 'black') {
-    return `b_cat/C${numb}.png`;
-  }
-  return `w_cat/C${numw}.png`;
-}
-
-if (color === 'black') {
-  timg4.src = getRandomImage();
-  timg4.style.opacity = "1";
-  timg3.style.opacity = "0";
-} else {
-  timg1.src = getRandomImage();
-  timg1.style.opacity = "1";
-  timg2.style.opacity = "0";
-}
-
+    // --- 5. 處理角落圖片 (立即顯示) ---
+    updateCorners(color);
 });
+// 管理不同顯示區域的狀態
+let videoStates = {
+    bg: { active: 1 },
+    board: { active: 1 }
+};
+/**
+ * 修正版：支援雙影片無感切換，同時確保圖片能正常顯示
+ */
+function updateMediaDisplay(type, imageElemId, fileName) {
+    const v1 = document.getElementById(`${type}Video1`);
+    const v2 = document.getElementById(`${type}Video2`);
+    const image = document.getElementById(imageElemId);
+    const path = `picture/${fileName}`;
+    const isVideo = fileName.endsWith(".mp4");
+
+    if (!isVideo) {
+        // --- 圖片顯示邏輯 ---
+        // 1. 隱藏並停止所有影片
+        [v1, v2].forEach(v => {
+            if (v) {
+                v.style.opacity = 0;
+                v.pause();
+                v.src = ""; // 清空資源釋放電力/記憶體
+            }
+        });
+
+        // 2. 顯示圖片並確保透明度為 1
+        if (image) {
+            image.src = path;
+            image.style.display = "block";
+            image.style.opacity = 1;
+            console.log(`圖片已載入: ${path}`);
+        }
+    } else {
+        // --- 影片顯示邏輯 ---
+        if (image) {
+            image.style.display = "none";
+            image.style.opacity = 0;
+        }
+
+        const state = videoStates[type];
+        const currentVid = state.active === 1 ? v1 : v2;
+        const nextVid = state.active === 1 ? v2 : v1;
+
+        // 切換影片源
+        currentVid.src = path;
+        currentVid.style.opacity = 1;
+        currentVid.load();
+        currentVid.play().catch(e => console.log("自動播放被攔截"));
+
+        // 循環中的無感切換監聽
+        currentVid.ontimeupdate = function() {
+            const overlapTime = 1.5; 
+            if (currentVid.duration - currentVid.currentTime < overlapTime) {
+                if (nextVid.paused || nextVid.src !== currentVid.src) {
+                    nextVid.src = path;
+                    nextVid.currentTime = 0;
+                    nextVid.play().then(() => {
+                        nextVid.style.opacity = 1;
+                        currentVid.style.opacity = 0;
+                        state.active = state.active === 1 ? 2 : 1;
+                        currentVid.ontimeupdate = null;
+                    });
+                }
+            }
+        };
+    }
+}
+/**
+ * 輔助函數：角落圖片邏輯
+ */
+function updateCorners(color) {
+    const corners = {
+        t1: document.getElementById("corner-image1"),
+        t2: document.getElementById("corner-image2"),
+        t3: document.getElementById("corner-image3"),
+        t4: document.getElementById("corner-image4")
+    };
+
+    const getRandomImage = () => {
+        if (color === 'black') {
+            const numb = Math.floor(Math.random() * 9) + 1;
+            return `b_cat/C${numb}.png`;
+        } else {
+            const numw = Math.floor(Math.random() * 13) + 2;
+            return `w_cat/C${numw}.png`;
+        }
+    };
+
+    // 重置所有透明度
+    Object.values(corners).forEach(img => { if(img) img.style.opacity = "0"; });
+
+    if (color === 'black') {
+        corners.t4.src = getRandomImage();
+        corners.t4.style.opacity = "1";
+    } else {
+        corners.t1.src = getRandomImage();
+        corners.t1.style.opacity = "1";
+    }
+}
 
 
 // 遊戲開始時初始化畫面與狀態

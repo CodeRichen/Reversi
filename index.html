@@ -6,10 +6,6 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="background">
-  <img id="bgImage" src="" alt="背景圖片">
-  <video id="bgVideo" autoplay muted loop></video>
-</div>
 
 <div id="status">正在連線...</div>
 <button id="aiButton">與電腦對戰</button>
@@ -72,10 +68,16 @@
   <img id="board-image">
 </div>
 
+
+<div id="background">
+  <img id="bgImage" src="" alt="背景圖片" style="position:absolute; z-index:1;">
+  <video id="bgVideo1" class="fade-video" autoplay muted playsinline></video>
+  <video id="bgVideo2" class="fade-video" muted playsinline></video>
+</div>
+
 <div id="video-layer">
-  <video id="board-video" autoplay muted loop playsinline>
-    <source id="board-video-source" type="video/mp4">
-  </video>
+  <video id="board-video1" class="fade-video" autoplay muted playsinline></video>
+  <video id="board-video2" class="fade-video" muted playsinline></video>
 </div>
 
 <svg width="100%" height="100%">

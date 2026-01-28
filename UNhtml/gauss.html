@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>全螢幕液態網格</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: #0f172a;
+            overflow: hidden; /* 防止出現滾動條 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 濾鏡容器：讓格子融合的關鍵 */
+        .grid-wrapper {
+            filter: url(#gooey); 
+            display: grid;
+            /* 透過 JS 動態設定 grid-template-columns */
+            gap: 0; 
+            width: 100vw;
+            height: 100vh;
+            
+        }
+
+        .cell {
+            background: rgba(255, 255, 255, 0.02);
+            border: 0.1px solid rgba(255, 255, 255, 0.03);
+            transition: background 0.4s, transform 0.3s;
+            box-sizing: border-box;
+        }
+
+        .cell.active {
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            /* 放大倍率提高，增加融合感 */
+            transform: scale(1.5); 
+            z-index: 2;
+        }
+
+        svg {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-wrapper" id="grid"></div>
+
+    <svg>
+        <defs>
+            <filter id="gooey">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur" />
+                <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10" result="goo" />
+                <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+            </filter>
+        </defs>
+    </svg>
+
+    <script>
+        const grid = document.getElementById('grid');
+        const cellSize = 50; // 設定每個格子的大約大小（像素）
+
+        function createGrid() {
+            // 清空現有格子
+            grid.innerHTML = '';
+            
+            // 計算欄數與列數
+            const cols = Math.ceil(window.innerWidth / cellSize);
+            const rows = Math.ceil(window.innerHeight / cellSize);
+            const totalCells = cols * rows;
+
+            // 設定 Grid 樣式
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+            // 產生格子
+            for (let i = 0; i < totalCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                
+                // 使用 mouseenter 觸發
+                cell.addEventListener('mouseenter', () => {
+                    cell.classList.add('active');
+                    // 3秒後自動冷卻，讓畫面保持動態感
+                    setTimeout(() => {
+                        cell.classList.remove('active');
+                    }, 3000);
+                });
+
+                grid.appendChild(cell);
+            }
+        }
+
+        // 初始化
+        createGrid();
+
+        // 當視窗大小改變時重新計算（加上防抖 debounce 會更好，這裡先採用直接重繪）
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(createGrid, 250);
+        });
+    </script>
+</body>
+</html>

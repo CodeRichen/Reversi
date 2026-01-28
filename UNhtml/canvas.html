@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>整體水漬遮罩效果</title>
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; height: 100%; }
+
+        .background {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://picsum.photos/1920/1080') center/cover no-repeat;
+            z-index: 1;
+        }
+
+        /* 這是那個「整體」的 CSS 層 */
+        .glass-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2;
+            
+            /* 在這裡套用你想要的整體 CSS 效果 */
+            backdrop-filter: blur(20px) brightness(1.2) contrast(1.1);
+            -webkit-backdrop-filter: blur(20px) brightness(1.2) contrast(1.1);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2); /* 這會套用到整個遮罩邊緣嗎？不，這會套用到全螢幕 */
+            
+            /* 關鍵：將 Canvas 內容作為遮罩 */
+            mask-image: none; /* 由 JS 動態賦值 */
+            -webkit-mask-repeat: no-repeat;
+        }
+
+        canvas { display: none; } /* 我們不需要直接看到 Canvas */
+    </style>
+</head>
+<body>
+
+    <div class="background"></div>
+    <div id="glassLayer" class="glass-layer"></div>
+    <canvas id="maskCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('maskCanvas');
+        const glassLayer = document.getElementById('glassLayer');
+        const ctx = canvas.getContext('2d');
+        let width, height, points = [];
+        
+        const GRID_SIZE = 40;
+        const RADIUS = 80;
+        const DECAY = 0.02;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        window.addEventListener('mousemove', (e) => {
+            points.push({ x: e.clientX, y: e.clientY, v: 2.0 });
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            points = points.filter(p => { p.v -= DECAY; return p.v > 0; });
+
+            const cols = Math.ceil(width / GRID_SIZE);
+            const rows = Math.ceil(height / GRID_SIZE);
+            
+            // 繪製純黑色的合併形狀
+            ctx.fillStyle = "black";
+            
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < rows; r++) {
+                    let energy = 0;
+                    const gx = c * GRID_SIZE + GRID_SIZE / 2;
+                    const gy = r * GRID_SIZE + GRID_SIZE / 2;
+
+                    for (let p of points) {
+                        const dx = gx - p.x;
+                        const dy = gy - p.y;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < RADIUS * RADIUS * 4) {
+                            energy += (p.v * RADIUS * RADIUS) / distSq;
+                        }
+                    }
+
+                    if (energy > 0.8) {
+                        ctx.fillRect(c * GRID_SIZE, r * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+                    }
+                }
+            }
+
+            // 將畫好的 Canvas 轉為 Data URL 傳給 CSS 遮罩
+            glassLayer.style.webkitMaskImage = `url(${canvas.toDataURL()})`;
+            glassLayer.style.maskImage = `url(${canvas.toDataURL()})`;
+
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+</body>
+</html>

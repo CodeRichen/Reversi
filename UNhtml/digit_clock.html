@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>手寫數字時鐘</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+    }
+
+    .clock {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .digit {
+      width: 60px;
+      height: 80px;
+      object-fit: contain;
+    }
+
+    .colon {
+      font-size: 60px;
+      margin: 0 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="clock" id="clock">
+    <!-- 時鐘會由 JS 動態插入 -->
+  </div>
+
+  <script>
+    const DIGIT_PATH = "digits"; // 你的手寫數字資料夾
+    const MAX_PER_DIGIT = 200;   // 每個數字存了幾張
+
+    function getRandomDigitImage(digit) {
+      const randomIndex = Math.floor(Math.random() * MAX_PER_DIGIT);
+      return `${DIGIT_PATH}/${digit}/${randomIndex}.png`;
+    }
+
+    function updateClock() {
+      const now = new Date();
+      let h = now.getHours().toString().padStart(2, '0');
+      let m = now.getMinutes().toString().padStart(2, '0');
+      let s = now.getSeconds().toString().padStart(2, '0');
+
+      const timeStr = h + m + s;
+      const clockEl = document.getElementById("clock");
+      clockEl.innerHTML = "";
+
+      timeStr.split("").forEach((ch, i) => {
+        const img = document.createElement("img");
+        img.className = "digit";
+        img.src = getRandomDigitImage(ch);
+        clockEl.appendChild(img);
+
+        // 在 小時/分鐘、分鐘/秒 之間加冒號
+        if (i === 1 || i === 3) {
+          const colon = document.createElement("span");
+          colon.className = "colon";
+          colon.textContent = ":";
+          clockEl.appendChild(colon);
+        }
+      });
+    }
+
+    // 初始化 + 每秒更新
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

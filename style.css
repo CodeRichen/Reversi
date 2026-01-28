@@ -449,16 +449,91 @@ svg {
 
 
 .cell.highlight {
-  /* transform: scale(1.2); */
-    border: 1px solid rgb(53, 157, 57);
-  box-shadow: inset 0 0 4px  rgb(53, 157, 57);
-  /* transition: transform 0.4s, background-color 0.4s; */
-  z-index: 5;
+    /* 移除原本的邊框與內陰影 */
+    border: none;
+    box-shadow: none;
+    
+    position: relative; /* 確保加號相對於細胞定位 */
+    z-index: 5;
+}
+
+/* 共通設定：建立加號的兩條線 */
+.cell.highlight::before,
+.cell.highlight::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background-color: rgb(53, 157, 57); /* 你的綠色 */
+    transform: translate(-50%, -50%);
+    border-radius: 2px; /* 讓加號邊角稍微圓潤 */
+    pointer-events: none; /* 確保加號不會干擾點擊 */
+}
+
+/* 橫槓 */
+.cell.highlight::before {
+    width: 16px;  /* 加號的長度 */
+    height: 2px;  /* 加號的粗細 */
+}
+
+/* 豎槓 */
+.cell.highlight::after {
+    width: 2px;   /* 加號的粗細 */
+    height: 16px; /* 加號的長度 */
 }
 
 .cell.invalid {
-  background-color: #e88;
+    position: relative;
+    z-index: 10;
+    /* 如果你想保留淡紅色背景，可以解除下方註釋 */
+    /* background-color: rgba(232, 136, 136, 0.3); */
 }
+
+/* 建立 X 的兩條斜線 */
+.cell.invalid::before,
+.cell.invalid::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;       /* X 的長度 */
+    height: 3px;       /* X 的粗細 */
+    background-color: #ff4d4d; /* 鮮艷的紅色 */
+    border-radius: 2px;
+    
+    /* 動畫：出現並在 1 秒內淡出 */
+    animation: x-fade-out 1s ease-out forwards;
+}
+
+/* 旋轉成 X 字型 */
+.cell.invalid::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.cell.invalid::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* 淡出動畫定義 */
+@keyframes x-fade-out {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--rot)) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(var(--rot)) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--rot)) scale(1);
+    }
+}
+
+/* 修正動畫中的旋轉角度 */
+.cell.invalid::before { --rot: 45deg; }
+.cell.invalid::after { --rot: -45deg; }
+
 .fogged {
   position: relative;
   z-index: 1;
@@ -1136,4 +1211,24 @@ body,
   cursor: none !important;
 }
 
+/* 讓兩個影片絕對定位重疊 */
+.fade-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out; /* 淡入淡出時間 */
+  z-index: 1;
+}
 
+/* 圖片也要重疊在同一層 */
+#bgImage, #board-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2; /* 圖片權限稍高 */
+  transition: opacity 0.8s ease;
+}

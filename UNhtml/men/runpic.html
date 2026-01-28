@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>四邊框照片循環</title>
+<style>
+  body {
+    background: #111;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    gap: 20px;
+  }
+
+  .frame {
+    position: relative;
+    
+    width: 600px;
+    height: 400px;
+    border: 3px solid #fff;
+    overflow: visible;
+  }
+
+  /* ===== 共用樣式 ===== */
+  .edge-horizontal, .edge-vertical {
+    position: absolute;
+    overflow: hidden;
+  }
+  .edge-horizontal .inner,
+  .edge-vertical .inner {
+    position: absolute;
+    background-size: contain;
+  filter: hue-rotate(-120deg) saturate(250%) brightness(120%);
+  backface-visibility: hidden;
+  will-change: transform;
+    animation-play-state: running; /* 預設啟動動畫 */
+  }
+
+  /* ===== 上邊 ===== */
+  .edge-horizontal.top {
+    top: -50px;
+    left: 0;
+    width: 100%;
+    height: 50px;
+
+  }
+.edge-horizontal.top .inner {
+  width: 200%;  /* 兩張圖拼接 */
+   transform: translateX(-50%); /* 初始位置調整 */
+  height: 100%;
+  display: flex;
+  background: none;
+  
+   flex-direction: row-reverse; /* ← 反轉圖片順序 */
+  animation: move-right 8s linear infinite;
+}
+.edge-horizontal.top .inner::before,
+.edge-horizontal.top .inner::after {
+  content: "";
+  width: 50%;
+  background-image: url("men1.png");
+  background-size: contain;
+background-repeat: no-repeat;
+  background-position: center;
+  background-size: 60%;
+  background-position: center bottom;
+}
+@keyframes move-left {
+  from { transform: translateX(0%); }
+  to   { transform: translateX(-50%); }
+}
+
+/* 動畫：移動一張圖寬度 */
+
+  /* ===== 下邊 ===== */
+  .edge-horizontal.bottom {
+    bottom: -50px;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    transform: scaleY(-1);
+  }
+
+
+  .edge-horizontal.bottom .inner {
+    width: 200%;
+    height: 100%;
+       display: flex;
+  background: none;
+    animation: move-left 8s linear infinite;
+  }
+
+.edge-horizontal.bottom .inner::before,
+.edge-horizontal.bottom .inner::after {
+  content: "";
+  flex: 1;
+  background-image: url("men2.png");
+  background-size: contain;
+background-repeat: no-repeat;
+  background-position: center;
+    background-size: 50%;
+  background-position: center bottom;
+}
+  /* ===== 左邊：往上跑 ===== */
+  .edge-vertical.left {
+    top: 0;
+    left: -50px;
+    width: 50px;
+    height: 100%;
+  }
+  .edge-vertical.left .inner {
+    width: 100%;
+    height: 200%;
+    display: flex;
+    flex-direction: column;
+    animation: move-up 8s linear infinite;
+  }
+  .edge-vertical.left .inner::before,
+  .edge-vertical.left .inner::after {
+    content: "";
+    flex: 1;
+    background: url("men3.png") center no-repeat;
+    background-size: contain;
+      background-size: 50%;
+  background-position: center left;
+  }
+    /* ===== 右邊：往下跑 ===== */
+  .edge-vertical.right {
+    top: 0;
+    right: -50px;
+    width: 50px;
+    height: 100%;
+      transform: scaleX(-1);
+  }
+  .edge-vertical.right .inner {
+    width: 100%;
+    height: 200%;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(-50%); /* 初始位置調整 */
+    animation: move-down 8s linear infinite;
+  }
+  .edge-vertical.right .inner::before,
+  .edge-vertical.right .inner::after {
+    content: "";
+    flex: 1;
+    background: url("men4.png") center no-repeat;
+    background-size: contain;
+  }
+
+
+  /* ===== 動畫 ===== */
+
+@keyframes move-left {
+  from { transform: translateX(0%); }
+  to   { transform: translateX(-50%); }
+}
+
+  @keyframes move-right {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0%); }
+}
+  @keyframes move-down {
+  from { transform: translateY(-50%); }
+  to   { transform: translateY(0%); }
+}
+@keyframes move-up {
+  from { transform: translateY(0%); }
+  to   { transform: translateY(-50%); }
+}
+
+
+
+  /* 停止狀態 */
+.frame.paused .inner {
+  animation-play-state: paused !important;
+  filter: hue-rotate(150deg) saturate(600%) brightness(90%) contrast(120%);
+}
+
+
+  /* 控制按鈕 */
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #333;
+    color: #fff;
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+  <div class="frame" id="frame">
+    <!-- 上下 -->
+    <div class="edge-horizontal top"><div class="inner"></div></div>
+    <div class="edge-horizontal bottom"><div class="inner"></div></div>
+
+    <!-- 左右 -->
+    <div class="edge-vertical left"><div class="inner"></div></div>
+    <div class="edge-vertical right"><div class="inner"></div></div>
+  </div>
+
+  <button id="toggleBtn">停止</button>
+
+<script>
+  const frame = document.getElementById("frame");
+  const btn = document.getElementById("toggleBtn");
+  let running = true;
+
+  btn.addEventListener("click", () => {
+    running = !running;
+    if (running) {
+      frame.classList.remove("paused");
+      btn.textContent = "停止";
+    } else {
+      frame.classList.add("paused");
+      btn.textContent = "繼續";
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<div id="container"></div>
+
+<style>
+  #container {
+    position: absolute;
+    bottom: 20px; 
+    left: 40%;
+    transform: translateX(-50%);
+    width: 400px;
+    height: 260px;
+    display: grid;
+    grid-template-columns: repeat(20, 1fr); 
+    grid-template-rows: repeat(13, 1fr);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    overflow: visible; 
+  }
+
+  .tile {
+    position: relative;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .tile .layer1 {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image: url("sniperwomen.png");
+    background-size: 400px 260px;
+  }
+
+  .tile .layer2 {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image: url("gun.png");
+    background-size: 400px 260px;
+  }
+
+  /* 動畫結束後要顯示的完整圖 */
+  #full-sniper {
+    position: absolute;
+    top: 0; left: 0;
+    width: 400px; height: 260px;
+    background-image: url("sniperwomen.png");
+    background-size: 400px 260px;
+    z-index: 1;
+  }
+  #full-gun {
+    position: absolute;
+    top: 0; left: 0;
+    width: 400px; height: 260px;
+    background-image: url("gun.png");
+    background-size: 400px 260px;
+    transform-origin: 20% 50%;
+    z-index: 2;
+  }
+
+  #container.move-left {
+    left: 0px; 
+    bottom: 0px;
+    transform: none;
+  }
+  .red-dot {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: red;
+    pointer-events: none;
+    transition: transform 1s linear;
+  }
+</style>
+
+<script>
+  const container = document.getElementById("container");
+  const cols = 20, rows = 13;
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  // 建立 tile
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+
+      const layer1 = document.createElement("div");
+      layer1.className = "layer1";
+      layer1.style.backgroundPosition = `-${(width/cols)*c}px -${(height/rows)*r}px`;
+
+      const layer2 = document.createElement("div");
+      layer2.className = "layer2";
+      layer2.style.backgroundPosition = `-${(width/cols)*c}px -${(height/rows)*r}px`;
+
+      tile.appendChild(layer1);
+      tile.appendChild(layer2);
+      container.appendChild(tile);
+    }
+  }
+
+  // 顯示順序：先偶數行再奇數行
+  const order = [];
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r += 2) order.push({r, c});
+    for (let r = 1; r < rows; r += 2) order.push({r, c});
+  }
+
+  let acc = 5;
+  order.forEach((pos, i) => {
+    const index = pos.r * cols + pos.c;
+    const tile = container.children[index];
+    setTimeout(() => {
+      tile.style.opacity = "1";
+    }, i * acc);
+    acc -= 0.015;
+  });
+
+  container.classList.add("move-left");
+
+  // ✅ 小方塊動畫結束 → 換成完整的圖
+  const totalDelay = 400; 
+  setTimeout(() => {
+    // container.innerHTML = ""; // 清空所有 tile
+
+    // 加完整圖
+    const sniper = document.createElement("div");
+    sniper.id = "full-sniper";
+    const gun = document.createElement("div");
+    gun.id = "full-gun";
+    const smoke = document.createElement("div");
+    smoke.id = "smoke";
+    smoke.style.width = "400px";
+    smoke.style.height = "260px";
+    smoke.style.backgroundSize = "contain";
+    smoke.style.backgroundRepeat = "no-repeat";
+    smoke.style.opacity = "0";
+    smoke.style.transition = "opacity 0.5s ease";
+    smoke.style.transformOrigin = "20% 50%";
+
+
+// 建立一個 img 物件來取得原始圖片大小
+const img = new Image();
+img.src = "smoky.png";
+img.onload = () => {
+ const xInImage = img.width;      // 右邊界
+  const yInImage = img.height / 3;
+
+  // 2️⃣ 取得 smoke 在螢幕上的位置
+  const rect = smoke.getBoundingClientRect();
+
+  // 3️⃣ 計算縮放比例（因為 backgroundSize=contain 會縮放）
+  const scaleX = rect.width / img.width;
+  const scaleY = rect.height / img.height;
+
+  // 4️⃣ 把圖片座標轉換成元素內座標，再轉成螢幕座標
+  const screenX = rect.left + xInImage * scaleX;
+  const screenY = rect.top + yInImage * scaleY;
+
+  console.log("螢幕上的座標：", screenX, screenY);
+};
+smoke.style.backgroundImage = `url('${img.src}')`;
+
+    container.appendChild(sniper);
+    container.appendChild(gun);
+    container.appendChild(smoke);
+
+    // 讓 gun 永遠指向滑鼠
+    window.addEventListener("mousemove", (e) => {
+      const rect = container.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 4;
+      const angle = (Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI);
+      console.log ("角度：", angle);
+      gun.style.transform = `rotate(${angle}deg)`;
+      smoke.style.transform = `rotate(${angle}deg)`;
+    });   
+    window.addEventListener("click", (e) => {
+    // 螢幕中心
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+
+    // 左下角座標
+    const startX = 0;
+    const startY = window.innerHeight;
+
+   const rect = gun.getBoundingClientRect();
+
+    const launchX = startX +  width/10;
+    const launchY = startY -  height*6/10;
+
+    // 點擊位置
+    const targetX = e.clientX;
+    const targetY = e.clientY;
+
+    // 建立紅點
+    const dot = document.createElement("div");
+    dot.className = "red-dot";
+    dot.style.left = `${launchX - 6}px`; 
+    dot.style.top = `${launchY - 6}px`;
+    document.body.appendChild(dot);
+
+    // 讓瀏覽器先渲染初始位置
+    requestAnimationFrame(() => {
+      dot.style.transform = `translate(${targetX - launchX}px, ${targetY - launchY}px)`;
+    });
+
+    // 1 秒後移除
+    setTimeout(() => {
+      dot.remove();
+    }, 1000);
+  });
+
+  }, totalDelay);
+
+
+</script>

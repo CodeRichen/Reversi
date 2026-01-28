@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>自訂游標拖尾效果</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #111;
+      cursor: none; /* 隱藏原本的游標 */
+      overflow: hidden;
+    }
+
+    /* 自訂游標圖片 */
+    .cursor {
+      position: fixed;
+      width: 32px;
+      height: 32px;
+      background: url("cursor.png") no-repeat center/contain;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+    }
+
+    /* 拖曳尾巴 */
+    .trail {
+      position: fixed;
+      height: 2px;
+      background: rgba(0, 200, 255, 0.7);
+      pointer-events: none;
+      z-index: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="cursor"></div>
+
+  <script>
+    const cursor = document.querySelector(".cursor");
+    let lastX = window.innerWidth / 2;
+    let lastY = window.innerHeight / 2;
+    let lastTime = Date.now();
+
+    window.addEventListener("mousemove", (e) => {
+      const nowX = e.clientX;
+      const nowY = e.clientY;
+      const nowTime = Date.now();
+
+      // 游標圖片跟隨
+      cursor.style.left = nowX + "px";
+      cursor.style.top = nowY + "px";
+
+      // 計算移動速度
+      const dx = nowX - lastX;
+      const dy = nowY - lastY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const dt = nowTime - lastTime;
+      const speed = dist / (dt || 1); // px/ms
+
+      // 根據速度決定線的長度
+      const length = Math.min(speed * 20, 200); // 最長200px
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+      // 建立拖尾線
+      const trail = document.createElement("div");
+      trail.className = "trail";
+      trail.style.width = length + "px";
+      trail.style.left = nowX + "px";
+      trail.style.top = nowY + "px";
+      trail.style.transform = `translate(-100%, -50%) rotate(${angle}deg)`;
+
+      document.body.appendChild(trail);
+
+      // 線條淡出後移除
+      setTimeout(() => {
+        trail.style.transition = "opacity 0.3s";
+        trail.style.opacity = "0";
+        setTimeout(() => trail.remove(), 300);
+      }, 10);
+
+      // 更新上次位置
+      lastX = nowX;
+      lastY = nowY;
+      lastTime = nowTime;
+    });
+  </script>
+</body>
+</html>
