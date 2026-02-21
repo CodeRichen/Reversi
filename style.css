@@ -1222,7 +1222,7 @@ body,
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 1.5s ease-in-out; /* 淡入淡出時間 */
+  transition: opacity 1s ease-in-out; 
   z-index: 1;
 }
 

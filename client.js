@@ -149,7 +149,7 @@ let videoStates = {
     board: { active: 1 }
 };
 /**
- * 修正版：支援雙影片無感切換，同時確保圖片能正常顯示
+ * 修正版：確保 1s 入 + 1s 出 完成後，才進入下一次循環監聽
  */
 function updateMediaDisplay(type, imageElemId, fileName) {
     const v1 = document.getElementById(`${type}Video1`);
@@ -158,58 +158,94 @@ function updateMediaDisplay(type, imageElemId, fileName) {
     const path = `picture/${fileName}`;
     const isVideo = fileName.endsWith(".mp4");
 
-    if (!isVideo) {
-        // --- 圖片顯示邏輯 ---
-        // 1. 隱藏並停止所有影片
-        [v1, v2].forEach(v => {
-            if (v) {
-                v.style.opacity = 0;
-                v.pause();
-                v.src = ""; // 清空資源釋放電力/記憶體
-            }
-        });
+    console.log(`[Media] 開始處理 ${type}: ${fileName}`);
 
-        // 2. 顯示圖片並確保透明度為 1
+    if (!isVideo) {
+        // --- 圖片邏輯 ---
+        [v1, v2].forEach(v => { v.style.opacity = 0; v.pause(); v.style.zIndex = 1; });
         if (image) {
             image.src = path;
             image.style.display = "block";
             image.style.opacity = 1;
-            console.log(`圖片已載入: ${path}`);
+            image.style.zIndex = 2;
         }
     } else {
-        // --- 影片顯示邏輯 ---
-        if (image) {
-            image.style.display = "none";
-            image.style.opacity = 0;
-        }
+        // --- 影片邏輯 ---
+        if (image) { image.style.display = "none"; image.style.opacity = 0; }
 
         const state = videoStates[type];
+        // 第一次啟動時的初始化
         const currentVid = state.active === 1 ? v1 : v2;
-        const nextVid = state.active === 1 ? v2 : v1;
-
-        // 切換影片源
+        
         currentVid.src = path;
+        currentVid.style.transition = "none";
         currentVid.style.opacity = 1;
-        currentVid.load();
-        currentVid.play().catch(e => console.log("自動播放被攔截"));
-
-        // 循環中的無感切換監聽
-        currentVid.ontimeupdate = function() {
-            const overlapTime = 1.5; 
-            if (currentVid.duration - currentVid.currentTime < overlapTime) {
-                if (nextVid.paused || nextVid.src !== currentVid.src) {
-                    nextVid.src = path;
-                    nextVid.currentTime = 0;
-                    nextVid.play().then(() => {
-                        nextVid.style.opacity = 1;
-                        currentVid.style.opacity = 0;
-                        state.active = state.active === 1 ? 2 : 1;
-                        currentVid.ontimeupdate = null;
-                    });
-                }
-            }
-        };
+        currentVid.style.zIndex = 5;
+        
+        currentVid.play().then(() => {
+            // 啟動循環監聽
+            setupLoopListener(type, currentVid, fileName);
+        }).catch(e => console.log("播放失敗:", e));
     }
+}
+
+/**
+ * 獨立的循環監聽函式，避免重複初始化導致動畫中斷
+ */
+function setupLoopListener(type, currentVid, fileName) {
+    const v1 = document.getElementById(`${type}Video1`);
+    const v2 = document.getElementById(`${type}Video2`);
+    const path = `picture/${fileName}`;
+    
+    currentVid.ontimeupdate = function() {
+        const overlapTime = 2.0; // 預留 2 秒啟動動畫 (1s淡入+1s淡出)
+        
+        if (currentVid.duration > 0 && (currentVid.duration - currentVid.currentTime < overlapTime)) {
+            currentVid.ontimeupdate = null; // 停止監聽，進入換幕程序
+            
+            const state = videoStates[type];
+            const nextVid = (currentVid === v1) ? v2 : v1;
+
+            // console.log(`[Video] ${type} 接力開始: 新片入層`);
+
+            // 1. 準備接力影片：放在最頂層 (z-index: 10) 但透明
+            nextVid.style.transition = "none";
+            nextVid.src = path;
+            nextVid.style.opacity = 0;
+            nextVid.style.zIndex = 10;
+            nextVid.load();
+
+            nextVid.oncanplay = function() {
+                nextVid.play().then(() => {
+                    // --- 階段一：新影片花 1 秒淡入 ---
+                    nextVid.style.transition = "opacity 1s ease-in-out";
+                    nextVid.style.opacity = 1;
+
+                    // --- 階段二：1秒後，舊影片花 1 秒淡出 ---
+                    setTimeout(() => {
+                        // console.log(`[Video] ${type} 舊片開始淡出`);
+                        currentVid.style.transition = "opacity 1s ease-in-out";
+                        currentVid.style.opacity = 0;
+                        
+                        // 更新全局狀態
+                        state.active = (nextVid === v1) ? 1 : 2;
+
+                        // --- 階段三：淡出完成後，清理舊片並讓新片開始監聽下一次結束 ---
+                        setTimeout(() => {
+                            currentVid.pause();
+                            currentVid.style.zIndex = 1;
+                            // console.log(`[Video] ${type} 循環完成，新片接手監聽`);
+                            
+                            // 關鍵：讓新影片開始監聽它自己的結束時間
+                            setupLoopListener(type, nextVid, fileName);
+                        }, 1000);
+
+                    }, 1000);
+                });
+                nextVid.oncanplay = null;
+            };
+        }
+    };
 }
 /**
  * 輔助函數：角落圖片邏輯
@@ -1325,7 +1361,8 @@ document.addEventListener("mousemove", (e) => {
 
         // 3. 繪製當前的黑線
         if (activePoints.length > 1) {
-            drawPath(activePoints, 'black');
+            if (myColor=='black') drawPath(activePoints, 'black');
+            else if (myColor=='white') drawPath(activePoints, 'white');
         }
 
         requestAnimationFrame(draw);
