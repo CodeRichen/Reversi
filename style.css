@@ -457,78 +457,70 @@ svg {
     z-index: 5;
 }
 
-/* 共通設定：建立加號的兩條線 */
-.cell.highlight::before,
-.cell.highlight::after {
+.cell {
+    position: relative;
+}
+
+.cell {
+    position: relative;
+}
+
+/* 預設狀態（隱藏） */
+.cell::before {
     content: "";
     position: absolute;
     top: 50%;
     left: 50%;
-    background-color: rgb(53, 157, 57); /* 你的綠色 */
-    transform: translate(-50%, -50%);
-    border-radius: 2px; /* 讓加號邊角稍微圓潤 */
-    pointer-events: none; /* 確保加號不會干擾點擊 */
+
+    width: 90%;
+    height: 90%;
+
+    background-image: url("part_cat/paw.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+
+    transform: translate(-50%, -50%) rotate(-15deg);
+    transform-origin: center;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 0.4s ease;
 }
 
-/* 橫槓 */
+/* 加上 highlight 才顯示 */
 .cell.highlight::before {
-    width: 16px;  /* 加號的長度 */
-    height: 2px;  /* 加號的粗細 */
+    opacity: 1;
 }
-
-/* 豎槓 */
-.cell.highlight::after {
-    width: 2px;   /* 加號的粗細 */
-    height: 16px; /* 加號的長度 */
-}
-
 .cell.invalid {
     position: relative;
-    z-index: 10;
-    /* 如果你想保留淡紅色背景，可以解除下方註釋 */
-    /* background-color: rgba(232, 136, 136, 0.3); */
+    z-index: 5;
 }
-
 /* 建立 X 的兩條斜線 */
-.cell.invalid::before,
+/* .cell.invalid::before,
 .cell.invalid::after {
     content: "";
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 20px;       /* X 的長度 */
-    height: 3px;       /* X 的粗細 */
-    background-color: #ff4d4d; /* 鮮艷的紅色 */
+    width: 10px;       
+    height: 2px;      
+    background-color: #ff4d4d; 
     border-radius: 2px;
-    
-    /* 動畫：出現並在 1 秒內淡出 */
-    animation: x-fade-out 1s ease-out forwards;
-}
+   
+} */
 
 /* 旋轉成 X 字型 */
-.cell.invalid::before {
+/* .cell.invalid::before {
     transform: translate(-50%, -50%) rotate(45deg);
 }
 
 .cell.invalid::after {
     transform: translate(-50%, -50%) rotate(-45deg);
-}
+} */
 
-/* 淡出動畫定義 */
-@keyframes x-fade-out {
-    0% {
-        opacity: 0;
-        transform: translate(-50%, -50%) rotate(var(--rot)) scale(0.5);
-    }
-    20% {
-        opacity: 1;
-        transform: translate(-50%, -50%) rotate(var(--rot)) scale(1.2);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) rotate(var(--rot)) scale(1);
-    }
-}
+
 
 /* 修正動畫中的旋轉角度 */
 .cell.invalid::before { --rot: 45deg; }

@@ -25,8 +25,35 @@ const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
 const messageEl = document.getElementById("message");
 // const scoreEl = document.getElementById("score");
-const audio_place = new Audio("place.mp3");
-const audio_meow = new Audio("meow.mp3");
+const audio_place = new Audio("audio/place.mp3");
+
+// 創建音頻池，避免同時播放衝突
+const audio_meow_pool = [];
+for (let i = 0; i < 20; i++) { // 增加到 20 個實例
+  const audio = new Audio("audio/meow.mp3");
+  audio.preload = "auto";
+  audio.load();
+  audio.volume = 0.8; // 設置默認音量
+  audio_meow_pool.push(audio);
+}
+let currentMeowIndex = 0;
+
+// 獲取可用的音頻實例 
+function getAvailableAudio() {
+  // 尋找未在播放的音頻實例
+  for (let i = 0; i < audio_meow_pool.length; i++) {
+    const index = (currentMeowIndex + i) % audio_meow_pool.length;
+    const audio = audio_meow_pool[index];
+    if (audio.paused || audio.ended) {
+      currentMeowIndex = (index + 1) % audio_meow_pool.length;
+      return audio;
+    }
+  }
+  // 如果所有都在播放，返回下一個（會被重置）
+  const audio = audio_meow_pool[currentMeowIndex];
+  currentMeowIndex = (currentMeowIndex + 1) % audio_meow_pool.length;
+  return audio;
+}
 // 建立一個用來顯示對手滑鼠位置的虛擬游標
 let opponentCursor = document.createElement('div');
 opponentCursor.className = 'opponent-cursor';
@@ -459,9 +486,9 @@ updateBoard(data.board);
   if (currentTurn === "black" || currentTurn === "white") {
     overlayImg.style.display = "block"; // 顯示圖片
   if (currentTurn === "black") {
-    overlayImg.src = "cat_b.png";
+    overlayImg.src = "part_cat/cat_b.png";
   } else {
-    overlayImg.src = "cat_w.png";
+    overlayImg.src = "part_cat/cat_w.png";
   }}
   else {
     // 如果不符合條件就隱藏
@@ -554,7 +581,46 @@ socket.on("placeidx", idx => {
 const specialCell = boardEl.querySelector(`[data-index="${targetIndex}"]`);
   specialCell.classList.add("special"); 
 });
+function playMeow(audioElement) {
+    try {
+        const speedOptions = [0.6, 0.8, 1, 1.2, 1.4];
+        const volumeOptions = [0.6, 0.8, 1.0]; // 調低音量避免失真
 
+        // 確保音頻已載入完成
+        if (audioElement.readyState < 2) {
+            // 如果音頻未載入完成，等待載入
+            audioElement.addEventListener('canplaythrough', () => {
+                playMeowInternal(audioElement, speedOptions, volumeOptions);
+            }, { once: true });
+            return;
+        }
+        
+        playMeowInternal(audioElement, speedOptions, volumeOptions);
+    } catch (error) {
+        console.warn("音頻播放失敗:", error);
+    }
+}
+
+function playMeowInternal(audioElement, speedOptions, volumeOptions) {
+    // 重置音頻
+    audioElement.pause();
+    audioElement.currentTime = 0;
+
+    // 🎲 隨機選一個明顯的值
+    audioElement.playbackRate = 
+        speedOptions[Math.floor(Math.random() * speedOptions.length)];
+    
+    audioElement.volume = 
+        volumeOptions[Math.floor(Math.random() * volumeOptions.length)];
+
+    // 使用 Promise 處理播放
+    const playPromise = audioElement.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.warn("音頻播放被阻止:", error);
+        });
+    }
+}
 
 const container = document.getElementById("container");
 // 當伺服器回傳落子結果時，更新分數與動畫
@@ -562,9 +628,8 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
     const x = idx % 8;
     const y = Math.floor(idx / 8);
   // console.log(`玩家 ${player} 翻轉了 ${flippedCount} 顆棋子`);
-    if (flippedCount > 0) {
-    audio_meow.play();
-  }
+  
+  
   if (flippedCount == 1  ){
     flipon=false;
     wgunon=false;
@@ -616,6 +681,11 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
     time_1A=0;
     time_2A=0;
     sortedFlipped.forEach(({ fx, fy }, i) => {
+      // 給每個音效添加延遲，對應翻轉動畫時機
+      setTimeout(() => {
+        const audioInstance = getAvailableAudio();
+        playMeow(audioInstance);
+      }, i * 100);
      setTimeout(() => flipani(fx, fy), i * 100); // 每顆延遲一點時間
    });
     sortedFlipped.forEach(({ fx, fy }, i) => {
@@ -1420,14 +1490,14 @@ document.addEventListener("click", (e) => {
 
       setTimeout(() => {
         // 第 2.5 步：停頓 （維持在原地）
-        showcat_real(e.clientX, e.clientY, "cat_real.png");
+        showcat_real(e.clientX, e.clientY, "part_cat/cat_real.png");
         
         setTimeout(() => {
           // 第三步：回到起跳點（右 + 下來）
           img.style.transition = "transform 0.17s ease-in, left 0.17s ease-in";
           img.style.left = `${jumpStartX}px`;
           img.style.transform = `translate(-50%, 0px)`;
-showcat_real(e.clientX, e.clientY, "cat.png");
+showcat_real(e.clientX, e.clientY, "part_cat/cat.png");
           setTimeout(() => {
             isJumping = false; // 跳完才允許再次跟隨滑鼠
           }, 170); // 確保結束後解除鎖定
@@ -1491,7 +1561,7 @@ socket.on("opponentDoJump", ({ x, y }) => {
 });
 
 function showcat_real(x, y, imageUrl) {
-  if (imageUrl === "cat_real.png") {
+  if (imageUrl === "part_cat/cat_real.png") {
   const img = document.createElement("img");
   img.src = imageUrl;
   img.className = "effect-image";
@@ -1504,7 +1574,7 @@ function showcat_real(x, y, imageUrl) {
     img.remove(); // 動畫結束後自動刪除
   });
   }
-  if(imageUrl === "cat.png") {
+  if(imageUrl === "part_cat/cat.png") {
     const img = document.createElement("img");
     img.src = imageUrl;
     img.className = "effect-image2";
