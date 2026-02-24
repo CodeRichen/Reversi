@@ -732,18 +732,21 @@ will-change: transform, border-radius; /* 提示瀏覽器優化 */
   right: 20px;
   z-index: 1000;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  max-width: 240px;
 }
 
 #controlPanel button {
-  padding: 8px 12px;
-  font-size: 0.9em;
+  padding: 6px 10px;
+  font-size: 0.85em;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: bold;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  min-width: 70px;
 }
 
 #soundToggle {
@@ -771,6 +774,34 @@ will-change: transform, border-radius; /* 提示瀏覽器優化 */
 }
 
 #glassToggle.disabled {
+  background-color: #999;
+}
+
+#cornerImageToggle {
+  background-color: #77ffaa;
+  color: white;
+}
+
+#cornerImageToggle:hover {
+  background-color: #55dd88;
+  transform: translateY(-2px);
+}
+
+#cornerImageToggle.disabled {
+  background-color: #999;
+}
+
+#mouseTrailToggle {
+  background-color: #ffaa77;
+  color: white;
+}
+
+#mouseTrailToggle:hover {
+  background-color: #dd8855;
+  transform: translateY(-2px);
+}
+
+#mouseTrailToggle.disabled {
   background-color: #999;
 }
 
@@ -1018,19 +1049,19 @@ will-change: transform, border-radius; /* 提示瀏覽器優化 */
     display: block;
 }
 
-/* 全域隱藏游標 */
-body, 
-#board, 
-#game-wrapper, 
-.board-container, 
-.cell,
-#container {
+/* 全域隱藏游標（只在啟用軌跡時） */
+body.hide-cursor, 
+body.hide-cursor #board, 
+body.hide-cursor #game-wrapper, 
+body.hide-cursor .board-container, 
+body.hide-cursor .cell,
+body.hide-cursor #container {
   cursor: none !important;
 }
 
 /* 但保留按鈕的游標 */
 #aiButton,
-#soundToggle {
+#controlPanel button {
   cursor: pointer !important;
 }
 

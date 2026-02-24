@@ -26,6 +26,12 @@ let SOUND_ENABLED = localStorage.getItem('soundEnabled') !== 'false';
 // 毛玻璃效果開關 - 可在網頁上動態切換
 let GLASS_EFFECT_ENABLED = localStorage.getItem('glassEffectEnabled') !== 'false';
 
+// 角落圖片顯示開關
+let CORNER_IMAGES_ENABLED = localStorage.getItem('cornerImagesEnabled') !== 'false';
+
+// 滑鼠軌跡開關
+let MOUSE_TRAIL_ENABLED = localStorage.getItem('mouseTrailEnabled') !== 'false';
+
 // 獲取 DOM 元素：棋盤、狀態欄、訊息欄、分數欄
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
@@ -82,7 +88,90 @@ function toggleSound() {
   }
 }
 
-// 毛玻璃效果開關控制函數
+// 角落圖片開關控制函數
+function toggleCornerImages() {
+  CORNER_IMAGES_ENABLED = !CORNER_IMAGES_ENABLED;
+  localStorage.setItem('cornerImagesEnabled', CORNER_IMAGES_ENABLED);
+  updateCornerImageButton();
+  updateCornerImagesDisplay();
+}
+
+// 滑鼠軌跡開關控制函數
+function toggleMouseTrail() {
+  MOUSE_TRAIL_ENABLED = !MOUSE_TRAIL_ENABLED;
+  localStorage.setItem('mouseTrailEnabled', MOUSE_TRAIL_ENABLED);
+  updateMouseTrailButton();
+  updateMouseTrailDisplay();
+}
+
+// 更新角落圖片按鈕狀態
+function updateCornerImageButton() {
+  const button = document.getElementById('cornerImageToggle');
+  if (CORNER_IMAGES_ENABLED) {
+    button.textContent = '🎨 角落圖';
+    button.classList.remove('disabled');
+  } else {
+    button.textContent = '🖼️ 角落圖';
+    button.classList.add('disabled');
+  }
+}
+
+// 更新滑鼠軌跡按鈕狀態
+function updateMouseTrailButton() {
+  const button = document.getElementById('mouseTrailToggle');
+  if (MOUSE_TRAIL_ENABLED) {
+    button.textContent = '🔍 軌跡';
+    button.classList.remove('disabled');
+  } else {
+    button.textContent = '🚫 軌跡';
+    button.classList.add('disabled');
+  }
+}
+
+// 更新角落圖片顯示
+function updateCornerImagesDisplay() {
+  const cornerImages = [
+    document.getElementById('corner-image1'),
+    document.getElementById('corner-image2'),
+    document.getElementById('corner-image3'),
+    document.getElementById('corner-image4')
+  ];
+  
+  cornerImages.forEach(img => {
+    if (img) {
+      img.style.display = CORNER_IMAGES_ENABLED ? 'block' : 'none';
+    }
+  });
+}
+
+// 更新滑鼠軌跡顯示
+function updateMouseTrailDisplay() {
+  const canvas = document.getElementById('canvas');
+  const cursor = document.querySelector('.cursor');
+  
+  if (canvas) {
+    canvas.style.display = MOUSE_TRAIL_ENABLED ? 'block' : 'none';
+  }
+  
+  if (cursor) {
+    cursor.style.display = MOUSE_TRAIL_ENABLED ? 'block' : 'none';
+  }
+  
+  // 更新身體類別來控制游標顯示
+  if (MOUSE_TRAIL_ENABLED) {
+    document.body.classList.add('hide-cursor');
+  } else {
+    document.body.classList.remove('hide-cursor');
+  }
+  
+  // 關閉軌跡時清空畫布
+  if (!MOUSE_TRAIL_ENABLED && canvas) {
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+}
 function toggleGlass() {
   GLASS_EFFECT_ENABLED = !GLASS_EFFECT_ENABLED;
   localStorage.setItem('glassEffectEnabled', GLASS_EFFECT_ENABLED);
@@ -129,9 +218,9 @@ function updateGlassButton() {
 function getChessImagePath(color, rand) {
   const baseFolder = GLASS_EFFECT_ENABLED ? 'chess' : 'chess/chess_p';
   if (color === 'white') {
-    return rand === 1 ? 'chess1.png' : `${baseFolder}/chess1_${rand}.png`;
+    return `${baseFolder}/chess1_${rand}.png`;
   } else if (color === 'black') {
-    return rand === 1 ? 'chess2.png' : `${baseFolder}/chess2_${rand}.png`;
+    return `${baseFolder}/chess2_${rand}.png`;
   }
 }
 
@@ -160,6 +249,12 @@ function getCurrentBoard() {
 function initButtons() {
   updateSoundButton();
   updateGlassButton();
+  updateCornerImageButton();
+  updateMouseTrailButton();
+  
+  // 初始化顯示狀態
+  updateCornerImagesDisplay();
+  updateMouseTrailDisplay();
 }
 
 // 初始化音頻
@@ -1260,13 +1355,13 @@ function gunFlip(x, y) {
         if (src.includes("chess2")) {
             if (!cell.dataset.whiteImage) {
                 const rand = Math.floor(Math.random() * 6) + 1;
-                newImg = rand === 1 ? "chess1.png" : `chess/chess1_${rand}.png`;
+                newImg = `chess/chess1_${rand}.png`;
                 cell.dataset.whiteImage = newImg;
             } else newImg = cell.dataset.whiteImage;
         } else if (src.includes("chess1")) {
             if (!cell.dataset.blackImage) {
                 const rand = Math.floor(Math.random() * 6) + 1;
-                newImg = rand === 1 ? "chess2.png" : `chess/chess2_${rand}.png`;
+                newImg = `chess/chess2_${rand}.png`;
                 cell.dataset.blackImage = newImg;
             } else newImg = cell.dataset.blackImage;
         } else return;
@@ -1488,6 +1583,8 @@ document.addEventListener("mousemove", (e) => {
 
   socket.emit("opponentMove", { x: e.clientX });
 
+  if (!MOUSE_TRAIL_ENABLED) return; // 關閉軌跡時不處理軌跡繪製
+
       const nowX = e.clientX;
       const nowY = e.clientY;
       const nowTime = Date.now();
@@ -1526,6 +1623,8 @@ document.addEventListener("mousemove", (e) => {
 // 監測滑鼠停止，停止時將「當前所有點」轉為「正在淡出」的段落
     let stopTimer;
     window.addEventListener('mousemove', () => {
+        if (!MOUSE_TRAIL_ENABLED) return; // 關閉軌跡時不處理
+        
         clearTimeout(stopTimer);
         stopTimer = setTimeout(() => {
        if (permanentSegments.length > 0) {
@@ -1992,7 +2091,7 @@ function getRandomImageForUpdate() {
 }
 
 setInterval(() => {
-  if (toggle) {
+  if (toggle && CORNER_IMAGES_ENABLED) {
     if (myColor === 'black'){
     const timg3 = document.getElementById("corner-image3");
     const timg4 = document.getElementById("corner-image4");
@@ -2007,7 +2106,7 @@ setInterval(() => {
     timg2.style.opacity = "1";
     timg1.style.opacity = "0";
     }
-  } else {
+  } else if (CORNER_IMAGES_ENABLED) {
     if (myColor === 'black'){
       const timg3 = document.getElementById("corner-image3");
       const timg4 = document.getElementById("corner-image4");
