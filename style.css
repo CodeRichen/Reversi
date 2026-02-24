@@ -805,6 +805,20 @@ will-change: transform, border-radius; /* 提示瀏覽器優化 */
   background-color: #999;
 }
 
+#backgroundToggle {
+  background-color: #aa77ff;
+  color: white;
+}
+
+#backgroundToggle:hover {
+  background-color: #8855dd;
+  transform: translateY(-2px);
+}
+
+#backgroundToggle.disabled {
+  background-color: #999;
+}
+
 #aiButton {
   margin-top: 10px;
   padding: 8px 16px;
@@ -907,6 +921,41 @@ will-change: transform, border-radius; /* 提示瀏覽器優化 */
 
 .shake {
   animation: shake 0.4s ease-in-out;
+}
+
+/* 米黃色純色背景模式 */
+body.plain-background {
+  background-color: #f5f5dc !important; /* 米黃色 */
+}
+
+body.plain-background #background {
+  display: none !important;
+}
+
+body.plain-background #board {
+  background-color: #f5f5dc;
+}
+
+body.plain-background .cell {
+  background-color: #f5f5dc;
+}
+
+body.plain-background #game-wrapper {
+  background-color: rgba(245, 245, 220, 0.8);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+body.plain-background #image-layer,
+body.plain-background #video-layer {
+  background-color: #f5f5dc !important;
+}
+
+body.plain-background #image-layer img,
+body.plain-background #image-layer video,
+body.plain-background #video-layer img,
+body.plain-background #video-layer video {
+  display: none !important;
 }
 
 #background {

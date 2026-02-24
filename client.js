@@ -32,6 +32,9 @@ let CORNER_IMAGES_ENABLED = localStorage.getItem('cornerImagesEnabled') !== 'fal
 // 滑鼠軌跡開關
 let MOUSE_TRAIL_ENABLED = localStorage.getItem('mouseTrailEnabled') !== 'false';
 
+// 背景圖片開關
+let BACKGROUND_ENABLED = localStorage.getItem('backgroundEnabled') !== 'false';
+
 // 獲取 DOM 元素：棋盤、狀態欄、訊息欄、分數欄
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
@@ -104,6 +107,14 @@ function toggleMouseTrail() {
   updateMouseTrailDisplay();
 }
 
+// 背景圖片開關控制函數
+function toggleBackground() {
+  BACKGROUND_ENABLED = !BACKGROUND_ENABLED;
+  localStorage.setItem('backgroundEnabled', BACKGROUND_ENABLED);
+  updateBackgroundButton();
+  updateBackgroundDisplay();
+}
+
 // 更新角落圖片按鈕狀態
 function updateCornerImageButton() {
   const button = document.getElementById('cornerImageToggle');
@@ -125,6 +136,27 @@ function updateMouseTrailButton() {
   } else {
     button.textContent = '🚫 軌跡';
     button.classList.add('disabled');
+  }
+}
+
+// 更新背景按鈕狀態
+function updateBackgroundButton() {
+  const button = document.getElementById('backgroundToggle');
+  if (BACKGROUND_ENABLED) {
+    button.textContent = '🌄 背景';
+    button.classList.remove('disabled');
+  } else {
+    button.textContent = '📄 純色';
+    button.classList.add('disabled');
+  }
+}
+
+// 更新背景顯示
+function updateBackgroundDisplay() {
+  if (BACKGROUND_ENABLED) {
+    document.body.classList.remove('plain-background');
+  } else {
+    document.body.classList.add('plain-background');
   }
 }
 
@@ -251,10 +283,12 @@ function initButtons() {
   updateGlassButton();
   updateCornerImageButton();
   updateMouseTrailButton();
+  updateBackgroundButton();
   
   // 初始化顯示狀態
   updateCornerImagesDisplay();
   updateMouseTrailDisplay();
+  updateBackgroundDisplay();
 }
 
 // 初始化音頻
