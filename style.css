@@ -725,6 +725,55 @@ will-change: transform, border-radius; /* 提示瀏覽器優化 */
   z-index: 15;
 }
 
+/* 右上角控制面板 */
+#controlPanel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+}
+
+#controlPanel button {
+  padding: 8px 12px;
+  font-size: 0.9em;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#soundToggle {
+  background-color: #77aaff;
+  color: white;
+}
+
+#soundToggle:hover {
+  background-color: #5588dd;
+  transform: translateY(-2px);
+}
+
+#soundToggle.disabled {
+  background-color: #999;
+}
+
+#glassToggle {
+  background-color: #ff77aa;
+  color: white;
+}
+
+#glassToggle:hover {
+  background-color: #dd5588;
+  transform: translateY(-2px);
+}
+
+#glassToggle.disabled {
+  background-color: #999;
+}
+
 #aiButton {
   margin-top: 10px;
   padding: 8px 16px;
@@ -734,6 +783,15 @@ will-change: transform, border-radius; /* 提示瀏覽器優化 */
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  display: inline-block;
+}
+
+#aiButton:hover {
+  background-color: #5588dd;
+}
+
+#aiButton:active {
+  transform: scale(0.98);
 }
 #floating-img {
   position: absolute;
@@ -966,9 +1024,14 @@ body,
 #game-wrapper, 
 .board-container, 
 .cell,
-#aiButton,
 #container {
   cursor: none !important;
+}
+
+/* 但保留按鈕的游標 */
+#aiButton,
+#soundToggle {
+  cursor: pointer !important;
 }
 
 /* 讓兩個影片絕對定位重疊 */

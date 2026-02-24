@@ -20,26 +20,160 @@ let popon = true;
 let time_1A = 0;
 let time_2A = 0;
 
+// 聲音開關 - 可在網頁上動態切換
+let SOUND_ENABLED = localStorage.getItem('soundEnabled') !== 'false';
+
+// 毛玻璃效果開關 - 可在網頁上動態切換
+let GLASS_EFFECT_ENABLED = localStorage.getItem('glassEffectEnabled') !== 'false';
+
 // 獲取 DOM 元素：棋盤、狀態欄、訊息欄、分數欄
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
 const messageEl = document.getElementById("message");
 // const scoreEl = document.getElementById("score");
-const audio_place = new Audio("audio/place.mp3");
+let audio_place = null;
 
 // 創建音頻池，避免同時播放衝突
 const audio_meow_pool = [];
-for (let i = 0; i < 20; i++) { // 增加到 20 個實例
-  const audio = new Audio("audio/meow.mp3");
-  audio.preload = "auto";
-  audio.load();
-  audio.volume = 0.8; // 設置默認音量
-  audio_meow_pool.push(audio);
-}
 let currentMeowIndex = 0;
+
+// 初始化音頻資源
+function initAudio() {
+  if (SOUND_ENABLED && !audio_place) {
+    audio_place = new Audio("audio/place.mp3");
+    
+    // 清空並重新創建音頻池
+    audio_meow_pool.length = 0;
+    for (let i = 0; i < 20; i++) {
+      const audio = new Audio("audio/meow.mp3");
+      audio.preload = "auto";
+      audio.load();
+      audio.volume = 0.8;
+      audio_meow_pool.push(audio);
+    }
+  }
+}
+
+// 清理音頻資源
+function cleanupAudio() {
+  if (audio_place) {
+    audio_place.pause();
+    audio_place = null;
+  }
+  
+  audio_meow_pool.forEach(audio => {
+    audio.pause();
+    audio.src = '';
+  });
+  audio_meow_pool.length = 0;
+  currentMeowIndex = 0;
+}
+
+// 聲音開關控制函數
+function toggleSound() {
+  SOUND_ENABLED = !SOUND_ENABLED;
+  localStorage.setItem('soundEnabled', SOUND_ENABLED);
+  updateSoundButton();
+  
+  if (SOUND_ENABLED) {
+    initAudio();
+  } else {
+    cleanupAudio();
+  }
+}
+
+// 毛玻璃效果開關控制函數
+function toggleGlass() {
+  GLASS_EFFECT_ENABLED = !GLASS_EFFECT_ENABLED;
+  localStorage.setItem('glassEffectEnabled', GLASS_EFFECT_ENABLED);
+  updateGlassButton();
+  
+  // 重新更新所有棋子圖片
+  document.querySelectorAll('.cell').forEach(cell => {
+    cell.dataset.whiteImage = '';
+    cell.dataset.blackImage = '';
+  });
+  
+  // 重新繪製棋盤
+  const board = getCurrentBoard();
+  if (board) {
+    updateBoard(board);
+  }
+}
+
+// 更新聲音按鈕狀態
+function updateSoundButton() {
+  const soundButton = document.getElementById('soundToggle');
+  if (SOUND_ENABLED) {
+    soundButton.textContent = '🔊 聲音';
+    soundButton.classList.remove('disabled');
+  } else {
+    soundButton.textContent = '🔇 聲音';
+    soundButton.classList.add('disabled');
+  }
+}
+
+// 更新毛玻璃按鈕狀態
+function updateGlassButton() {
+  const glassButton = document.getElementById('glassToggle');
+  if (GLASS_EFFECT_ENABLED) {
+    glassButton.textContent = '✨ 毛玻璃';
+    glassButton.classList.remove('disabled');
+  } else {
+    glassButton.textContent = '📷 清晰';
+    glassButton.classList.add('disabled');
+  }
+}
+
+// 獲取棋子圖片路徑
+function getChessImagePath(color, rand) {
+  const baseFolder = GLASS_EFFECT_ENABLED ? 'chess' : 'chess/chess_p';
+  if (color === 'white') {
+    return rand === 1 ? 'chess1.png' : `${baseFolder}/chess1_${rand}.png`;
+  } else if (color === 'black') {
+    return rand === 1 ? 'chess2.png' : `${baseFolder}/chess2_${rand}.png`;
+  }
+}
+
+// 獲取當前棋盤狀態（從DOM重建）
+function getCurrentBoard() {
+  const board = Array(8).fill().map(() => Array(8).fill(null));
+  
+  document.querySelectorAll('.cell').forEach((cell, i) => {
+    const x = i % 8;
+    const y = Math.floor(i / 8);
+    const disk = cell.querySelector('.disk');
+    
+    if (disk) {
+      if (disk.classList.contains('white')) {
+        board[y][x] = 'white';
+      } else if (disk.classList.contains('black')) {
+        board[y][x] = 'black';
+      }
+    }
+  });
+  
+  return board;
+}
+
+// 初始化按鈕狀態
+function initButtons() {
+  updateSoundButton();
+  updateGlassButton();
+}
+
+// 初始化音頻
+initAudio();
+// 初始化按鈕狀態
+window.addEventListener('DOMContentLoaded', initButtons);
 
 // 獲取可用的音頻實例 
 function getAvailableAudio() {
+  // 如果聲音關閉，返回 null
+  if (!SOUND_ENABLED || audio_meow_pool.length === 0) {
+    return null;
+  }
+  
   // 尋找未在播放的音頻實例
   for (let i = 0; i < audio_meow_pool.length; i++) {
     const index = (currentMeowIndex + i) % audio_meow_pool.length;
@@ -504,8 +638,8 @@ document.querySelectorAll(".cell").forEach((cell, i) => {
 
   // console.log(`更新格子 (${x}, ${y})`);
 
-  if (data.board[y][x]) {
-    // 有棋子 → 加上 fogged 效果
+  if (data.board[y][x] && GLASS_EFFECT_ENABLED) {
+    // 有棋子且啟用毛玻璃效果 → 加上 fogged 效果
     cell.classList.add("fogged");
     
     // 為每個 fogged 元素設置隨機參數
@@ -571,7 +705,9 @@ socket.on("invalidMove", () => {
   showMessage("這不是合法的落子位置");
 });
 socket.on("place", ({i,board,turn}) => {
-    audio_place.play();
+    if (SOUND_ENABLED && audio_place) {
+        audio_place.play();
+    }
     setTimeout(() => updatechess(i,board,turn));
    
 });
@@ -582,6 +718,11 @@ const specialCell = boardEl.querySelector(`[data-index="${targetIndex}"]`);
   specialCell.classList.add("special"); 
 });
 function playMeow(audioElement) {
+    // 如果聲音關閉或音頻元素不存在，直接返回
+    if (!SOUND_ENABLED || !audioElement) {
+        return;
+    }
+    
     try {
         const speedOptions = [0.6, 0.8, 1, 1.2, 1.4];
         const volumeOptions = [0.6, 0.8, 1.0]; // 調低音量避免失真
@@ -677,8 +818,10 @@ socket.on("moveResult", ({ flippedCount, flippedPositions, player, scores,idx })
     sortedFlipped.forEach(({ fx, fy }, i) => {
       // 給每個音效添加延遲，對應翻轉動畫時機
       setTimeout(() => {
-        const audioInstance = getAvailableAudio();
-        playMeow(audioInstance);
+        if (SOUND_ENABLED) {
+          const audioInstance = getAvailableAudio();
+          playMeow(audioInstance);
+        }
       }, i * 100);
      setTimeout(() => flipani(fx, fy), i * 100); // 每顆延遲一點時間
    });
@@ -934,7 +1077,7 @@ function updatechess(idx,board,turn){
         let imgName;
         if (!cell.dataset.whiteImage) {
           const rand = Math.floor(Math.random() * 6) + 1;
-          imgName = rand === 1 ? 'chess1.png' : `chess/chess1_${rand}.png`;
+          imgName = getChessImagePath('white', rand);
           cell.dataset.whiteImage = imgName;
         } else {
           imgName = cell.dataset.whiteImage;
@@ -946,7 +1089,7 @@ function updatechess(idx,board,turn){
 
         if (!cell.dataset.blackImage) {
           const rand = Math.floor(Math.random() * 6) + 1;
-          imgName = rand === 1 ? 'chess2.png' : `chess/chess2_${rand}.png`;
+          imgName = getChessImagePath('black', rand);
           cell.dataset.blackImage = imgName;
         } else {
           imgName = cell.dataset.blackImage;
@@ -984,7 +1127,7 @@ function updateBoard(board) {
 
         if (!cell.dataset.whiteImage) {
           const rand = Math.floor(Math.random() * 6) + 1;
-          imgName = rand === 1 ? 'chess1.png' : `chess/chess1_${rand}.png`;
+          imgName = getChessImagePath('white', rand);
           cell.dataset.whiteImage = imgName;
         } else {
           imgName = cell.dataset.whiteImage;
@@ -997,7 +1140,7 @@ function updateBoard(board) {
 
         if (!cell.dataset.blackImage) {
           const rand = Math.floor(Math.random() * 6) + 1;
-          imgName = rand === 1 ? 'chess2.png' : `chess/chess2_${rand}.png`;
+          imgName = getChessImagePath('black', rand);
           cell.dataset.blackImage = imgName;
         } else {
           imgName = cell.dataset.blackImage;
