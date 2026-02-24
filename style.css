@@ -725,98 +725,120 @@ will-change: transform, border-radius; /* 提示瀏覽器優化 */
   z-index: 15;
 }
 
-/* 右上角控制面板 */
-#controlPanel {
+/* 設定圖示樣式 */
+#settingsIcon {
   position: fixed;
   top: 20px;
-  right: 20px;
-  z-index: 1000;
+  right: 80px; /* 靠左一點點 */
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  z-index: 1001;
+  transition: all 0.3s ease; /* 加快動畫速度 */
+  border-radius: 50%;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-width: 240px;
+  align-items: center;
+  justify-content: center;
 }
 
-#controlPanel button {
-  padding: 6px 10px;
-  font-size: 0.85em;
+#settingsIcon img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  transition: all 0.3s ease; /* 圖片漸變動畫 */
+}
+
+#settingsIcon:hover {
+  transform: scale(1.05); /* 減少懸停效果 */
+}
+
+/* 設定圖示打開狀態 */
+#settingsIcon.open {
+  right: 20px; /* 移動到右上角 */
+}
+
+/* 設定面板樣式 */
+#settingsPanel {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 150px; /* 進一步縮小寬度 */
+  background: rgba(255, 255, 255, 0.1); /* 改為玻璃效果 */
+  backdrop-filter: blur(15px);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  overflow: hidden;
+  transition: all 0.3s ease; /* 加快動畫 */
+  transform: translateY(-15px) scale(0.95);
+  opacity: 0;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* 添加玻璃邊框 */
+}
+
+#settingsPanel.show {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  pointer-events: all;
+}
+
+#settingsPanel.hidden {
+  transform: translateY(-15px) scale(0.95);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.settings-content {
+  padding: 12px; /* 縮小內邊距 */
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* 3列網格 */
+  grid-template-rows: 1fr 1fr; /* 2行網格 */
+  gap: 6px; /* 縮小間距 */
+  align-items: center;
+  justify-items: center;
+}
+
+.settings-content button {
+  padding: 6px 8px; /* 縮小按鈕 */
+  font-size: 1em;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  min-width: 70px;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  width: 35px; /* 縮小按鈕尺寸 */
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: transparent; /* 移除背景色 */
+  color: white; /* 白色文字 */
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* 添加文字陰影增強可讀性 */
 }
 
-#soundToggle {
-  background-color: #77aaff;
-  color: white;
+.settings-content button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.1); /* 懸停時微弱背景 */
 }
 
-#soundToggle:hover {
-  background-color: #5588dd;
-  transform: translateY(-2px);
+/* 劃線效果 */
+.settings-content button.crossed::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 2px;
+  background: white; /* 使用與文字相同的顏色 */
+  transform: translate(-50%, -50%) rotate(45deg);
+  z-index: 1;
 }
 
-#soundToggle.disabled {
-  background-color: #999;
+/* 禁用狀態 */
+.settings-content button.disabled {
+  opacity: 0.5;
 }
-
-#glassToggle {
-  background-color: #ff77aa;
-  color: white;
-}
-
-#glassToggle:hover {
-  background-color: #dd5588;
-  transform: translateY(-2px);
-}
-
-#glassToggle.disabled {
-  background-color: #999;
-}
-
-#cornerImageToggle {
-  background-color: #77ffaa;
-  color: white;
-}
-
-#cornerImageToggle:hover {
-  background-color: #55dd88;
-  transform: translateY(-2px);
-}
-
-#cornerImageToggle.disabled {
-  background-color: #999;
-}
-
-#mouseTrailToggle {
-  background-color: #ffaa77;
-  color: white;
-}
-
-#mouseTrailToggle:hover {
-  background-color: #dd8855;
-  transform: translateY(-2px);
-}
-
-#mouseTrailToggle.disabled {
-  background-color: #999;
-}
-
-#backgroundToggle {
-  background-color: #aa77ff;
-  color: white;
-}
-
-#backgroundToggle:hover {
-  background-color: #8855dd;
-  transform: translateY(-2px);
-}
-
-#backgroundToggle.disabled {
-  background-color: #999;
 }
 
 #aiButton {
@@ -1110,7 +1132,7 @@ body.hide-cursor #container {
 
 /* 但保留按鈕的游標 */
 #aiButton,
-#controlPanel button {
+#settingsPanel button {
   cursor: pointer !important;
 }
 

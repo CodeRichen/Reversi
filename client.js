@@ -42,24 +42,41 @@ const messageEl = document.getElementById("message");
 // const scoreEl = document.getElementById("score");
 let audio_place = null;
 
-// 創建音頻池，避免同時播放衝突
-const audio_meow_pool = [];
-let currentMeowIndex = 0;
+// 創建多種音效的音頻池
+const audio_effects = {
+  meow: "audio/meow.mp3",
+  angry: "audio/meow(生氣).mp3",
+  orw: "audio/meow(orw).mp3"
+};
+
+const audio_pools = {};
+const poolSize = 3; // 每種音效3個實例
+
+// 追蹤正在播放的音頻數量
+let playingCount = 0;
+const maxConcurrentSounds = 3;
 
 // 初始化音頻資源
 function initAudio() {
   if (SOUND_ENABLED && !audio_place) {
     audio_place = new Audio("audio/place.mp3");
     
-    // 清空並重新創建音頻池
-    audio_meow_pool.length = 0;
-    for (let i = 0; i < 20; i++) {
-      const audio = new Audio("audio/meow.mp3");
-      audio.preload = "auto";
-      audio.load();
-      audio.volume = 0.8;
-      audio_meow_pool.push(audio);
-    }
+    // 為每種音效創建音頻池
+    Object.keys(audio_effects).forEach(type => {
+      if (!audio_pools[type]) {
+        audio_pools[type] = [];
+      }
+      // 清空並重新創建音頻池
+      audio_pools[type].length = 0;
+      for (let i = 0; i < poolSize; i++) {
+        const audio = new Audio(audio_effects[type]);
+        audio.preload = "auto";
+        audio.load();
+        audio.volume = 0.8;
+        audio.dataset.type = type; // 標記音效類型
+        audio_pools[type].push(audio);
+      }
+    });
   }
 }
 
@@ -70,12 +87,52 @@ function cleanupAudio() {
     audio_place = null;
   }
   
-  audio_meow_pool.forEach(audio => {
-    audio.pause();
-    audio.src = '';
+  // 清理所有音效池
+  Object.keys(audio_pools).forEach(type => {
+    audio_pools[type].forEach(audio => {
+      audio.pause();
+      audio.src = '';
+    });
+    audio_pools[type].length = 0;
   });
-  audio_meow_pool.length = 0;
-  currentMeowIndex = 0;
+  
+  playingCount = 0;
+}
+
+// 設定面板狀態
+let settingsOpen = false;
+
+// 設定面板開關控制函數
+function toggleSettings() {
+  const icon = document.getElementById('settingsIcon');
+  const panel = document.getElementById('settingsPanel');
+  const iconImg = icon.querySelector('img');
+  
+  settingsOpen = !settingsOpen;
+  
+  if (settingsOpen) {
+    // 打開設定
+    icon.classList.add('open');
+    // 添加圖片漸變效果
+    iconImg.style.opacity = '0';
+    setTimeout(() => {
+      iconImg.src = 'other/t1.png';
+      iconImg.style.opacity = '1';
+    }, 150); // 在移動過程中切換圖片
+    panel.classList.remove('hidden');
+    panel.classList.add('show');
+  } else {
+    // 關閉設定
+    icon.classList.remove('open');
+    // 添加圖片漸變效果
+    iconImg.style.opacity = '0';
+    setTimeout(() => {
+      iconImg.src = 'other/t3.png';
+      iconImg.style.opacity = '1';
+    }, 150); // 在移動過程中切換圖片
+    panel.classList.remove('show');
+    panel.classList.add('hidden');
+  }
 }
 
 // 聲音開關控制函數
@@ -119,11 +176,11 @@ function toggleBackground() {
 function updateCornerImageButton() {
   const button = document.getElementById('cornerImageToggle');
   if (CORNER_IMAGES_ENABLED) {
-    button.textContent = '🎨 角落圖';
-    button.classList.remove('disabled');
+    button.textContent = '貓';
+    button.classList.remove('disabled', 'crossed');
   } else {
-    button.textContent = '🖼️ 角落圖';
-    button.classList.add('disabled');
+    button.textContent = '貓';
+    button.classList.add('disabled', 'crossed');
   }
 }
 
@@ -131,11 +188,11 @@ function updateCornerImageButton() {
 function updateMouseTrailButton() {
   const button = document.getElementById('mouseTrailToggle');
   if (MOUSE_TRAIL_ENABLED) {
-    button.textContent = '🔍 軌跡';
-    button.classList.remove('disabled');
+    button.textContent = '跡';
+    button.classList.remove('disabled', 'crossed');
   } else {
-    button.textContent = '🚫 軌跡';
-    button.classList.add('disabled');
+    button.textContent = '跡';
+    button.classList.add('disabled', 'crossed');
   }
 }
 
@@ -143,11 +200,11 @@ function updateMouseTrailButton() {
 function updateBackgroundButton() {
   const button = document.getElementById('backgroundToggle');
   if (BACKGROUND_ENABLED) {
-    button.textContent = '🌄 背景';
-    button.classList.remove('disabled');
+    button.textContent = '圖';
+    button.classList.remove('disabled', 'crossed');
   } else {
-    button.textContent = '📄 純色';
-    button.classList.add('disabled');
+    button.textContent = '圖';
+    button.classList.add('disabled', 'crossed');
   }
 }
 
@@ -226,11 +283,11 @@ function toggleGlass() {
 function updateSoundButton() {
   const soundButton = document.getElementById('soundToggle');
   if (SOUND_ENABLED) {
-    soundButton.textContent = '🔊 聲音';
-    soundButton.classList.remove('disabled');
+    soundButton.textContent = '音';
+    soundButton.classList.remove('disabled', 'crossed');
   } else {
-    soundButton.textContent = '🔇 聲音';
-    soundButton.classList.add('disabled');
+    soundButton.textContent = '音';
+    soundButton.classList.add('disabled', 'crossed');
   }
 }
 
@@ -238,11 +295,11 @@ function updateSoundButton() {
 function updateGlassButton() {
   const glassButton = document.getElementById('glassToggle');
   if (GLASS_EFFECT_ENABLED) {
-    glassButton.textContent = '✨ 毛玻璃';
-    glassButton.classList.remove('disabled');
+    glassButton.textContent = '玻';
+    glassButton.classList.remove('disabled', 'crossed');
   } else {
-    glassButton.textContent = '📷 清晰';
-    glassButton.classList.add('disabled');
+    glassButton.textContent = '玻';
+    glassButton.classList.add('disabled', 'crossed');
   }
 }
 
@@ -299,22 +356,42 @@ window.addEventListener('DOMContentLoaded', initButtons);
 // 獲取可用的音頻實例 
 function getAvailableAudio() {
   // 如果聲音關閉，返回 null
-  if (!SOUND_ENABLED || audio_meow_pool.length === 0) {
+  if (!SOUND_ENABLED || Object.keys(audio_pools).length === 0) {
     return null;
   }
   
-  // 尋找未在播放的音頻實例
-  for (let i = 0; i < audio_meow_pool.length; i++) {
-    const index = (currentMeowIndex + i) % audio_meow_pool.length;
-    const audio = audio_meow_pool[index];
+  // 檢查是否超過同時播放限制
+  if (playingCount >= maxConcurrentSounds) {
+    return null; // 返回null表示不播放
+  }
+
+  // 隨機選擇音效類型
+  const effectTypes = Object.keys(audio_effects);
+  const randomType = effectTypes[Math.floor(Math.random() * effectTypes.length)];
+  const pool = audio_pools[randomType];
+
+  if (!pool || pool.length === 0) {
+    return null;
+  }
+
+  // 在選定的音效池中找到可用的音頻
+  for (let audio of pool) {
     if (audio.paused || audio.ended) {
-      currentMeowIndex = (index + 1) % audio_meow_pool.length;
+      // 設置播放結束監聽器
+      audio.onended = () => {
+        playingCount = Math.max(0, playingCount - 1);
+      };
+      playingCount++;
       return audio;
     }
   }
-  // 如果所有都在播放，返回下一個（會被重置）
-  const audio = audio_meow_pool[currentMeowIndex];
-  currentMeowIndex = (currentMeowIndex + 1) % audio_meow_pool.length;
+  
+  // 如果所有都在播放，返回第一個（會被重置）
+  const audio = pool[0];
+  audio.onended = () => {
+    playingCount = Math.max(0, playingCount - 1);
+  };
+  playingCount++;
   return audio;
 }
 // 建立一個用來顯示對手滑鼠位置的虛擬游標
