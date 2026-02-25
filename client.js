@@ -35,6 +35,9 @@ let MOUSE_TRAIL_ENABLED = localStorage.getItem('mouseTrailEnabled') !== 'false';
 // 背景圖片開關
 let BACKGROUND_ENABLED = localStorage.getItem('backgroundEnabled') !== 'false';
 
+// 爪子特效開關
+let PAW_EFFECT_ENABLED = localStorage.getItem('pawEffectEnabled') !== 'false';
+
 // 獲取 DOM 元素：棋盤、狀態欄、訊息欄、分數欄
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
@@ -107,31 +110,52 @@ function toggleSettings() {
   const icon = document.getElementById('settingsIcon');
   const panel = document.getElementById('settingsPanel');
   const iconImg = icon.querySelector('img');
+  const buttons = panel.querySelectorAll('button');
   
   settingsOpen = !settingsOpen;
   
   if (settingsOpen) {
     // 打開設定
     icon.classList.add('open');
-    // 添加圖片漸變效果
+    // 圖片漸變效果
     iconImg.style.opacity = '0';
     setTimeout(() => {
-      iconImg.src = 'other/t1.png';
+      iconImg.src = 'other/t2.png';
       iconImg.style.opacity = '1';
-    }, 150); // 在移動過程中切換圖片
+    }, 150);
+    
+    // 顯示面板和文字
     panel.classList.remove('hidden');
     panel.classList.add('show');
+    
+    // 逐個顯示文字，模擬圖片劃過的效果
+
+      buttons.forEach((button, index) => {
+          button.classList.add('show-text');
+      });
+
+    // 分析按鈕背景亮度並調整文字顏色
+    setTimeout(analyzeBrightnessForButtons, 400);
+
+    
   } else {
     // 關閉設定
     icon.classList.remove('open');
-    // 添加圖片漸變效果
+    // 圖片漸變效果
     iconImg.style.opacity = '0';
     setTimeout(() => {
       iconImg.src = 'other/t3.png';
       iconImg.style.opacity = '1';
-    }, 150); // 在移動過程中切換圖片
-    panel.classList.remove('show');
-    panel.classList.add('hidden');
+    }, 150);
+    
+    // 隱藏文字，模擬圖片收回的效果
+    buttons.forEach(button => button.classList.remove('show-text'));
+    
+    // 延遲隱藏面板
+    setTimeout(() => {
+      panel.classList.remove('show');
+      panel.classList.add('hidden');
+    }, 200);
   }
 }
 
@@ -177,10 +201,10 @@ function updateCornerImageButton() {
   const button = document.getElementById('cornerImageToggle');
   if (CORNER_IMAGES_ENABLED) {
     button.textContent = '貓';
-    button.classList.remove('disabled', 'crossed');
+    button.classList.remove( 'crossed');
   } else {
     button.textContent = '貓';
-    button.classList.add('disabled', 'crossed');
+    button.classList.add( 'crossed');
   }
 }
 
@@ -189,10 +213,32 @@ function updateMouseTrailButton() {
   const button = document.getElementById('mouseTrailToggle');
   if (MOUSE_TRAIL_ENABLED) {
     button.textContent = '跡';
-    button.classList.remove('disabled', 'crossed');
+    button.classList.remove( 'crossed');
   } else {
     button.textContent = '跡';
-    button.classList.add('disabled', 'crossed');
+    button.classList.add( 'crossed');
+  }
+}
+
+// 爪子特效開關控制函數
+function togglePawEffect() {
+  PAW_EFFECT_ENABLED = !PAW_EFFECT_ENABLED;
+  localStorage.setItem('pawEffectEnabled', PAW_EFFECT_ENABLED);
+  updatePawEffectButton();
+}
+
+// 更新爪子特效按鈕狀態
+function updatePawEffectButton() {
+  const button = document.getElementById('pawEffectToggle');
+  const floatingImg = document.getElementById('floating-img');
+  if (PAW_EFFECT_ENABLED) {
+    button.textContent = '爪';
+    button.classList.remove( 'crossed');
+    if (floatingImg) floatingImg.style.display = 'block';
+  } else {
+    button.textContent = '爪';
+    button.classList.add( 'crossed');
+    if (floatingImg) floatingImg.style.display = 'none';
   }
 }
 
@@ -200,11 +246,11 @@ function updateMouseTrailButton() {
 function updateBackgroundButton() {
   const button = document.getElementById('backgroundToggle');
   if (BACKGROUND_ENABLED) {
-    button.textContent = '圖';
-    button.classList.remove('disabled', 'crossed');
+    button.textContent = '景';
+    button.classList.remove( 'crossed');
   } else {
-    button.textContent = '圖';
-    button.classList.add('disabled', 'crossed');
+    button.textContent = '景';
+    button.classList.add( 'crossed');
   }
 }
 
@@ -215,6 +261,8 @@ function updateBackgroundDisplay() {
   } else {
     document.body.classList.add('plain-background');
   }
+  // 背景變更時重新分析按鈕文字顏色
+  setTimeout(analyzeBrightnessForButtons, 100);
 }
 
 // 更新角落圖片顯示
@@ -284,10 +332,10 @@ function updateSoundButton() {
   const soundButton = document.getElementById('soundToggle');
   if (SOUND_ENABLED) {
     soundButton.textContent = '音';
-    soundButton.classList.remove('disabled', 'crossed');
+    soundButton.classList.remove( 'crossed');
   } else {
     soundButton.textContent = '音';
-    soundButton.classList.add('disabled', 'crossed');
+    soundButton.classList.add( 'crossed');
   }
 }
 
@@ -295,11 +343,11 @@ function updateSoundButton() {
 function updateGlassButton() {
   const glassButton = document.getElementById('glassToggle');
   if (GLASS_EFFECT_ENABLED) {
-    glassButton.textContent = '玻';
-    glassButton.classList.remove('disabled', 'crossed');
+    glassButton.textContent = '霧';
+    glassButton.classList.remove( 'crossed');
   } else {
-    glassButton.textContent = '玻';
-    glassButton.classList.add('disabled', 'crossed');
+    glassButton.textContent = '霧';
+    glassButton.classList.add( 'crossed');
   }
 }
 
@@ -341,6 +389,7 @@ function initButtons() {
   updateCornerImageButton();
   updateMouseTrailButton();
   updateBackgroundButton();
+  updatePawEffectButton();
   
   // 初始化顯示狀態
   updateCornerImagesDisplay();
@@ -352,6 +401,122 @@ function initButtons() {
 initAudio();
 // 初始化按鈕狀態
 window.addEventListener('DOMContentLoaded', initButtons);
+// 監聽窗口大小變化，重新分析按鈕文字顏色
+window.addEventListener('resize', () => {
+  setTimeout(analyzeBrightnessForButtons, 100);
+});
+// 頁面載入完成後分析按鈕文字顏色
+window.addEventListener('load', () => {
+  setTimeout(analyzeBrightnessForButtons, 500);
+});
+
+// 背景亮度分析功能
+function analyzeBrightnessForButtons() {
+  const buttons = document.querySelectorAll('.settings-content button');
+  if (buttons.length === 0) return;
+
+  // 如果是純色背景，分析純色背景亮度
+  if (!BACKGROUND_ENABLED) {
+    // 取得純色背景的顏色值 #f5f5dc (米黃色)
+    const plainBgColor = { r: 245, g: 245, b: 220 }; // #f5f5dc 的RGB值
+    const brightness = (0.2126 * plainBgColor.r + 0.7152 * plainBgColor.g + 0.0722 * plainBgColor.b);
+    const isDark = brightness < 128;
+    
+    buttons.forEach(button => {
+      button.style.color = isDark ? 'white' : 'black';
+      button.style.textShadow = isDark ? '1px 1px 2px rgba(0,0,0,0.8)' : '1px 1px 2px rgba(255,255,255,0.8)';
+    });
+    return;
+  }
+
+  // 取得背景圖片
+  const bgImage = document.getElementById('bgImage');
+  if (!bgImage || !bgImage.src) {
+    // 沒有背景圖片時使用白色文字
+    buttons.forEach(button => {
+      button.style.color = 'white';
+    });
+    return;
+  }
+
+  // 創建臨時圖片元素來檢查是否載入
+  const tempImg = new Image();
+  tempImg.crossOrigin = 'anonymous';
+  tempImg.onload = () => {
+    analyzeButtonBrightness(buttons, tempImg);
+  };
+  tempImg.onerror = () => {
+    // 圖片載入失敗時使用白色文字
+    buttons.forEach(button => {
+      button.style.color = 'white';
+    });
+  };
+  tempImg.src = bgImage.src;
+}
+
+function analyzeButtonBrightness(buttons, bgImg) {
+  const canvas = document.getElementById('brightness-canvas');
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  
+  // 計算背景圖片的Cover縮放比例
+  const iw = bgImg.width;
+  const ih = bgImg.height;
+  const scale = Math.max(vw / iw, vh / ih);
+  const dx = (vw - iw * scale) / 2;
+  const dy = (vh - ih * scale) / 2;
+
+  buttons.forEach(button => {
+    try {
+      const rect = button.getBoundingClientRect();
+      
+      // 設定canvas大小
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      
+      // 計算在原圖中的對應位置
+      const sourceX = (rect.left - dx) / scale;
+      const sourceY = (rect.top - dy) / scale;
+      const sourceW = rect.width / scale;
+      const sourceH = rect.height / scale;
+      
+      // 繪製對應區域到canvas
+      ctx.drawImage(
+        bgImg,
+        sourceX, sourceY, sourceW, sourceH,
+        0, 0, rect.width, rect.height
+      );
+      
+      // 計算平均亮度
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      let brightnessSum = 0;
+      const sampleStep = 16; // 採樣間隔，提高性能
+      
+      for (let i = 0; i < data.length; i += sampleStep) {
+        // 使用加權平均計算亮度
+        const brightness = (0.2126 * data[i] + 0.7152 * data[i+1] + 0.0722 * data[i+2]);
+        brightnessSum += brightness;
+      }
+      
+      const avgBrightness = brightnessSum / (data.length / sampleStep);
+      
+      // 根據亮度設定文字顏色
+      const isDark = avgBrightness < 128;
+      button.style.color = isDark ? 'white' : 'black';
+      button.style.textShadow = isDark ? '1px 1px 2px rgba(0,0,0,0.8)' : '1px 1px 2px rgba(255,255,255,0.8)';
+      
+    } catch (error) {
+      console.warn('按鈕亮度分析失敗:', error);
+      // 出錯時使用白色文字
+      button.style.color = 'white';
+      button.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
+    }
+  });
+}
 
 // 獲取可用的音頻實例 
 function getAvailableAudio() {
@@ -1687,7 +1852,7 @@ let lastTime = Date.now();
 // 滑鼠移動時圖片左右跟著動（上下不動）
 document.addEventListener("mousemove", (e) => {
   mouseX = e.clientX;
-  if (!isJumping) {
+  if (!isJumping && PAW_EFFECT_ENABLED) {
     img.style.transition = "left 0.1s linear";
     img.style.left = `${mouseX}px`;
   }
@@ -1805,6 +1970,7 @@ document.addEventListener("mousemove", (e) => {
     
     requestAnimationFrame(draw);
 document.addEventListener("click", (e) => {
+  if (!PAW_EFFECT_ENABLED) return; // 爪子特效關閉時不執行跳躍動畫
   if (isJumping) return; // 防止在跳躍時多次觸發
   isJumping = true;
   const jumpTargetX = e.clientX;
@@ -1863,6 +2029,7 @@ socket.on("opponentDoMove", ({ x }) => {
 });
 
 socket.on("opponentDoJump", ({ x, y }) => {
+   if (!PAW_EFFECT_ENABLED) return; // 爪子特效關閉時不執行對手跳躍動畫
    if (isJumping) return;
   isJumping = true;
 
@@ -1908,6 +2075,8 @@ socket.on("opponentDoJump", ({ x, y }) => {
 });
 
 function showcat_real(x, y, imageUrl) {
+  if (!PAW_EFFECT_ENABLED) return; // 爪子特效關閉時不執行
+  
   if (imageUrl === "part_cat/cat_real.png") {
   const img = document.createElement("img");
   img.src = imageUrl;

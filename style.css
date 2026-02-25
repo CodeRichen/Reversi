@@ -728,13 +728,13 @@ will-change: transform, border-radius; /* 提示瀏覽器優化 */
 /* 設定圖示樣式 */
 #settingsIcon {
   position: fixed;
-  top: 20px;
-  right: 80px; /* 靠左一點點 */
-  width: 50px;
-  height: 50px;
+  top: 0px;
+  right: 160px; 
+  width: 60px;
+  height: 60px;
   cursor: pointer;
-  z-index: 1001;
-  transition: all 0.3s ease; /* 加快動畫速度 */
+  z-index: 5;
+  transition: all 0.3s ease;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -745,101 +745,109 @@ will-change: transform, border-radius; /* 提示瀏覽器優化 */
   width: 80%;
   height: 80%;
   object-fit: contain;
-  transition: all 0.3s ease; /* 圖片漸變動畫 */
+  transition: all 0.3s ease;
 }
 
-#settingsIcon:hover {
-  transform: scale(1.05); /* 減少懸停效果 */
-}
 
 /* 設定圖示打開狀態 */
 #settingsIcon.open {
-  right: 20px; /* 移動到右上角 */
+  right: -10px; /* 移動到右上角 */
 }
 
 /* 設定面板樣式 */
 #settingsPanel {
   position: fixed;
-  top: 80px;
-  right: 20px;
-  width: 150px; /* 進一步縮小寬度 */
-  background: rgba(255, 255, 255, 0.1); /* 改為玻璃效果 */
-  backdrop-filter: blur(15px);
-  border-radius: 12px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
-  z-index: 1000;
-  overflow: hidden;
-  transition: all 0.3s ease; /* 加快動畫 */
-  transform: translateY(-15px) scale(0.95);
+  top: 13px;
+  right: 33px; /* 與圖片初始位置對齊 */
+  width: auto;
+  background: transparent; 
+  z-index: 5;
+  transition: all 0.3s ease;
   opacity: 0;
   pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.2); /* 添加玻璃邊框 */
 }
 
 #settingsPanel.show {
-  transform: translateY(0) scale(1);
   opacity: 1;
   pointer-events: all;
 }
 
 #settingsPanel.hidden {
-  transform: translateY(-15px) scale(0.95);
   opacity: 0;
   pointer-events: none;
 }
 
 .settings-content {
-  padding: 12px; /* 縮小內邊距 */
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr; /* 3列網格 */
-  grid-template-rows: 1fr 1fr; /* 2行網格 */
-  gap: 6px; /* 縮小間距 */
+  display: flex;
+  gap: 3px;
+  flex-direction: row;
   align-items: center;
-  justify-items: center;
 }
 
 .settings-content button {
-  padding: 6px 8px; /* 縮小按鈕 */
   font-size: 1em;
+  cursor: pointer;
   border: none;
   border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease, color 0.5s ease, text-shadow 0.5s ease;
   font-weight: 600;
-  width: 35px; /* 縮小按鈕尺寸 */
-  height: 35px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  background: transparent; /* 移除背景色 */
-  color: white; /* 白色文字 */
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* 添加文字陰影增強可讀性 */
+  background: transparent;
+  color: white;
+  opacity: 0; /* 初始隱藏 */
 }
 
-.settings-content button:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.1); /* 懸停時微弱背景 */
+
+
+/* 1. 基礎狀態：定義「退場」時的延遲 (由後往前) */
+.settings-content button {
+    opacity: 0;
+    /* 這裡必須寫 transition，確保消失時有動畫 */
+    transition: opacity 0.3s ease; 
 }
+
+/* 當 class 被移除時，會套用這裡的延遲：6號最快(0.05s)，1號最慢(0.3s) */
+.settings-content button:nth-child(1) { transition-delay: 0.30s; }
+.settings-content button:nth-child(2) { transition-delay: 0.25s; }
+.settings-content button:nth-child(3) { transition-delay: 0.20s; }
+.settings-content button:nth-child(4) { transition-delay: 0.15s; }
+.settings-content button:nth-child(5) { transition-delay: 0.10s; }
+.settings-content button:nth-child(6) { transition-delay: 0.05s; }
+
+/* 2. 顯示狀態：定義「進場」時的延遲 (由前往後) */
+.settings-content button.show-text {
+    opacity: 1;
+    mix-blend-mode: difference;
+
+}
+
+/* 當 class 被加上時，這組延遲會「覆蓋」上面的設定：1號最快(0.05s)，6號最慢(0.3s) */
+.settings-content button.show-text:nth-child(1) { transition-delay: 0.05s; }
+.settings-content button.show-text:nth-child(2) { transition-delay: 0.10s; }
+.settings-content button.show-text:nth-child(3) { transition-delay: 0.15s; }
+.settings-content button.show-text:nth-child(4) { transition-delay: 0.20s; }
+.settings-content button.show-text:nth-child(5) { transition-delay: 0.25s; }
+.settings-content button.show-text:nth-child(6) { transition-delay: 0.30s; }
 
 /* 劃線效果 */
 .settings-content button.crossed::after {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 80%;
+  top: 53%;
+  left: 53%;
+  width: 75%;
   height: 2px;
-  background: white; /* 使用與文字相同的顏色 */
+  background: white;
   transform: translate(-50%, -50%) rotate(45deg);
   z-index: 1;
 }
 
-/* 禁用狀態 */
-.settings-content button.disabled {
-  opacity: 0.5;
-}
-}
+
 
 #aiButton {
   margin-top: 10px;
