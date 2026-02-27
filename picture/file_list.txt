@@ -1,0 +1,44 @@
+D:\2.programm2\Game\Reversi\picture\folder_structure.txt
+D:\2.programm2\Game\Reversi\picture\bb\b-background1.jpg
+D:\2.programm2\Game\Reversi\picture\bb\b-background2.jpg
+D:\2.programm2\Game\Reversi\picture\bb\b-background3.jpg
+D:\2.programm2\Game\Reversi\picture\bb\cat_wb1 - 複製.jpg
+D:\2.programm2\Game\Reversi\picture\bb\w-background1 - 複製.jpg
+D:\2.programm2\Game\Reversi\picture\bb\w-background2.jpg
+D:\2.programm2\Game\Reversi\picture\bb\wb-background1.jpg
+D:\2.programm2\Game\Reversi\picture\bb\wb-background2.jpg
+D:\2.programm2\Game\Reversi\picture\bb(v)\115802599 - 複製.gif
+D:\2.programm2\Game\Reversi\picture\bb(v)\w-background1 - 複製.mp4
+D:\2.programm2\Game\Reversi\picture\bb(v)\wb-background1.mp4
+D:\2.programm2\Game\Reversi\picture\bb(v)-s\116258873 - 複製.gif
+D:\2.programm2\Game\Reversi\picture\bb(v)-s\b-background1.mp4
+D:\2.programm2\Game\Reversi\picture\bb(v)-s\b-background2.mp4
+D:\2.programm2\Game\Reversi\picture\bb(v)-s\b-background4.jpg
+D:\2.programm2\Game\Reversi\picture\bb(v)-s\cat-cloud.3840x2160 - 2.mp4
+D:\2.programm2\Game\Reversi\picture\bb(v)-s\curious-cats.3840x2160 - 複製.mp4
+D:\2.programm2\Game\Reversi\picture\bc\cat_b1.jpg
+D:\2.programm2\Game\Reversi\picture\bc\cat_b2.jpg
+D:\2.programm2\Game\Reversi\picture\bc\cat_b3.jpg
+D:\2.programm2\Game\Reversi\picture\bc\cat_b4.jpg
+D:\2.programm2\Game\Reversi\picture\bc(v)\cat_b2.mp4
+D:\2.programm2\Game\Reversi\picture\bc(v)\donut-pusheen-nyan-cat-moewalls-com - 2.mp4
+D:\2.programm2\Game\Reversi\picture\bc(v)-s\cat_b1.mp4
+D:\2.programm2\Game\Reversi\picture\bc(v)-s\ih9UUHeOnrx0Ngl_Breath Of Wind Lofi Live Wallpaper.mp4
+D:\2.programm2\Game\Reversi\picture\wb\cat_wb1.jpg
+D:\2.programm2\Game\Reversi\picture\wb\w-background1.jpg
+D:\2.programm2\Game\Reversi\picture\wb\w-background2 - 複製.jpg
+D:\2.programm2\Game\Reversi\picture\wb\wb-background1 - 複製.jpg
+D:\2.programm2\Game\Reversi\picture\wb\wb-background2 - 複製.jpg
+D:\2.programm2\Game\Reversi\picture\wb(v)\115802599.gif
+D:\2.programm2\Game\Reversi\picture\wb(v)\118695764.gif
+D:\2.programm2\Game\Reversi\picture\wb(v)\w-background1.mp4
+D:\2.programm2\Game\Reversi\picture\wb(v)\wb-background1 - 複製.mp4
+D:\2.programm2\Game\Reversi\picture\wb(v)-s\116258873.gif
+D:\2.programm2\Game\Reversi\picture\wb(v)-s\curious-cats.3840x2160.mp4
+D:\2.programm2\Game\Reversi\picture\wc\cat_w1.jpg
+D:\2.programm2\Game\Reversi\picture\wc\cat_w2.jpg
+D:\2.programm2\Game\Reversi\picture\wc(v)\cat_w1.mp4
+D:\2.programm2\Game\Reversi\picture\wc(v)\cat_w3.mp4
+D:\2.programm2\Game\Reversi\picture\wc(v)\cute-cats-christmas-moewalls-com.mp4
+D:\2.programm2\Game\Reversi\picture\wc(v)\donut-pusheen-nyan-cat-moewalls-com - 2 - 複製.mp4
+D:\2.programm2\Game\Reversi\picture\wc(v)-s\cat_w2.mp4
