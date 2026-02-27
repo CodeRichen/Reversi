@@ -17,8 +17,8 @@ def write_file_paths(root_path, output_file="file_list.txt"):
 
 
 if __name__ == "__main__":
-    folder_path = input("請輸入資料夾路徑：").strip()
-
+    folder_path = r"D:\2.programm2\Game\Reversi\picture"
+    
     if os.path.isdir(folder_path):
         write_file_paths(folder_path)
     else:

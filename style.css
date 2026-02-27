@@ -1158,7 +1158,7 @@ body.hide-cursor #container {
 }
 
 /* 圖片也要重疊在同一層 */
-#bgImage, #board-image {
+#bgImage, #boardImage {
   position: absolute;
   top: 0;
   left: 0;

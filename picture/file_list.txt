@@ -1,9 +1,6 @@
-D:\2.programm2\Game\Reversi\picture\folder_structure.txt
 D:\2.programm2\Game\Reversi\picture\bb\b-background1.jpg
 D:\2.programm2\Game\Reversi\picture\bb\b-background2.jpg
 D:\2.programm2\Game\Reversi\picture\bb\b-background3.jpg
-D:\2.programm2\Game\Reversi\picture\bb\cat_wb1 - 複製.jpg
-D:\2.programm2\Game\Reversi\picture\bb\w-background1 - 複製.jpg
 D:\2.programm2\Game\Reversi\picture\bb\w-background2.jpg
 D:\2.programm2\Game\Reversi\picture\bb\wb-background1.jpg
 D:\2.programm2\Game\Reversi\picture\bb\wb-background2.jpg
@@ -20,6 +17,7 @@ D:\2.programm2\Game\Reversi\picture\bc\cat_b1.jpg
 D:\2.programm2\Game\Reversi\picture\bc\cat_b2.jpg
 D:\2.programm2\Game\Reversi\picture\bc\cat_b3.jpg
 D:\2.programm2\Game\Reversi\picture\bc\cat_b4.jpg
+D:\2.programm2\Game\Reversi\picture\bc\cat_wb1 - 複製.jpg
 D:\2.programm2\Game\Reversi\picture\bc(v)\cat_b2.mp4
 D:\2.programm2\Game\Reversi\picture\bc(v)\donut-pusheen-nyan-cat-moewalls-com - 2.mp4
 D:\2.programm2\Game\Reversi\picture\bc(v)-s\cat_b1.mp4

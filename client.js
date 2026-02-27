@@ -32,8 +32,8 @@ let CORNER_IMAGES_ENABLED = localStorage.getItem('cornerImagesEnabled') !== 'fal
 // 滑鼠軌跡開關
 let MOUSE_TRAIL_ENABLED = localStorage.getItem('mouseTrailEnabled') !== 'false';
 
-// 背景圖片開關
-let BACKGROUND_ENABLED = localStorage.getItem('backgroundEnabled') !== 'false';
+// 背景模式：1=純色, 2=圖片, 3=特殊片段
+let BACKGROUND_MODE = parseInt(localStorage.getItem('backgroundMode')) || 1;
 
 // 爪子特效開關
 let PAW_EFFECT_ENABLED = localStorage.getItem('pawEffectEnabled') !== 'false';
@@ -188,10 +188,11 @@ function toggleMouseTrail() {
   updateMouseTrailDisplay();
 }
 
-// 背景圖片開關控制函數
+// 背景模式切換控制函數
 function toggleBackground() {
-  BACKGROUND_ENABLED = !BACKGROUND_ENABLED;
-  localStorage.setItem('backgroundEnabled', BACKGROUND_ENABLED);
+  // 在三種模式間循環：1 -> 2 -> 3 -> 1
+  BACKGROUND_MODE = (BACKGROUND_MODE % 3) + 1;
+  localStorage.setItem('backgroundMode', BACKGROUND_MODE);
   updateBackgroundButton();
   updateBackgroundDisplay();
 }
@@ -245,24 +246,64 @@ function updatePawEffectButton() {
 // 更新背景按鈕狀態
 function updateBackgroundButton() {
   const button = document.getElementById('backgroundToggle');
-  if (BACKGROUND_ENABLED) {
-    button.textContent = '景';
-    button.classList.remove( 'crossed');
+  const modeTexts = ['', '色', '圖', '片']; // 索引0不使用，1=色，2=圖，3=片
+  
+  button.textContent = modeTexts[BACKGROUND_MODE];
+  
+  // 根據模式設定樣式
+  if (BACKGROUND_MODE === 1) {
+    button.classList.remove('crossed');
   } else {
-    button.textContent = '景';
-    button.classList.add( 'crossed');
+    button.classList.remove('crossed');
   }
 }
 
 // 更新背景顯示
 function updateBackgroundDisplay() {
-  if (BACKGROUND_ENABLED) {
-    document.body.classList.remove('plain-background');
-  } else {
+  if (BACKGROUND_MODE === 1) {
+    // 純色模式 - 隱藏所有背景媒體
     document.body.classList.add('plain-background');
+    
+    // 隱藏背景圖片和影片
+    const bgImage = document.getElementById('bgImage');
+    const bgVideo1 = document.getElementById('bgVideo1');
+    const bgVideo2 = document.getElementById('bgVideo2');
+    const boardVideo1 = document.getElementById('boardVideo1');
+    const boardVideo2 = document.getElementById('boardVideo2');
+    const boardImage = document.getElementById('boardImage');
+    
+    if (bgImage) { bgImage.style.display = 'none'; bgImage.style.opacity = '0'; }
+    if (bgVideo1) { bgVideo1.style.display = 'none'; bgVideo1.style.opacity = '0'; }
+    if (bgVideo2) { bgVideo2.style.display = 'none'; bgVideo2.style.opacity = '0'; }
+    if (boardVideo1) { boardVideo1.style.display = 'none'; boardVideo1.style.opacity = '0'; }
+    if (boardVideo2) { boardVideo2.style.display = 'none'; boardVideo2.style.opacity = '0'; }
+    if (boardImage) { boardImage.style.display = 'none'; boardImage.style.opacity = '0'; }
+  } else {
+    // 圖片模式 (2) 或特殊片段模式 (3)
+    document.body.classList.remove('plain-background');
+    requestBackgroundFiles();
   }
   // 背景變更時重新分析按鈕文字顏色
   setTimeout(analyzeBrightnessForButtons, 100);
+}
+
+// 向服務器請求背景檔案
+function requestBackgroundFiles() {
+  if (!myColor) return; // 等待玩家顏色設定
+  
+  // 請求背景圖片
+  socket.emit("requestBackgroundFile", {
+    mode: BACKGROUND_MODE,
+    type: 'background',
+    playerColor: myColor
+  });
+  
+  // 請求棋盤背景
+  socket.emit("requestBackgroundFile", {
+    mode: BACKGROUND_MODE,
+    type: 'board', 
+    playerColor: myColor
+  });
 }
 
 // 更新角落圖片顯示
@@ -416,7 +457,7 @@ function analyzeBrightnessForButtons() {
   if (buttons.length === 0) return;
 
   // 如果是純色背景，分析純色背景亮度
-  if (!BACKGROUND_ENABLED) {
+  if (BACKGROUND_MODE === 1) {
     // 取得純色背景的顏色值 #f5f5dc (米黃色)
     const plainBgColor = { r: 245, g: 245, b: 220 }; // #f5f5dc 的RGB值
     const brightness = (0.2126 * plainBgColor.r + 0.7152 * plainBgColor.g + 0.0722 * plainBgColor.b);
@@ -638,6 +679,9 @@ socket.on("waitingForOpponent", () => {
 });
 socket.on("playerColor", color => {
     myColor = color;
+    
+    // 初始化背景設定
+    updateBackgroundDisplay();
     
     // --- 1. 定義所有本地檔案總清單 (建議將所有檔案放在這裡即可) ---
     const allBoardFiles = [
@@ -2404,3 +2448,91 @@ setInterval(() => {
   }
   toggle = !toggle;
 }, 6000);
+
+// 處理服務器回傳的背景檔案
+socket.on("backgroundFileResponse", ({ file, mode, type }) => {
+  if (mode !== BACKGROUND_MODE) return; // 模式已變更，忽略舊回應
+  
+  if (type === 'background') {
+    setBackgroundImage(file);
+  } else if (type === 'board') {
+    setBoardBackground(file);
+  }
+});
+
+// 設定背景圖片
+function setBackgroundImage(filePath) {
+  if (!filePath) return;
+  
+  const bgImage = document.getElementById('bgImage');
+  const bgVideo1 = document.getElementById('bgVideo1');
+  const bgVideo2 = document.getElementById('bgVideo2');
+  
+  // 初始化元素顯示狀態
+  if (bgImage && !bgImage.style.display) bgImage.style.display = 'none';
+  if (bgVideo1 && !bgVideo1.style.display) bgVideo1.style.display = 'none';
+  if (bgVideo2 && !bgVideo2.style.display) bgVideo2.style.display = 'none';
+  
+  if (filePath.toLowerCase().match(/\.(mp4|webm|ogg)$/)) {
+    // 影片檔案
+    if (bgImage) bgImage.style.display = 'none';
+    if (bgVideo1 && bgVideo2) {
+      const currentVideo = bgVideo1.style.display !== 'none' ? bgVideo1 : bgVideo2;
+      const nextVideo = currentVideo === bgVideo1 ? bgVideo2 : bgVideo1;
+      
+      nextVideo.src = filePath;
+      nextVideo.style.display = 'block';
+      nextVideo.style.opacity = '1';
+      currentVideo.style.opacity = '0';
+      
+      setTimeout(() => {
+        currentVideo.style.display = 'none';
+      }, 500);
+    }
+  } else {
+    // 圖片檔案
+    if (bgVideo1) { bgVideo1.style.display = 'none'; bgVideo1.style.opacity = '0'; }
+    if (bgVideo2) { bgVideo2.style.display = 'none'; bgVideo2.style.opacity = '0'; }
+    if (bgImage) {
+      bgImage.src = filePath;
+      bgImage.style.display = 'block';
+      bgImage.style.opacity = '1';
+    }
+  }
+}
+
+// 設定棋盤背景
+function setBoardBackground(filePath) {
+  if (!filePath) return;
+  
+  const boardVideo1 = document.getElementById('boardVideo1');
+  const boardVideo2 = document.getElementById('boardVideo2');
+  const boardImage = document.getElementById('boardImage');
+  
+  if (filePath.toLowerCase().match(/\.(mp4|webm|ogg)$/)) {
+    // 影片檔案
+    if (boardImage) { boardImage.style.display = 'none'; boardImage.style.opacity = '0'; }
+    if (boardVideo1 && boardVideo2) {
+      const currentVideo = boardVideo1.style.display !== 'none' ? boardVideo1 : boardVideo2;
+      const nextVideo = currentVideo === boardVideo1 ? boardVideo2 : boardVideo1;
+      
+      nextVideo.src = filePath;
+      nextVideo.style.display = 'block';
+      nextVideo.style.opacity = '1';
+      currentVideo.style.opacity = '0';
+      
+      setTimeout(() => {
+        currentVideo.style.display = 'none';
+      }, 500);
+    }
+  } else {
+    // 圖片檔案
+    if (boardVideo1) { boardVideo1.style.display = 'none'; boardVideo1.style.opacity = '0'; }
+    if (boardVideo2) { boardVideo2.style.display = 'none'; boardVideo2.style.opacity = '0'; }
+    if (boardImage) {
+      boardImage.src = filePath;
+      boardImage.style.display = 'block';
+      boardImage.style.opacity = '1';
+    }
+  }
+}

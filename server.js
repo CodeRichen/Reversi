@@ -2,6 +2,8 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -11,6 +13,95 @@ app.use(express.static(__dirname));
 
 let rooms = {};
 let time_2A=0;
+let pictureFiles = {};
+
+// 讀取圖片文件清單
+function loadPictureFiles() {
+  try {
+    const fileListPath = path.join(__dirname, 'picture', 'file_list.txt');
+    const data = fs.readFileSync(fileListPath, 'utf8');
+    const files = data.split('\n').map(line => line.trim()).filter(line => line);
+    
+    // 按資料夾分類檔案
+    pictureFiles = {
+      bb: [], 'bb(v)': [], 'bb-s': [], 'bb(v)-s': [],
+      bc: [], 'bc(v)': [], 'bc-s': [], 'bc(v)-s': [],
+      wb: [], 'wb(v)': [], 'wb-s': [], 'wb(v)-s': [],
+      wc: [], 'wc(v)': [], 'wc-s': [], 'wc(v)-s': []
+    };
+    
+    files.forEach(file => {
+      const relativePath = file.replace(/.*[\\\/]picture[\\\/]/, 'picture/');
+      const parts = relativePath.split(/[\\\/]/);
+      if (parts.length >= 3) {
+        const folder = parts[1];
+        const filename = parts[2];
+        if (pictureFiles.hasOwnProperty(folder)) {
+          pictureFiles[folder].push(filename);
+        }
+      }
+    });
+    
+    // console.log('圖片檔案清單已載入:', pictureFiles);
+  } catch (error) {
+    console.error('無法讀取圖片檔案清單:', error);
+  }
+}
+
+// 初始化時載入圖片檔案清單
+loadPictureFiles();
+
+// 根據模式、類型和玩家顏色獲取隨機背景檔案
+function getRandomBackgroundFile(mode, type, playerColor) {
+  // mode: 1=純色, 2=圖片, 3=特殊片段
+  // type: 'background' 或 'board'
+  // playerColor: 'black' 或 'white'
+  
+  if (mode === 1) {
+    return null; // 純色模式不需要檔案
+  }
+  
+  const colorPrefix = playerColor === 'black' ? 'b' : 'w';
+  const typeChar = type === 'background' ? 'b' : 'c';
+  
+  let targetFolders = [];
+  
+  if (mode === 2) {
+    // 第二種模式：一般圖片
+    targetFolders = [
+      `${colorPrefix}${typeChar}`,
+      `${colorPrefix}${typeChar}(v)`
+    ];
+  } else if (mode === 3) {
+    // 第三種模式：特殊片段（-s結尾）
+    targetFolders = [
+      `${colorPrefix}${typeChar}-s`,
+      `${colorPrefix}${typeChar}(v)-s`
+    ];
+  }
+  
+  // 收集所有可用檔案
+  let availableFiles = [];
+  targetFolders.forEach(folder => {
+    if (pictureFiles[folder] && pictureFiles[folder].length > 0) {
+      pictureFiles[folder].forEach(file => {
+        availableFiles.push(`picture/${folder}/${file}`);
+      });
+    }
+  });
+  
+  if (availableFiles.length === 0) {
+    // console.log(`沒有找到適合的檔案: mode=${mode}, type=${type}, playerColor=${playerColor}`);
+    return null;
+  }
+  
+  // 隨機選擇一個檔案
+  const randomIndex = Math.floor(Math.random() * availableFiles.length);
+  const selectedFile = availableFiles[randomIndex];
+  
+  // console.log(`選擇的檔案: ${selectedFile} (模式:${mode}, 類型:${type}, 顏色:${playerColor})`);
+  return selectedFile;
+}
 
 
 io.on('connection', socket => {
@@ -174,8 +265,14 @@ socket.on("opponentMove", ({ x }) => {
   room.players.forEach(p => {
     if (p !== socket) p.emit("opponentDoMove", { x });
   });
-
 });
+
+// 處理背景設定請求
+socket.on("requestBackgroundFile", ({ mode, type, playerColor }) => {
+  const file = getRandomBackgroundFile(mode, type, playerColor);
+  socket.emit("backgroundFileResponse", { file, mode, type });
+});
+
 });
 
 
@@ -234,7 +331,7 @@ function aiMoveLogic(room) {
       // console.log(time_2A);
     },time_2A+100); // GUN AI思考 
   } else {
-    console.log(`AI ${aiColor} 跳過回合，因為無法下子`);
+    // console.log(`AI ${aiColor} 跳過回合，因為無法下子`);
     room.players.forEach(s => s.emit("pass", {
       skippedColor: aiColor,
       nextTurn: playerColor
@@ -275,7 +372,7 @@ function nextTurnLoop(room) {
         nextTurn: opponentColor
       }));
 
-      console.log(`玩家 ${currentColor} 無法下棋，跳過回合，換 ${opponentColor}`);
+      // console.log(`玩家 ${currentColor} 無法下棋，跳過回合，換 ${opponentColor}`);
 
       // 如果是 AI 回合，自動執行 AI 下棋
       if (room.ai && opponentColor === room.aiColor) {
@@ -284,7 +381,7 @@ function nextTurnLoop(room) {
       break;
     } else {
       // 雙方都無法下，遊戲結束
-      console.log("雙方都無法下棋，遊戲結束");
+      // console.log("雙方都無法下棋，遊戲結束");
       endGame(room);
       break;
     }
